@@ -11,11 +11,6 @@ struct InMemoryFrame {
     std::vector<uint8_t> buffer;
 };
 
-struct ActionClip {
-    std::vector<InMemoryFrame> frames;
-    uint8_t fps;
-};
-
 class AssetManager {
 public:
     AssetManager();
@@ -30,14 +25,15 @@ public:
     // 绘制菜单图标
     void drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex, bool active);
 
-    // 预热加载当前阶段核心动作到 PSRAM
-    void preloadCoreActions(uint8_t gender, int level);
-
 private:
     bool isFsMounted;
     
-    // PSRAM 多动作高速缓存池 (彻底消除切换动作时的 SPI Flash I/O 阻塞与卡顿)
-    std::map<String, ActionClip> actionCache;
+    // 当前载入动作的内存缓存 (单动作轻量缓存，仅占用 ~20KB，开机秒开，绝不撑爆内存)
+    String currentLoadedAction;
+    uint8_t currentLoadedGender;
+    String currentLoadedStage;
+    std::vector<InMemoryFrame> currentClipFrames;
+    uint8_t currentClipFps;
 
     // 当前缓存的背景壁纸
     uint8_t currentLoadedBgId;
@@ -48,10 +44,11 @@ private:
     std::vector<InMemoryFrame> menuIconsAct;
     bool iconsLoaded;
 
-    ActionClip* getOrLoadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps);
+    void loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps);
     void loadMenuIcons();
     String getActionNameByState(PetAnimState anim, const String& stage, uint8_t& outFps);
 };
+
 
 
 

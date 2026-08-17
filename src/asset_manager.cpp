@@ -18,6 +18,7 @@ bool AssetManager::begin() {
     return isFsMounted;
 }
 
+
 void AssetManager::drawBackground(M5Canvas& canvas, uint8_t bgId) {
     if (bgId == 0 || !isFsMounted) {
         // 0 号默认壁纸：经典桌面柔和淡蓝渐变
@@ -116,29 +117,26 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
     }
 }
 
-ActionClip* AssetManager::getOrLoadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
-    if (!isFsMounted) return nullptr;
-
-    String genderStr = (gender == 1) ? "MM" : "GG";
-    String cacheKey = genderStr + "/" + stage + "/" + actionName;
-
-    // 1. 检查 PSRAM 高速缓存 (命中耗时 0ms，彻底消灭 I/O 卡顿)
-    auto it = actionCache.find(cacheKey);
-    if (it != actionCache.end() && !it->second.frames.empty()) {
-        return &(it->second);
+void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
+    if (!isFsMounted) return;
+    if (currentLoadedAction == actionName && currentLoadedGender == gender && currentLoadedStage == stage && !currentClipFrames.empty()) {
+        return; // 命中当前动作内存缓存，零延迟
     }
 
-    // 2. 未命中时从 LittleFS 加载并写入缓存
-    ActionClip clip;
-    clip.fps = fps;
+    currentClipFrames.clear();
+    currentClipFrames.shrink_to_fit();
+    currentLoadedAction = actionName;
+    currentLoadedGender = gender;
+    currentLoadedStage = stage;
+    currentClipFps = fps;
 
+    String genderStr = (gender == 1) ? "MM" : "GG";
     String dirPath = "/assets/" + genderStr + "/" + stage + "/" + actionName;
 
     // 如果目标动作不存在，智能回退
     char testFile[64];
     snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
     if (!LittleFS.exists(testFile)) {
-        // 尝试 GG 对应的动作
         dirPath = String("/assets/GG/") + stage + "/" + actionName;
         snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
         if (!LittleFS.exists(testFile)) {
@@ -169,20 +167,8 @@ ActionClip* AssetManager::getOrLoadActionClip(const String& actionName, uint8_t 
             frame.buffer.resize(sz);
             f.read(frame.buffer.data(), sz);
             f.close();
-            clip.frames.push_back(std::move(frame));
+            currentClipFrames.push_back(std::move(frame));
         }
-    }
-
-    actionCache[cacheKey] = std::move(clip);
-    return &actionCache[cacheKey];
-}
-
-void AssetManager::preloadCoreActions(uint8_t gender, int level) {
-    if (!isFsMounted) return;
-    String stage = (level < 5) ? "Egg" : ((level < 12) ? "Kid" : "Adult");
-    static const char* coreActs[] = {"stand", "happy", "play", "eat", "clean", "sick", "work", "study"};
-    for (const char* act : coreActs) {
-        getOrLoadActionClip(act, gender, stage, 10);
     }
 }
 
@@ -191,17 +177,18 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
     String stage = (level < 5) ? "Egg" : ((level < 12) ? "Kid" : "Adult");
 
     String act = getActionNameByState(anim, stage, fps);
-    ActionClip* clip = getOrLoadActionClip(act, gender, stage, fps);
+    loadActionClip(act, gender, stage, fps);
 
-    if (!clip || clip->frames.empty()) {
+    if (currentClipFrames.empty()) {
         canvas.fillCircle(x + 48, y + 48, 26, canvas.color565(255, 180, 0));
         return;
     }
 
-    size_t frameIdx = (currentMillis * clip->fps / 1000) % clip->frames.size();
-    const InMemoryFrame& frame = clip->frames[frameIdx];
+    size_t frameIdx = (currentMillis * currentClipFps / 1000) % currentClipFrames.size();
+    const InMemoryFrame& frame = currentClipFrames[frameIdx];
     canvas.drawPng(frame.buffer.data(), frame.buffer.size(), x, y);
 }
+
 
 void AssetManager::loadMenuIcons() {
     if (!isFsMounted || iconsLoaded) return;

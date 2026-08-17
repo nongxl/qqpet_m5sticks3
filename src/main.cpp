@@ -157,13 +157,11 @@ void setup() {
     lastSaveTime = millis();
     lastIdleQuoteTime = millis();
 
-    // 预热加载当前阶段核心动作到 8MB PSRAM (彻底消除动画切换时的卡顿)
-    g_assets.preloadCoreActions(g_pet.getState().gender, g_pet.getLevel());
-
-    // 启动问候气泡
+    // 启动问候气泡 (开机秒开，第一帧画面瞬间点亮)
     g_haptics.trigger(HAPTIC_CLICK);
     g_display.showBubble("主人早上好！我是你的QQ小桌宠~", 4000);
 }
+
 
 void loop() {
     uint32_t frameStart = millis();
