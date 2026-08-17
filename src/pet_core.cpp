@@ -18,14 +18,15 @@ void PetCore::initDefault() {
     strncpy(state.host, "主人", sizeof(state.host) - 1);
     state.gender = 0;
     state.is_adopted = false; // 初始未领养，触发首次并排选性别领养仪式
-    state.growth = 120.0f;    // 初始 2 级雏鸟
+    state.growth = 0.0f;      // 初始 0 级破壳雏鸟 (Lv.0: 0/50 成长值)
     state.health = HEALTH_NORMAL;
     state.illness[0] = '\0';
     
-    int maxVal = calculateMaxHungerClean(2);
+    int maxVal = calculateMaxHungerClean(0);
     state.hunger = maxVal;
     state.clean = maxVal;
     state.mood = 900;
+
 
     state.coins = 500; // 初始赠送 500 元宝
     state.intellect = 100;
@@ -73,95 +74,133 @@ void PetCore::resetAdoption() {
 }
 
 
-bool PetCore::work(String& outMsg) {
+bool PetCore::startTask(PetTaskType type, uint32_t durationSec, String& outMsg) {
     if (isDead()) {
-        outMsg = "宠物已死亡，无法打工！";
+        outMsg = "宠物已死亡，无法开启作业！";
         return false;
     }
     if (state.health <= 2) {
         outMsg = "宠物病情严重，快去给它看病吧！";
         return false;
     }
-    if (state.hunger < 100 || state.clean < 100) {
-        outMsg = "太饿或太脏了，没有力气打工啦！";
+    if (state.hunger < 200 || state.clean < 200) {
+        outMsg = "太饿或太脏了，先吃饱洗干净再去吧！";
+        return false;
+    }
+    if (type == TASK_TRIP && state.coins < 80) {
+        outMsg = "元宝不足！背包旅行需要 80 元宝路费。";
         return false;
     }
 
-    state.hunger = std::max(0, state.hunger - 60);
-    state.clean = std::max(0, state.clean - 60);
-    state.coins += 150;
-    addGrowth(25.0f);
-    triggerTransientAnim(ANIM_WORK, 4500);
-    outMsg = "打工搬砖大获丰收！赚取 150 元宝，成长值 +25！";
+    if (isTaskActive()) {
+        String oldMsg;
+        stopTask(oldMsg, false);
+    }
+
+    if (type == TASK_TRIP) {
+        state.coins -= 80;
+    }
+
+    state.current_task = static_cast<uint8_t>(type);
+    state.task_start_time = millis() / 1000;
+    state.task_duration = (durationSec < 60) ? 60 : durationSec;
+    state.task_elapsed_sec = 0;
+
+    int mins = state.task_duration / 60;
+    if (type == TASK_WORK) {
+        outMsg = String("开始搬砖打工！预计时长: ") + mins + " 分钟。随时按键可提前召回结算！";
+    } else if (type == TASK_STUDY) {
+        outMsg = String("开始认真自习！预计时长: ") + mins + " 分钟。智力与学业成长UP！";
+    } else if (type == TASK_TRIP) {
+        outMsg = String("背起行囊旅行！预计时长: ") + mins + " 分钟。尽享神州美景！";
+    }
     return true;
+}
+
+bool PetCore::stopTask(String& outMsg, bool isNaturalFinish) {
+    if (!isTaskActive()) {
+        outMsg = "当前没有正在进行的作业。";
+        return false;
+    }
+
+    PetTaskType type = getCurrentTask();
+    uint32_t elapsedSec = state.task_elapsed_sec;
+    if (elapsedSec < 10) elapsedSec = 10;
+    int elapsedMins = (elapsedSec + 59) / 60;
+
+    state.current_task = TASK_NONE;
+    state.task_start_time = 0;
+    state.task_duration = 0;
+    state.task_elapsed_sec = 0;
+
+    if (type == TASK_WORK) {
+        int earnedCoins = elapsedMins * 6; // 6元宝/分钟
+        float earnedExp = elapsedMins * 1.5f; // 1.5经验/分钟
+        state.coins += earnedCoins;
+        addGrowth(earnedExp);
+        triggerTransientAnim(ANIM_HAPPY, 3500);
+
+        if (isNaturalFinish) {
+            outMsg = String("🎉 打工圆满完成！工作 ") + elapsedMins + " 分钟，赚取 " + earnedCoins + " 元宝，经验 +" + static_cast<int>(earnedExp) + "！";
+        } else {
+            outMsg = String("⚒️ 召回打工企鹅！作业 ") + elapsedMins + " 分钟，按劳结算 " + earnedCoins + " 元宝，经验 +" + static_cast<int>(earnedExp) + "！";
+        }
+    } else if (type == TASK_STUDY) {
+        int intellectGain = std::max(1, static_cast<int>(elapsedMins * 0.5f));
+        int charmGain = std::max(1, static_cast<int>(elapsedMins * 0.4f));
+        float earnedExp = elapsedMins * 1.2f;
+        state.intellect += intellectGain;
+        state.charm += charmGain;
+        addGrowth(earnedExp);
+        triggerTransientAnim(ANIM_HAPPY, 3500);
+
+        if (isNaturalFinish) {
+            outMsg = String("🎓 学业圆满完成！自习 ") + elapsedMins + " 分钟，智力 +" + intellectGain + "，魅力 +" + charmGain + "，经验 +" + static_cast<int>(earnedExp) + "！";
+        } else {
+            outMsg = String("📚 召回自习企鹅！学习 ") + elapsedMins + " 分钟，智力 +" + intellectGain + "，魅力 +" + charmGain + "！";
+        }
+    } else if (type == TASK_TRIP) {
+        float earnedExp = elapsedMins * 1.0f;
+        state.mood = 1000;
+        addGrowth(earnedExp);
+        triggerTransientAnim(ANIM_HAPPY, 3500);
+
+        if (random(0, 100) < 60) {
+            state.food_salmon += 2;
+            outMsg = String("旅行归来！心情大好，带回特产 [鲜嫩三文鱼 x2]，经验 +") + static_cast<int>(earnedExp) + "！";
+        } else {
+            state.coins += 50;
+            outMsg = String("旅行归来！沿途结交新朋友，带回元宝礼金 +50，经验 +") + static_cast<int>(earnedExp) + "！";
+        }
+
+    }
+    return true;
+}
+
+uint32_t PetCore::getTaskRemainingSec() const {
+    if (!isTaskActive()) return 0;
+    if (state.task_elapsed_sec >= state.task_duration) return 0;
+    return state.task_duration - state.task_elapsed_sec;
+}
+
+float PetCore::getTaskProgress() const {
+    if (!isTaskActive() || state.task_duration == 0) return 0.0f;
+    float prog = static_cast<float>(state.task_elapsed_sec) / static_cast<float>(state.task_duration);
+    return constrain(prog, 0.0f, 1.0f);
+}
+
+bool PetCore::work(String& outMsg) {
+    return startTask(TASK_WORK, 900, outMsg); // 默认 15 分钟
 }
 
 bool PetCore::study(String& outMsg) {
-    if (isDead()) {
-        outMsg = "宠物已死亡，无法学习！";
-        return false;
-    }
-    if (state.health <= 2) {
-        outMsg = "生病难受中，头昏脑胀学不进去！";
-        return false;
-    }
-    if (state.hunger < 80 || state.clean < 80) {
-        outMsg = "肚子咕咕叫或太脏了，静不下心学习！";
-        return false;
-    }
-
-    state.hunger = std::max(0, state.hunger - 50);
-    state.clean = std::max(0, state.clean - 50);
-    state.intellect += 15;
-    state.charm += 10;
-    addGrowth(30.0f);
-    triggerTransientAnim(ANIM_STUDY, 4500);
-    outMsg = "专心上课自习！智力 +15，魅力 +10，经验 +30！";
-    return true;
+    return startTask(TASK_STUDY, 900, outMsg); // 默认 15 分钟
 }
 
 bool PetCore::trip(String& outMsg) {
-    if (isDead()) {
-        outMsg = "宠物已死亡，无法旅游！";
-        return false;
-    }
-    if (state.health <= 2) {
-        outMsg = "宠物病情严重，无法外出旅行！";
-        return false;
-    }
-    if (state.coins < 100) {
-        outMsg = "元宝不足！背包旅行需要 100 元宝路费。";
-        return false;
-    }
-    if (state.hunger < 80) {
-        outMsg = "肚子太饿了，没力气出门旅行啦！";
-        return false;
-    }
-
-    static const char* SCENE_NAMES[] = {
-        "经典桌面", "阳光草地", "森林小道", "浪漫海滩", "夜幕星空",
-        "企鹅客厅", "梦幻冰屋", "落叶枫林", "童话乐园", "蔚蓝深海",
-        "飞舞樱花", "魔法城堡", "农场庄园", "太空星云", "暖冬雪景",
-        "新春庭阁", "都市天际"
-    };
-
-    state.coins -= 100;
-    state.hunger = std::max(0, state.hunger - 60);
-    state.mood = 1000;
-    addGrowth(50.0f);
-    
-    // 随机漫游到新风景 (1~16)
-    uint8_t newBg = static_cast<uint8_t>(random(1, 17));
-    if (newBg == state.bg_id) {
-        newBg = (newBg % 16) + 1;
-    }
-    state.bg_id = newBg;
-
-    triggerTransientAnim(ANIM_TRIP, 4500);
-    const char* sceneName = (state.bg_id <= 16) ? SCENE_NAMES[state.bg_id] : "未知秘境";
-    outMsg = String("背包旅行归来！来到了【") + sceneName + "】，带回明信片，经验+50！";
-    return true;
+    return startTask(TASK_TRIP, 900, outMsg); // 默认 15 分钟
 }
+
 
 
 
@@ -429,6 +468,42 @@ bool PetCore::revive() {
 void PetCore::tickDecay(uint32_t deltaSeconds) {
     if (isDead() || deltaSeconds == 0) return;
 
+
+    // 1. 如果正在进行作业 (打工/学习/旅游)，推进秒数并执行加速消耗
+    if (isTaskActive()) {
+        state.task_elapsed_sec += deltaSeconds;
+
+        float taskCycles = static_cast<float>(deltaSeconds) / 60.0f;
+        if (state.current_task == TASK_WORK) {
+            // 打工搬砖加速消耗：饱食 -10/分, 清洁 -10/分
+            state.hunger = std::max(0, state.hunger - static_cast<int>(taskCycles * 10.0f));
+            state.clean = std::max(0, state.clean - static_cast<int>(taskCycles * 10.0f));
+        } else if (state.current_task == TASK_STUDY) {
+            // 学习自习消耗：饱食 -8/分, 清洁 -6/分, 心情 -4/分
+            state.hunger = std::max(0, state.hunger - static_cast<int>(taskCycles * 8.0f));
+            state.clean = std::max(0, state.clean - static_cast<int>(taskCycles * 6.0f));
+            state.mood = std::max(0, state.mood - static_cast<int>(taskCycles * 4.0f));
+        } else if (state.current_task == TASK_TRIP) {
+            // 旅游消耗：饱食 -6/分, 心情持续保持满格
+            state.hunger = std::max(0, state.hunger - static_cast<int>(taskCycles * 6.0f));
+            state.mood = 1000;
+        }
+
+        // 异常保护：饱食度归零或生病严重，自动中断作业回家
+        if (state.hunger <= 0 || state.clean <= 0 || state.health <= 2) {
+            String endMsg;
+            stopTask(endMsg, false);
+            return;
+        }
+
+        // 自然达成目标时长，自动完成结算
+        if (state.task_elapsed_sec >= state.task_duration) {
+            String endMsg;
+            stopTask(endMsg, true);
+            return;
+        }
+    }
+
     float cycles = static_cast<float>(deltaSeconds) / 60.0f;
     int baseDecay = static_cast<int>(cycles * 6.0f);
     if (baseDecay < 1 && deltaSeconds >= 30) baseDecay = 1;
@@ -487,8 +562,6 @@ void PetCore::triggerTransientAnim(PetAnimState anim, uint32_t durationMs) {
     transientAnimEndTime = now + durationMs;
 }
 
-
-
 void PetCore::switchRandomIdleAction() {
     // 根据宠物当前心情和状态自主抉择日常动作
     if (isHungry()) {
@@ -541,23 +614,31 @@ PetAnimState PetCore::getCurrentAnimState() const {
     // 1. 死亡状态
     if (state.health == 0) return ANIM_DEAD;
 
-    // 2. 临时核心动作 (进食、洗澡、逗玩、打工、学习、旅游、康复、升级等)
+    // 2. 临时核心动作 (进食、洗澡、逗玩、康复、升级等)
     if (transientAnim != ANIM_IDLE_STAND && millis() <= transientAnimEndTime) {
         return transientAnim;
     }
 
-    // 3. 濒死状态 (health == 1)
+    // 3. 如果当前处于持续作业状态，持续播放对应作业动画
+    if (isTaskActive()) {
+        if (state.current_task == TASK_WORK) return ANIM_WORK;
+        if (state.current_task == TASK_STUDY) return ANIM_STUDY;
+        if (state.current_task == TASK_TRIP) return ANIM_TRIP;
+    }
+
+    // 4. 濒死状态 (health == 1)
     if (state.health == 1) return ANIM_DYING;
 
-    // 4. 生病状态 (health < 5 或 illness 有病症)
+    // 5. 生病状态 (health < 5 或 illness 有病症)
     if (isSick() || state.health < 5) return ANIM_SICK;
 
-    // 5. 心情低落 (mood < 500)
+    // 6. 心情低落 (mood < 500)
     if (state.mood < 500) return ANIM_SAD;
 
-    // 6. 正常健康态下的自主日常杂耍动作流转
+    // 7. 正常健康态下的自主日常杂耍动作流转
     return currentIdleSubAction;
 }
+
 
 bool PetCore::buyItem(const char* itemId, int count, String& outMsg) {
     if (!itemId) {

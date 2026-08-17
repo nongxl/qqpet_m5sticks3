@@ -27,54 +27,58 @@ def start_server():
     return server
 
 ADULT_ACTIONS = [
-    {"name": "stand", "swf": "peaceful/Stand.swf", "frames": 12, "fps": 8},
-    {"name": "happy", "swf": "happy/Stand.swf", "frames": 14, "fps": 10},
-    {"name": "sad", "swf": "sad/Stand.swf", "frames": 12, "fps": 8},
-    {"name": "play", "swf": "happy/play/P1.swf", "frames": 16, "fps": 10},
-    {"name": "play_1", "swf": "happy/play/P2.swf", "frames": 16, "fps": 10},
-    {"name": "play_2", "swf": "happy/play/P3.swf", "frames": 16, "fps": 10},
-    {"name": "play_3", "swf": "happy/play/P4.swf", "frames": 16, "fps": 10},
-    {"name": "play_4", "swf": "happy/play/P5.swf", "frames": 16, "fps": 10},
-    {"name": "work", "swf": "game/Game1.swf", "frames": 16, "fps": 10},
-    {"name": "study", "swf": "peaceful/Stand.swf", "frames": 12, "fps": 8},
-    {"name": "eat", "swf": "Eat1.swf", "frames": 16, "fps": 10},
-
-    {"name": "clean", "swf": "Clean1.swf", "frames": 16, "fps": 10},
-    {"name": "sick", "swf": "Sick1.swf", "frames": 12, "fps": 8},
-    {"name": "dying", "swf": "Dying.swf", "frames": 10, "fps": 6},
-    {"name": "cure", "swf": "Cure1.swf", "frames": 14, "fps": 10},
-    {"name": "levelup", "swf": "LevUp.swf", "frames": 16, "fps": 10},
+    {"name": "stand", "swf": "peaceful/Stand.swf", "frames": 8, "fps": 8},
+    {"name": "happy", "swf": "happy/Stand.swf", "frames": 8, "fps": 8},
+    {"name": "sad", "swf": "sad/Stand.swf", "frames": 8, "fps": 8},
+    {"name": "play", "swf": "happy/play/P1.swf", "frames": 10, "fps": 10},
+    {"name": "play_1", "swf": "happy/play/P2.swf", "frames": 10, "fps": 10},
+    {"name": "play_2", "swf": "happy/play/P3.swf", "frames": 10, "fps": 10},
+    {"name": "play_3", "swf": "happy/play/P4.swf", "frames": 10, "fps": 10},
+    {"name": "play_4", "swf": "happy/play/P5.swf", "frames": 10, "fps": 10},
+    {"name": "work", "swf": "game/Game1.swf", "frames": 10, "fps": 10},
+    {"name": "study", "swf": "peaceful/play/P2.swf", "frames": 10, "fps": 10},
+    {"name": "trip", "swf": "happy/play/P4.swf", "frames": 10, "fps": 10},
+    {"name": "eat", "swf": "Eat1.swf", "frames": 10, "fps": 10},
+    {"name": "clean", "swf": "Clean1.swf", "frames": 10, "fps": 10},
+    {"name": "sick", "swf": "Sick1.swf", "frames": 8, "fps": 8},
+    {"name": "dying", "swf": "Dying.swf", "frames": 8, "fps": 6},
+    {"name": "cure", "swf": "Cure1.swf", "frames": 10, "fps": 10},
+    {"name": "levelup", "swf": "LevUp.swf", "frames": 10, "fps": 10},
 ]
 
 KID_ACTIONS = [
-    {"name": "stand", "swf": "Stand.swf", "frames": 12, "fps": 8},
-    {"name": "happy", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "sad", "swf": "Dirty.swf", "frames": 12, "fps": 8},
-    {"name": "play", "swf": "LevUp.swf", "frames": 16, "fps": 10},
-    {"name": "work", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "study", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "eat", "swf": "Eat1.swf", "frames": 16, "fps": 10},
-    {"name": "clean", "swf": "Clean.swf", "frames": 16, "fps": 10},
-    {"name": "sick", "swf": "Sick.swf", "frames": 12, "fps": 8},
-    {"name": "dying", "swf": "Dying.swf", "frames": 10, "fps": 6},
-    {"name": "cure", "swf": "Cure.swf", "frames": 14, "fps": 10},
-    {"name": "levelup", "swf": "LevUp.swf", "frames": 16, "fps": 10},
+    {"name": "stand", "swf": "Stand.swf", "frames": 8, "fps": 8},
+    {"name": "happy", "swf": "LevUp.swf", "frames": 8, "fps": 8},
+    {"name": "sad", "swf": "Dirty.swf", "frames": 8, "fps": 8},
+    {"name": "play", "swf": "play/P1.swf", "frames": 10, "fps": 10},
+    {"name": "work", "swf": "play/P3.swf", "frames": 10, "fps": 10},
+    {"name": "study", "swf": "play/P2.swf", "frames": 10, "fps": 10},
+    {"name": "trip", "swf": "play/P4.swf", "frames": 10, "fps": 10},
+    {"name": "eat", "swf": "Eat1.swf", "frames": 10, "fps": 10},
+    {"name": "clean", "swf": "Clean.swf", "frames": 10, "fps": 10},
+    {"name": "sick", "swf": "Sick.swf", "frames": 8, "fps": 8},
+    {"name": "dying", "swf": "Dying.swf", "frames": 8, "fps": 6},
+    {"name": "cure", "swf": "Cure.swf", "frames": 10, "fps": 10},
+    {"name": "levelup", "swf": "LevUp.swf", "frames": 10, "fps": 10},
 ]
 
 EGG_ACTIONS = [
-    {"name": "stand", "swf": "Stand.swf", "frames": 12, "fps": 8},
-    {"name": "happy", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "sad", "swf": "Stand.swf", "frames": 12, "fps": 8},
-    {"name": "play", "swf": "LevUp.swf", "frames": 16, "fps": 10},
-    {"name": "work", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "study", "swf": "Stand.swf", "frames": 12, "fps": 10},
-    {"name": "eat", "swf": "Eat1.swf", "frames": 14, "fps": 10},
-    {"name": "clean", "swf": "Clean.swf", "frames": 14, "fps": 10},
-    {"name": "sick", "swf": "Sick.swf", "frames": 12, "fps": 8},
-    {"name": "dying", "swf": "Dying.swf", "frames": 10, "fps": 6},
-    {"name": "cure", "swf": "Cure.swf", "frames": 14, "fps": 10},
-    {"name": "levelup", "swf": "LevUp.swf", "frames": 16, "fps": 10},
+    {"name": "stand", "swf": "Stand.swf", "frames": 8, "fps": 8},
+    {"name": "happy", "swf": "play/P1.swf", "frames": 8, "fps": 8},
+    {"name": "sad", "swf": "Sick.swf", "frames": 8, "fps": 8},
+    {"name": "play", "swf": "play/P2.swf", "frames": 10, "fps": 10},
+    {"name": "work", "swf": "play/P3.swf", "frames": 10, "fps": 10},
+    {"name": "study", "swf": "play/P4.swf", "frames": 10, "fps": 10},
+    {"name": "trip", "swf": "play/P5.swf", "frames": 10, "fps": 10},
+    {"name": "eat", "swf": "Eat1.swf", "frames": 10, "fps": 10},
+    {"name": "clean", "swf": "Clean.swf", "frames": 10, "fps": 10},
+    {"name": "sick", "swf": "Sick.swf", "frames": 8, "fps": 8},
+    {"name": "dying", "swf": "Dying.swf", "frames": 8, "fps": 6},
+    {"name": "cure", "swf": "Cure.swf", "frames": 10, "fps": 10},
+    {"name": "levelup", "swf": "LevUp.swf", "frames": 10, "fps": 10},
 ]
+
+
 
 
 
@@ -167,8 +171,9 @@ def extract_actions_list(page, gender_name, stage_name, action_list):
                 paste_y = 96 - new_h - 2
                 final_img.paste(resized, (paste_x, paste_y))
                 
-                quantized = final_img.quantize(colors=64, method=Image.Quantize.FASTOCTREE)
+                quantized = final_img.quantize(colors=32, method=Image.Quantize.FASTOCTREE)
                 quantized.save(frame_path, optimize=True)
+
 
             time.sleep(frame_delay)
 
@@ -216,7 +221,11 @@ def extract_icons():
         ("feed", "weishi.png"),
         ("bath", "qingjie.png"),
         ("play", "wanshua.png"),
+        ("work", "dagong.png"),
+        ("study", "xuexi.png"),
+        ("trip", "lvyou.png"),
         ("cure", "zhibing.png"),
+        ("shop", "richang.png"),
         ("status", "chongwu.png"),
         ("web", "guanli.png"),
     ]
@@ -233,7 +242,8 @@ def extract_icons():
         act_img = img.resize((28, 28), Image.Resampling.LANCZOS)
         act_q = act_img.quantize(colors=32, method=Image.Quantize.FASTOCTREE)
         act_q.save(icons_out / f"{name}_act.png", optimize=True)
-    print("  -> Icons extracted successfully!")
+    print("  -> All 10 Icons extracted successfully!")
+
 
 def main():
     if (WORKSPACE_DIR / "data").exists():

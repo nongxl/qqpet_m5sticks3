@@ -139,14 +139,14 @@ const char* QUOTES_LEVELUP[] = {
 const size_t QUOTES_LEVELUP_COUNT = sizeof(QUOTES_LEVELUP) / sizeof(QUOTES_LEVELUP[0]);
 
 int calculateLevel(float growth, int& currentLevelMinGrowth, int& nextLevelGrowth) {
-    if (growth <= 0) {
+    if (growth < 50.0f) {
         currentLevelMinGrowth = 0;
-        nextLevelGrowth = LEVEL_TABLE[1];
-        return 1;
+        nextLevelGrowth = 50;
+        return 0; // 原版正统 0 级起步 (破壳雏鸟阶段)
     }
     for (size_t i = 1; i < LEVEL_TABLE_SIZE; ++i) {
         if (growth < LEVEL_TABLE[i]) {
-            currentLevelMinGrowth = LEVEL_TABLE[i - 1];
+            currentLevelMinGrowth = (i == 1) ? 50 : LEVEL_TABLE[i - 1];
             nextLevelGrowth = LEVEL_TABLE[i];
             return static_cast<int>(i);
         }
@@ -155,6 +155,7 @@ int calculateLevel(float growth, int& currentLevelMinGrowth, int& nextLevelGrowt
     nextLevelGrowth = LEVEL_TABLE[LEVEL_TABLE_SIZE - 1];
     return static_cast<int>(LEVEL_TABLE_SIZE);
 }
+
 
 int calculateMaxHungerClean(int level) {
     int cap = level > 30 ? 30 : level;

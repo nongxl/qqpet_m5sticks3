@@ -49,15 +49,23 @@ public:
     bool work(String& outMsg);
     bool study(String& outMsg);
     bool trip(String& outMsg);
+    
+    // 持续作业挂机系统 (打工/学习/旅游)
+    bool isTaskActive() const { return state.current_task != TASK_NONE; }
+    PetTaskType getCurrentTask() const { return static_cast<PetTaskType>(state.current_task); }
+    bool startTask(PetTaskType type, uint32_t durationSec, String& outMsg);
+    bool stopTask(String& outMsg, bool isNaturalFinish = false);
+    uint32_t getTaskRemainingSec() const;
+    float getTaskProgress() const;
+
     bool buyItem(const char* itemId, int count, String& outMsg);
     bool buyShopProduct(int productIndex, int count, String& outMsg);
     int getFoodCount(int foodIndex) const;
     int getMedCount(int medIndex) const;
 
-
-
     // 周期衰减与恶化处理
     void tickDecay(uint32_t deltaSeconds);
+
     
     // 状态查询 (按等级上限的 35% 比例动态判断饥饿与脏污，杜绝低等级误触发)
     int getLevel() const;

@@ -94,6 +94,8 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
         case ANIM_TRIP:
             outFps = 10;
             return "trip";
+
+
         case ANIM_EAT:
             outFps = 10;
             return "eat";

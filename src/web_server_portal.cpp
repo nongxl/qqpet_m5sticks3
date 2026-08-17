@@ -86,19 +86,43 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
     </div>
 
-    <!-- 快捷互动与打工 -->
+    <!-- 快捷互动与持续打工挂机 -->
     <div class="card">
-        <div class="card-title">⚡ 一键养护与打工</div>
+        <div class="card-title">⚡ 一键养护与作业挂机</div>
+        
+        <!-- 实时作业状态展示条 -->
+        <div id="taskStatusBox" style="display:none;background:#e6f7ff;border:1px solid #91d5ff;border-radius:8px;padding:10px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span id="taskTitle" style="font-weight:bold;color:#0050b3;">⚒️ 正在打工中...</span>
+                <span id="taskCountdown" style="font-weight:bold;color:#fa8c16;">剩余 12:45</span>
+            </div>
+            <div style="background:#d9d9d9;border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
+                <div id="taskProgBar" style="background:#1890ff;height:100%;width:0%;transition:width 0.5s;"></div>
+            </div>
+            <button class="btn" style="background:#ff4d4f;color:#fff;width:100%;padding:6px;margin:0;" onclick="stopTask()">🛑 提前召回并结算收益</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <label style="font-size:13px;color:#555;font-weight:bold;">挂机作业时长:</label>
+            <select id="taskDurationSelect" style="flex:1;padding:6px;border-radius:6px;border:1px solid #d9d9d9;background:#fff;font-size:13px;">
+                <option value="300">5 分钟 (快速体验 +30Y)</option>
+                <option value="900" selected>15 分钟 (标准作业 +90Y)</option>
+                <option value="1800">30 分钟 (深度沉浸 +180Y)</option>
+                <option value="3600">60 分钟 (长效挂机 +360Y)</option>
+            </select>
+        </div>
+
         <div class="btn-grid">
             <button class="btn" onclick="doAction('feed')">🍖 喂食 (+1000)</button>
             <button class="btn" onclick="doAction('bath')">🧼 洗澡 (+1000)</button>
             <button class="btn" onclick="doAction('play')">🎮 逗玩 (+150)</button>
-            <button class="btn btn-work" onclick="doWork()">⚒️ 打工搬砖 (+150元宝)</button>
-            <button class="btn" style="background:#2f54eb" onclick="doStudy()">📚 认真自习 (+智力/经验)</button>
-            <button class="btn" style="background:#13c2c2" onclick="doTrip()">✈️ 背包旅行 (-100Y/满心情)</button>
+            <button class="btn btn-work" onclick="doWork()">⚒️ 开始打工</button>
+            <button class="btn" style="background:#2f54eb" onclick="doStudy()">📚 开始自习</button>
+            <button class="btn" style="background:#13c2c2" onclick="doTrip()">✈️ 背包旅行 (-80Y)</button>
             <button class="btn btn-heal" onclick="doAction('heal')" style="grid-column: span 2;">💊 一键对症吃药/复活</button>
         </div>
     </div>
+
 
 
     <!-- 元宝道具商城 -->
@@ -216,6 +240,21 @@ function refresh() {
         if (document.getElementById('sel-bg').value != data.bg_id) {
             document.getElementById('sel-bg').value = data.bg_id;
         }
+
+        // 动态更新挂机作业状态条
+        let taskBox = document.getElementById('taskStatusBox');
+        if (data.current_task && data.current_task > 0) {
+            taskBox.style.display = 'block';
+            let taskNames = ['', '⚒️ 正在打工搬砖中...', '📚 正在认真自习中...', '✈️ 正在背包漫游中...'];
+            document.getElementById('taskTitle').innerText = taskNames[data.current_task] || '作业中...';
+            let remM = Math.floor(data.task_remaining / 60);
+            let remS = data.task_remaining % 60;
+            document.getElementById('taskCountdown').innerText = '剩余 ' + (remM < 10 ? '0' : '') + remM + ':' + (remS < 10 ? '0' : '') + remS;
+            let prog = Math.round(data.task_progress * 100);
+            document.getElementById('taskProgBar').style.width = prog + '%';
+        } else {
+            taskBox.style.display = 'none';
+        }
     });
 }
 
@@ -227,21 +266,31 @@ function doAction(type) {
 }
 
 function doWork() {
-    fetch('/api/work').then(r => r.json()).then(res => {
+    let dur = document.getElementById('taskDurationSelect').value || 900;
+    fetch('/api/work?duration=' + dur).then(r => r.json()).then(res => {
         alert(res.msg);
         refresh();
     });
 }
 
 function doStudy() {
-    fetch('/api/study').then(r => r.json()).then(res => {
+    let dur = document.getElementById('taskDurationSelect').value || 900;
+    fetch('/api/study?duration=' + dur).then(r => r.json()).then(res => {
         alert(res.msg);
         refresh();
     });
 }
 
 function doTrip() {
-    fetch('/api/trip').then(r => r.json()).then(res => {
+    let dur = document.getElementById('taskDurationSelect').value || 900;
+    fetch('/api/trip?duration=' + dur).then(r => r.json()).then(res => {
+        alert(res.msg);
+        refresh();
+    });
+}
+
+function stopTask() {
+    fetch('/api/task/stop').then(r => r.json()).then(res => {
         alert(res.msg);
         refresh();
     });
@@ -273,7 +322,6 @@ function resetAdoption() {
             });
     }
 }
-
 
 function saveConfig() {
     let payload = {
@@ -336,6 +384,11 @@ void WebServerPortal::begin() {
         doc["soap_count"] = st.soap_count;
         doc["revival_count"] = st.revival_count;
 
+        // 作业挂机字段
+        doc["current_task"] = st.current_task;
+        doc["task_remaining"] = g_pet.getTaskRemainingSec();
+        doc["task_duration"] = st.task_duration;
+        doc["task_progress"] = g_pet.getTaskProgress();
 
         String out;
         serializeJson(doc, out);
@@ -344,10 +397,11 @@ void WebServerPortal::begin() {
 
     // 打工 API
     server.on("/api/work", HTTP_GET, [this]() {
+        uint32_t dur = server.hasArg("duration") ? server.arg("duration").toInt() : 900;
         String msg;
-        bool ok = g_pet.work(msg);
+        bool ok = g_pet.startTask(TASK_WORK, dur, msg);
         g_storage.savePetState(g_pet.getState());
-        g_display.showToast(msg, 3000);
+        g_display.showToast(msg, 5500);
 
         DynamicJsonDocument doc(256);
         doc["success"] = ok;
@@ -359,10 +413,11 @@ void WebServerPortal::begin() {
 
     // 学习 API
     server.on("/api/study", HTTP_GET, [this]() {
+        uint32_t dur = server.hasArg("duration") ? server.arg("duration").toInt() : 900;
         String msg;
-        bool ok = g_pet.study(msg);
+        bool ok = g_pet.startTask(TASK_STUDY, dur, msg);
         g_storage.savePetState(g_pet.getState());
-        g_display.showToast(msg, 3000);
+        g_display.showToast(msg, 5500);
 
         DynamicJsonDocument doc(256);
         doc["success"] = ok;
@@ -374,10 +429,11 @@ void WebServerPortal::begin() {
 
     // 旅游 API
     server.on("/api/trip", HTTP_GET, [this]() {
+        uint32_t dur = server.hasArg("duration") ? server.arg("duration").toInt() : 900;
         String msg;
-        bool ok = g_pet.trip(msg);
+        bool ok = g_pet.startTask(TASK_TRIP, dur, msg);
         g_storage.savePetState(g_pet.getState());
-        g_display.showToast(msg, 3000);
+        g_display.showToast(msg, 5500);
 
         DynamicJsonDocument doc(256);
         doc["success"] = ok;
@@ -386,6 +442,22 @@ void WebServerPortal::begin() {
         serializeJson(doc, out);
         server.send(200, "application/json", out);
     });
+
+    // 提前召回/结束作业 API
+    server.on("/api/task/stop", HTTP_GET, [this]() {
+        String msg;
+        bool ok = g_pet.stopTask(msg, false);
+        g_storage.savePetState(g_pet.getState());
+        g_display.showToast(msg, 5500);
+
+        DynamicJsonDocument doc(256);
+        doc["success"] = ok;
+        doc["msg"] = msg;
+        String out;
+        serializeJson(doc, out);
+        server.send(200, "application/json", out);
+    });
+
 
 
     // 道具商城购买 API

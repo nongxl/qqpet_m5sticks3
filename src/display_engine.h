@@ -21,8 +21,12 @@ enum SubScreenMode {
     SUB_SCREEN_NONE = 0,
     SUB_SCREEN_FEED,   // 全屏食物选择背包
     SUB_SCREEN_CURE,   // 全屏对症药品药箱
-    SUB_SCREEN_SHOP    // 全屏元宝道具商城
+    SUB_SCREEN_SHOP,   // 全屏元宝道具商城
+    SUB_SCREEN_WORK,   // 打工时长选择
+    SUB_SCREEN_STUDY,  // 学习时长选择
+    SUB_SCREEN_TRIP    // 旅游时长选择
 };
+
 
 class DisplayEngine {
 public:
@@ -56,13 +60,16 @@ public:
     void setDragging(bool dragging) { isDragging = dragging; }
 
     // 弹窗与状态卡片控制
-    void showToast(const String& msg, uint32_t durationMs = 2500);
+    void showToast(const String& msg, uint32_t durationMs = 5500);
+    void closeToast() { toastEndTime = 0; }
+    bool isToastVisible() const { return millis() <= toastEndTime && toastText.length() > 0; }
     void showStatusCard();
     void closeStatusCard() { statusCardVisible = false; }
     bool isStatusCardOpen() const { return statusCardVisible; }
     void showWebPortalCard(uint32_t durationMs = 20000);
     void closeWebPortalCard() { webPortalCardEndTime = 0; }
     bool isWebPortalOpen() const { return millis() <= webPortalCardEndTime; }
+
 
 private:
     M5Canvas canvas;

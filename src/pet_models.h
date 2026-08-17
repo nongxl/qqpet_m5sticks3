@@ -8,6 +8,13 @@ struct MedicineInventoryItem {
     int count;
 };
 
+enum PetTaskType : uint8_t {
+    TASK_NONE = 0,
+    TASK_WORK = 1,  // 铁镐打工搬砖
+    TASK_STUDY = 2, // 研读自习上课
+    TASK_TRIP = 3   // 背包神州漫游
+};
+
 // 宠物完整状态模型
 struct PetState {
     char name[32];          // 宠物昵称
@@ -36,6 +43,11 @@ struct PetState {
     int revival_count;      // 还魂丹库存
     MedicineInventoryItem medicines[13]; // 常用药品库存
 
+    // 持续作业挂机状态 (打工/学习/旅游)
+    uint8_t current_task;       // 0: 空闲, 1: 打工, 2: 学习, 3: 旅游
+    uint32_t task_start_time;   // 开始绝对时间戳 (秒)
+    uint32_t task_duration;     // 目标设定时长 (秒，例如 300, 900, 1800, 3600)
+    uint32_t task_elapsed_sec;  // 已实际进行有效秒数
 
     // 系统配置
     char wifi_ssid[64];
@@ -46,4 +58,5 @@ struct PetState {
     
     uint32_t last_active_time; // 上次运行时间戳 (秒)
 };
+
 

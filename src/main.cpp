@@ -51,44 +51,38 @@ void executeMenuAction(MenuOption opt) {
             break;
 
         case MENU_WORK:
-            {
-                String workMsg;
-                if (g_pet.work(workMsg)) {
-                    g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(workMsg, 3000);
-                    g_ai.requestDialog("idle");
-                } else {
-                    g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(workMsg, 3000);
-                }
+            if (g_pet.isTaskActive() && g_pet.getCurrentTask() == TASK_WORK) {
+                String stopMsg;
+                g_pet.stopTask(stopMsg, false);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_display.showToast(stopMsg, 5500);
+            } else {
+                g_display.openSubScreen(SUB_SCREEN_WORK);
+                g_haptics.trigger(HAPTIC_CLICK);
             }
             break;
 
         case MENU_STUDY:
-            {
-                String studyMsg;
-                if (g_pet.study(studyMsg)) {
-                    g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(studyMsg, 3000);
-                    g_ai.requestDialog("idle");
-                } else {
-                    g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(studyMsg, 3000);
-                }
+            if (g_pet.isTaskActive() && g_pet.getCurrentTask() == TASK_STUDY) {
+                String stopMsg;
+                g_pet.stopTask(stopMsg, false);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_display.showToast(stopMsg, 5500);
+            } else {
+                g_display.openSubScreen(SUB_SCREEN_STUDY);
+                g_haptics.trigger(HAPTIC_CLICK);
             }
             break;
 
         case MENU_TRIP:
-            {
-                String tripMsg;
-                if (g_pet.trip(tripMsg)) {
-                    g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(tripMsg, 3000);
-                    g_ai.requestDialog("happy");
-                } else {
-                    g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(tripMsg, 3000);
-                }
+            if (g_pet.isTaskActive() && g_pet.getCurrentTask() == TASK_TRIP) {
+                String stopMsg;
+                g_pet.stopTask(stopMsg, false);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_display.showToast(stopMsg, 5500);
+            } else {
+                g_display.openSubScreen(SUB_SCREEN_TRIP);
+                g_haptics.trigger(HAPTIC_CLICK);
             }
             break;
 
@@ -115,11 +109,12 @@ void executeMenuAction(MenuOption opt) {
             g_haptics.trigger(HAPTIC_SUCCESS);
             break;
 
-
         default:
             break;
     }
 }
+
+
 
 #include "asset_manager.h"
 
@@ -181,8 +176,9 @@ void loop() {
             g_pet.adopt(selectedAdoptGender);
             g_storage.savePetState(g_pet.getState());
             g_haptics.trigger(HAPTIC_SUCCESS);
-            g_display.showBubble((selectedAdoptGender == 1) ? "领养成功！我是你的甜美MM~" : "领养成功！我是你的帅气GG~", 4500);
+            g_display.showBubble((selectedAdoptGender == 1) ? "啪嗒！破壳诞生啦~ 我是您的甜美MM！" : "啪嗒！破壳诞生啦~ 我是您的帅气GG！", 5000);
         }
+
 
         g_display.drawAdoptionScreen(selectedAdoptGender);
 
@@ -201,7 +197,10 @@ void loop() {
             int idx = g_display.getSubScreenIndex();
             SubScreenMode mode = g_display.getSubScreenMode();
             int totalItems = (mode == SUB_SCREEN_FEED) ? (FOOD_COUNT + 1) : 
-                             ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : (SHOP_PRODUCT_COUNT + 1));
+                             ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : 
+                             ((mode == SUB_SCREEN_SHOP) ? (SHOP_PRODUCT_COUNT + 1) : (4 + 1)));
+
+            static const int TASK_DURATIONS[4] = {300, 900, 1800, 3600};
 
             // 如果点击了最后一项 [返回桌面]
             if (idx == totalItems - 1) {
@@ -211,34 +210,48 @@ void loop() {
                 String feedMsg;
                 if (g_pet.feedFood(idx, feedMsg)) {
                     g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(feedMsg, 3000);
+                    g_display.showToast(feedMsg, 5500);
                     g_display.closeSubScreen();
                     g_ai.requestDialog("hungry");
                 } else {
                     g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(feedMsg, 3000);
+                    g_display.showToast(feedMsg, 5500);
                 }
             } else if (mode == SUB_SCREEN_CURE) {
                 String cureMsg;
                 if (g_pet.cureWithMed(idx, cureMsg)) {
                     g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(cureMsg, 3000);
+                    g_display.showToast(cureMsg, 5500);
                     g_display.closeSubScreen();
                     g_ai.requestDialog("idle");
                 } else {
                     g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(cureMsg, 3000);
+                    g_display.showToast(cureMsg, 5500);
                 }
             } else if (mode == SUB_SCREEN_SHOP) {
                 String buyMsg;
                 if (g_pet.buyShopProduct(idx, 1, buyMsg)) {
                     g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(buyMsg, 2500);
+                    g_display.showToast(buyMsg, 5500);
                 } else {
                     g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(buyMsg, 2500);
+                    g_display.showToast(buyMsg, 5500);
+                }
+            } else if (mode == SUB_SCREEN_WORK || mode == SUB_SCREEN_STUDY || mode == SUB_SCREEN_TRIP) {
+                PetTaskType targetTask = (mode == SUB_SCREEN_WORK) ? TASK_WORK : ((mode == SUB_SCREEN_STUDY) ? TASK_STUDY : TASK_TRIP);
+                String taskMsg;
+                if (g_pet.startTask(targetTask, TASK_DURATIONS[idx], taskMsg)) {
+                    g_haptics.trigger(HAPTIC_SUCCESS);
+                    g_display.showToast(taskMsg, 5500);
+                    g_display.closeSubScreen();
+                } else {
+                    g_haptics.trigger(HAPTIC_ALERT);
+                    g_display.showToast(taskMsg, 5500);
                 }
             }
+        } else if (g_display.isToastVisible()) {
+            g_display.closeToast();
+            g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
@@ -250,12 +263,21 @@ void loop() {
             executeMenuAction(g_display.getSelectedMenuOption());
             g_display.closeMenu();
         } else {
-            // 待机模式下: 摸摸互动
-            g_pet.play(50);
-            g_haptics.trigger(HAPTIC_CLICK);
-            g_ai.requestDialog("happy");
+            // 待机模式下: 如果正在作业，按 A 键召回结算；否则摸摸互动
+            if (g_pet.isTaskActive()) {
+                String stopMsg;
+                g_pet.stopTask(stopMsg, false);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_display.showToast(stopMsg, 5500);
+            } else {
+                g_pet.play(50);
+                g_haptics.trigger(HAPTIC_CLICK);
+                g_ai.requestDialog("happy");
+            }
         }
     }
+
+
 
 
     // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾
@@ -297,10 +319,14 @@ void loop() {
 
     // 2. 处理按键 BtnB (侧边按键: 呼出菜单 / 轮换切换 / 关闭状态卡片 / 子界面滚动)
     if (M5.BtnB.wasClicked()) {
-        if (g_display.isSubScreenOpen()) {
+        if (g_display.isToastVisible()) {
+            g_display.closeToast();
+            g_haptics.trigger(HAPTIC_CLICK);
+        } else if (g_display.isSubScreenOpen()) {
             g_display.nextSubScreenItem();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isStatusCardOpen()) {
+
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else {

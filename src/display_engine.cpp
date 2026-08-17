@@ -79,6 +79,7 @@ void DisplayEngine::nextSubScreenItem() {
     if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1; // 4种食物 + 1个退出项
     else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1; // 13种药 + 1个退出项
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1; // 18种商品 + 1个退出项
+    else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1; // 4个时长档位 + 1个退出项
     
     subIndex = (subIndex + 1) % maxItems;
 }
@@ -89,9 +90,11 @@ void DisplayEngine::prevSubScreenItem() {
     if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1;
     else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1;
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1;
+    else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1;
     
     subIndex = (subIndex + maxItems - 1) % maxItems;
 }
+
 
 void DisplayEngine::update(int petOffsetX, int petOffsetY) {
     // 0. 如果处于全屏子界面模式 (喂食选择/对症看病/元宝商城)，优先渲染全屏沉浸界面
@@ -133,11 +136,12 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
         petY += (animFrame % 6 > 3) ? -3 : 3;
         drawPet(petX, petY, (anim == ANIM_IDLE_STAND) ? ANIM_DRAG : anim);
     } else {
-        if (anim == ANIM_PLAY || anim == ANIM_IDLE_BOUNCE) {
-            petY += (animFrame % 8 > 4) ? -4 : 0;
+        if (anim == ANIM_PLAY || anim == ANIM_IDLE_BOUNCE || anim == ANIM_WORK || anim == ANIM_STUDY) {
+            petY += (animFrame % 8 > 4) ? -3 : 0;
         }
         drawPet(petX, petY, anim);
     }
+
 
 
 
@@ -168,6 +172,28 @@ void DisplayEngine::drawTopBar() {
     canvas.setFont(&fonts::efontCN_12);
     canvas.setTextColor(canvas.color565(30, 45, 60));
     
+    // 如果正在持续作业中，展示精美作业状态倒计时徽章
+    if (g_pet.isTaskActive()) {
+        uint32_t rem = g_pet.getTaskRemainingSec();
+        int remM = rem / 60;
+        int remS = rem % 60;
+        char buf[32];
+        const char* taskPrefix = (st.current_task == TASK_WORK) ? "打工" : ((st.current_task == TASK_STUDY) ? "自习" : "漫游");
+        snprintf(buf, sizeof(buf), "[%s %02d:%02d]", taskPrefix, remM, remS);
+
+        // 浅橙/浅蓝倒计时胶囊底座
+        canvas.fillRoundRect(4, 3, 82, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 240, 210) : canvas.color565(225, 240, 255));
+        canvas.drawRoundRect(4, 3, 82, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 170, 50) : canvas.color565(80, 160, 240));
+        canvas.setTextColor((st.current_task == TASK_WORK) ? canvas.color565(200, 90, 0) : canvas.color565(20, 100, 200));
+        canvas.drawString(buf, 7, 5);
+
+        // 电池电量
+        canvas.setTextColor(canvas.color565(50, 75, 110));
+        canvas.drawRightString(String(cachedBattery) + "%", SCREEN_W - 6, 6);
+        canvas.drawFastHLine(4, 22, SCREEN_W - 8, canvas.color565(190, 215, 240));
+        return;
+    }
+
     // 企鹅昵称与等级
     canvas.drawString(String(st.name) + " Lv." + String(g_pet.getLevel()), 6, 6);
 
@@ -183,6 +209,7 @@ void DisplayEngine::drawTopBar() {
     // 顶部分隔线
     canvas.drawFastHLine(4, 22, SCREEN_W - 8, canvas.color565(190, 215, 240));
 }
+
 
 
 #include "asset_manager.h"
@@ -706,6 +733,18 @@ void DisplayEngine::renderSubScreen() {
         titleStr = "【元宝商城】";
         rightInfoStr = String(st.coins) + " 元宝";
         totalItems = SHOP_PRODUCT_COUNT + 1;
+    } else if (subMode == SUB_SCREEN_WORK) {
+        titleStr = "【打工搬砖】";
+        rightInfoStr = "收益:6Y/分";
+        totalItems = 4 + 1; // 4个档位 + 退出项
+    } else if (subMode == SUB_SCREEN_STUDY) {
+        titleStr = "【认真自习】";
+        rightInfoStr = "智力+经验";
+        totalItems = 4 + 1;
+    } else if (subMode == SUB_SCREEN_TRIP) {
+        titleStr = "【背包旅行】";
+        rightInfoStr = "路费:80Y";
+        totalItems = 4 + 1;
     }
 
     canvas.setTextColor(canvas.color565(255, 220, 80));
@@ -723,6 +762,19 @@ void DisplayEngine::renderSubScreen() {
     if (startIdx + visibleCount > totalItems) {
         startIdx = std::max(0, totalItems - visibleCount);
     }
+
+    static const struct {
+        int mins;
+        const char* name;
+        const char* workDesc;
+        const char* studyDesc;
+        const char* tripDesc;
+    } TASK_OPTS[] = {
+        {5, "5 分钟 (快速体验)", "+30 元宝 / +7 经验", "+2 智力 / +6 经验", "漫游周边，心情满格"},
+        {15, "15 分钟 (标准作业)", "+90 元宝 / +22 经验", "+7 智力 / +18 经验", "风景名胜，带回特产"},
+        {30, "30 分钟 (深度沉浸)", "+180 元宝 / +45 经验", "+15 智力 / +36 经验", "跨省漫游，结交好友"},
+        {60, "60 分钟 (长效挂机)", "+360 元宝 / +90 经验", "+30 智力 / +72 经验", "神州漫步，豪华特产"}
+    };
 
     int startY = 28;
     for (int i = 0; i < visibleCount && (startIdx + i) < totalItems; ++i) {
@@ -813,6 +865,19 @@ void DisplayEngine::renderSubScreen() {
             // 第二行：效果描述
             canvas.setTextColor(isSelected ? canvas.color565(0, 120, 180) : canvas.color565(140, 150, 160));
             canvas.drawString(prod.desc, boxX + 6, curY + 19);
+        } else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) {
+            const auto& opt = TASK_OPTS[idx];
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
+            canvas.drawString(opt.name, boxX + 6, curY + 4);
+
+            canvas.setTextColor(isSelected ? canvas.color565(220, 100, 0) : canvas.color565(140, 150, 160));
+            if (subMode == SUB_SCREEN_WORK) {
+                canvas.drawString(opt.workDesc, boxX + 6, curY + 19);
+            } else if (subMode == SUB_SCREEN_STUDY) {
+                canvas.drawString(opt.studyDesc, boxX + 6, curY + 19);
+            } else {
+                canvas.drawString(opt.tripDesc, boxX + 6, curY + 19);
+            }
         }
     }
 
@@ -828,8 +893,15 @@ void DisplayEngine::renderSubScreen() {
         canvas.drawCenterString("BtnB切换 | BtnA服药", SCREEN_W / 2, botY + 4);
     } else if (subMode == SUB_SCREEN_SHOP) {
         canvas.drawCenterString("BtnB切换 | BtnA购买", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_WORK) {
+        canvas.drawCenterString("BtnB切换 | BtnA开始打工", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_STUDY) {
+        canvas.drawCenterString("BtnB切换 | BtnA开始自习", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_TRIP) {
+        canvas.drawCenterString("BtnB切换 | BtnA出发漫游", SCREEN_W / 2, botY + 4);
     }
 }
+
 
 
 
