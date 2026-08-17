@@ -1,7 +1,9 @@
 #include "display_engine.h"
 #include "config.h"
 #include "asset_manager.h"
+#include "mini_game_manager.h"
 #include <M5Unified.h>
+
 
 DisplayEngine g_display;
 
@@ -707,9 +709,15 @@ void DisplayEngine::drawAdoptionScreen(uint8_t selectedGender) {
 }
 
 void DisplayEngine::renderSubScreen() {
+    if (subMode == SUB_SCREEN_GAMES) {
+        MiniGameManager::getInstance().render(canvas);
+        return;
+    }
+
     // 1. 全屏淡蓝毛玻璃背景
     canvas.fillScreen(canvas.color565(235, 244, 255));
     canvas.setFont(&fonts::efontCN_12);
+
 
     const PetState& st = g_pet.getState();
 

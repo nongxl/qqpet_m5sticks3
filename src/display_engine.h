@@ -24,8 +24,10 @@ enum SubScreenMode {
     SUB_SCREEN_SHOP,   // 全屏元宝道具商城
     SUB_SCREEN_WORK,   // 打工时长选择
     SUB_SCREEN_STUDY,  // 学习时长选择
-    SUB_SCREEN_TRIP    // 旅游时长选择
+    SUB_SCREEN_TRIP,   // 旅游时长选择
+    SUB_SCREEN_GAMES   // 5大体感小游戏大厅
 };
+
 
 
 class DisplayEngine {

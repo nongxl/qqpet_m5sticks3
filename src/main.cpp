@@ -10,6 +10,7 @@
 #include "web_server_portal.h"
 #include "ai_client.h"
 #include "game_data.h"
+#include "mini_game_manager.h"
 
 
 // 计时变量
@@ -43,12 +44,11 @@ void executeMenuAction(MenuOption opt) {
             break;
 
         case MENU_PLAY:
-            if (g_pet.play(150)) {
-                g_haptics.trigger(HAPTIC_SUCCESS);
-                g_display.showToast("逗玩开怀大笑 +150 心情", 2000);
-                g_ai.requestDialog("happy");
-            }
+            // 进入 5 大经典体感游戏大厅
+            g_display.openSubScreen(SUB_SCREEN_GAMES);
+            g_haptics.trigger(HAPTIC_CLICK);
             break;
+
 
         case MENU_WORK:
             if (g_pet.isTaskActive() && g_pet.getCurrentTask() == TASK_WORK) {
@@ -191,11 +191,16 @@ void loop() {
 
     g_pet.updateAnimState();
 
-    // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽)
+    // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽 / 游戏主键)
     if (M5.BtnA.wasClicked()) {
         if (g_display.isSubScreenOpen()) {
-            int idx = g_display.getSubScreenIndex();
             SubScreenMode mode = g_display.getSubScreenMode();
+            if (mode == SUB_SCREEN_GAMES) {
+                MiniGameManager::getInstance().onBtnA();
+                return;
+            }
+
+            int idx = g_display.getSubScreenIndex();
             int totalItems = (mode == SUB_SCREEN_FEED) ? (FOOD_COUNT + 1) : 
                              ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : 
                              ((mode == SUB_SCREEN_SHOP) ? (SHOP_PRODUCT_COUNT + 1) : (4 + 1)));
@@ -287,7 +292,7 @@ void loop() {
     static float smoothOffsetX = 0;
     static float smoothOffsetY = 0;
 
-    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen()) {
+    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen() && !g_display.isSubScreenOpen()) {
         if (!dragStarted) {
             dragStarted = true;
             baseTiltX = g_imu.getTiltX();
@@ -323,8 +328,12 @@ void loop() {
             g_display.closeToast();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isSubScreenOpen()) {
-            g_display.nextSubScreenItem();
-            g_haptics.trigger(HAPTIC_CLICK);
+            if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
+                MiniGameManager::getInstance().onBtnB();
+            } else {
+                g_display.nextSubScreenItem();
+                g_haptics.trigger(HAPTIC_CLICK);
+            }
         } else if (g_display.isStatusCardOpen()) {
 
             g_display.closeStatusCard();
@@ -344,21 +353,22 @@ void loop() {
         }
     } else if (M5.BtnB.wasHold()) {
         if (g_display.isSubScreenOpen()) {
+            if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
+                MiniGameManager::getInstance().stopGame();
+            }
             g_display.closeSubScreen();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
-        } else if (g_display.isMenuOpen()) {
-            g_display.closeMenu();
-            g_haptics.trigger(HAPTIC_CLICK);
         }
     }
 
-
-
-    // 3. 处理 IMU 姿态与体感 (菜单打开时不响应晃动)
-    if (!g_display.isMenuOpen()) {
+    // 3. 处理 IMU 姿态与体感更新 (若在小游戏中则驱动小游戏，否则处理摇一摇)
+    if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
+        g_imu.update();
+        MiniGameManager::getInstance().update(g_imu.getTiltX(), g_imu.getTiltY(), g_imu.getAccelZ());
+    } else if (!g_display.isMenuOpen()) {
         ImuEventType imuEvt = g_imu.update();
         if (imuEvt == IMU_EVENT_SHAKE) {
             g_pet.play(80);
@@ -366,6 +376,7 @@ void loop() {
             g_ai.requestDialog("happy");
         }
     }
+
 
     // 4. 定时状态衰减 (每 30 秒递减一次属性)
     uint32_t now = millis();

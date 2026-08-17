@@ -16,6 +16,8 @@ public:
 
     float getTiltX() const { return tiltX; }
     float getTiltY() const { return tiltY; }
+    float getAccelZ() const { return lastAccZ; }
+
 
 private:
     float lastAccX, lastAccY, lastAccZ;
