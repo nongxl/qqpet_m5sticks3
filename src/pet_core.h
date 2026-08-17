@@ -37,17 +37,23 @@ public:
     void adopt(uint8_t gender);
     void resetAdoption();
 
-    // 基础操作
+    // 基础操作与细分道具
     bool feed(int amount = 1000);
+    bool feedFood(int foodIndex, String& outMsg);
     bool bath(int amount = 1000);
     bool play(int amount = 150);
     bool cure(const char* medicineId);
+    bool cureWithMed(int medIndex, String& outMsg);
     bool autoHeal(String& outMsg);
     bool revive();
     bool work(String& outMsg);
     bool study(String& outMsg);
     bool trip(String& outMsg);
     bool buyItem(const char* itemId, int count, String& outMsg);
+    bool buyShopProduct(int productIndex, int count, String& outMsg);
+    int getFoodCount(int foodIndex) const;
+    int getMedCount(int medIndex) const;
+
 
 
     // 周期衰减与恶化处理

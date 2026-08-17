@@ -9,9 +9,11 @@ DisplayEngine g_display;
 DisplayEngine::DisplayEngine() 
     : canvas(&M5.Display), menuVisible(false), menuSlideProgress(0.0f),
       wheelCurrentAngle(0.0f), wheelTargetAngle(0.0f),
-      menuLastActiveTime(0), currentOption(MENU_FEED), bubbleEndTime(0),
-      typewriterIndex(0), lastTypewriterTime(0), toastEndTime(0),
+      menuLastActiveTime(0), currentOption(MENU_FEED),
+      subMode(SUB_SCREEN_NONE), subIndex(0),
+      bubbleEndTime(0), typewriterIndex(0), lastTypewriterTime(0), toastEndTime(0),
       statusCardVisible(false), cachedBattery(100), lastBatteryCheckTime(0), animFrame(0), isDragging(false) {}
+
 
 
 void DisplayEngine::begin() {
@@ -60,9 +62,46 @@ void DisplayEngine::closeMenu() {
     menuVisible = false;
 }
 
+void DisplayEngine::openSubScreen(SubScreenMode mode) {
+    subMode = mode;
+    subIndex = 0;
+    menuVisible = false; // 打开全屏子界面时关闭轮盘菜单
+}
 
+void DisplayEngine::closeSubScreen() {
+    subMode = SUB_SCREEN_NONE;
+    subIndex = 0;
+}
+
+void DisplayEngine::nextSubScreenItem() {
+    if (subMode == SUB_SCREEN_NONE) return;
+    int maxItems = 1;
+    if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1; // 4种食物 + 1个退出项
+    else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1; // 13种药 + 1个退出项
+    else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1; // 18种商品 + 1个退出项
+    
+    subIndex = (subIndex + 1) % maxItems;
+}
+
+void DisplayEngine::prevSubScreenItem() {
+    if (subMode == SUB_SCREEN_NONE) return;
+    int maxItems = 1;
+    if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1;
+    else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1;
+    else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1;
+    
+    subIndex = (subIndex + maxItems - 1) % maxItems;
+}
 
 void DisplayEngine::update(int petOffsetX, int petOffsetY) {
+    // 0. 如果处于全屏子界面模式 (喂食选择/对症看病/元宝商城)，优先渲染全屏沉浸界面
+    if (isSubScreenOpen()) {
+        renderSubScreen();
+        drawToast();
+        canvas.pushSprite(0, 0);
+        return;
+    }
+
     animFrame++;
 
     // 菜单超时自动隐藏
@@ -79,6 +118,7 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
 
     // 1. 绘制清爽渐变背景
     drawBackground();
+
 
     // 2. 绘制顶部信息栏
     drawTopBar();
@@ -254,10 +294,11 @@ void DisplayEngine::drawRightBubbleMenu() {
     wheelCurrentAngle += (wheelTargetAngle - wheelCurrentAngle) * 0.35f;
 
     static const char* MENU_NAMES[] = {
-        "喂食", "洗澡", "逗玩", "打工", "学习", "旅游", "看病", "状态", "后台"
+        "喂食", "洗澡", "逗玩", "打工", "学习", "旅游", "看病", "商城", "状态", "后台"
     };
 
     const PetState& st = g_pet.getState();
+
 
     // 1. 绘制向左拱起的半椭圆轮盘轨道微弱淡蓝虚线弧
     if (menuSlideProgress > 0.4f) {
@@ -561,9 +602,10 @@ void DisplayEngine::drawAdoptionScreen(uint8_t selectedGender) {
     canvas.drawRoundRect(2, 4, SCREEN_W - 4, 38, 6, canvas.color565(140, 185, 235));
     canvas.setFont(&fonts::efontCN_12);
     canvas.setTextColor(canvas.color565(255, 220, 80));
-    canvas.drawCenterString("👑 QQ宠物领养仪式", SCREEN_W / 2, 9);
+    canvas.drawCenterString("【QQ宠物领养仪式】", SCREEN_W / 2, 9);
     canvas.setTextColor(TFT_WHITE);
     canvas.drawCenterString("选择陪伴一生的专属萌宠", SCREEN_W / 2, 23);
+
 
 
     // 3. 中间并排展示两只活泼企鹅 (左GG 帅哥 vs 右MM 妹子)
@@ -626,17 +668,170 @@ void DisplayEngine::drawAdoptionScreen(uint8_t selectedGender) {
     canvas.drawRoundRect(3, guideY, SCREEN_W - 6, 76, 6, canvas.color565(140, 185, 235));
 
     canvas.setTextColor(canvas.color565(40, 80, 140));
-    canvas.drawString("👉 按【侧键BtnB】切换", 8, guideY + 6);
+    canvas.drawString("> 按【侧键BtnB】切换", 8, guideY + 6);
     canvas.setTextColor(canvas.color565(220, 100, 0));
-    canvas.drawString("✨ 按【面板BtnA】领养", 8, guideY + 24);
+    canvas.drawString("* 按【面板BtnA】领养", 8, guideY + 24);
     canvas.setTextColor(canvas.color565(120, 130, 150));
     canvas.drawString("注: 领养后将终生绑定性别", 8, guideY + 44);
     canvas.drawString("专属陪伴，不可随意更换", 8, guideY + 58);
 
-
     // 推送画布
     canvas.pushSprite(0, 0);
 }
+
+void DisplayEngine::renderSubScreen() {
+    // 1. 全屏淡蓝毛玻璃背景
+    canvas.fillScreen(canvas.color565(235, 244, 255));
+    canvas.setFont(&fonts::efontCN_12);
+
+    const PetState& st = g_pet.getState();
+
+    // 2. 顶部高级标题栏 (Y=2 ~ 26)
+    canvas.fillRoundRect(2, 2, SCREEN_W - 4, 24, 4, canvas.color565(30, 60, 105));
+    canvas.drawRoundRect(2, 2, SCREEN_W - 4, 24, 4, canvas.color565(120, 175, 235));
+
+    String titleStr = "";
+    String rightInfoStr = "";
+
+    int totalItems = 0;
+    if (subMode == SUB_SCREEN_FEED) {
+        titleStr = "【食物背包】";
+        rightInfoStr = "饱食:" + String(st.hunger);
+        totalItems = FOOD_COUNT + 1;
+    } else if (subMode == SUB_SCREEN_CURE) {
+        titleStr = "【对症药箱】";
+        rightInfoStr = g_pet.isSick() ? String("病:") + st.illness : (g_pet.isDead() ? "已死亡" : "健康");
+        totalItems = MEDICINE_COUNT + 1;
+    } else if (subMode == SUB_SCREEN_SHOP) {
+        titleStr = "【元宝商城】";
+        rightInfoStr = String(st.coins) + " 元宝";
+        totalItems = SHOP_PRODUCT_COUNT + 1;
+    }
+
+    canvas.setTextColor(canvas.color565(255, 220, 80));
+    canvas.drawString(titleStr, 6, 6);
+    canvas.setTextColor(TFT_WHITE);
+    canvas.drawRightString(rightInfoStr, SCREEN_W - 6, 6);
+
+    // 3. 中部滚动卡片列表 (Y=28 ~ 212, 每张卡片高 36px, 同时显示 4 项)
+    int cardH = 36;
+    int visibleCount = 4;
+    int startIdx = 0;
+    if (subIndex >= visibleCount) {
+        startIdx = subIndex - visibleCount + 1;
+    }
+    if (startIdx + visibleCount > totalItems) {
+        startIdx = std::max(0, totalItems - visibleCount);
+    }
+
+    int startY = 28;
+    for (int i = 0; i < visibleCount && (startIdx + i) < totalItems; ++i) {
+        int idx = startIdx + i;
+        int curY = startY + i * (cardH + 2);
+        bool isSelected = (idx == subIndex);
+
+        int boxX = 3;
+        int boxW = SCREEN_W - 6;
+
+        if (isSelected) {
+            // 金色高光放大卡片
+            canvas.fillRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(255, 250, 225));
+            canvas.drawRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(255, 170, 0));
+            canvas.drawRoundRect(boxX + 1, curY + 1, boxW - 2, cardH - 2, 4, canvas.color565(255, 215, 80));
+        } else {
+            canvas.fillRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(248, 252, 255));
+            canvas.drawRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(200, 220, 240));
+        }
+
+        // 最后一项是退出项
+        if (idx == totalItems - 1) {
+            canvas.setTextColor(isSelected ? canvas.color565(220, 50, 50) : canvas.color565(120, 130, 140));
+            canvas.drawCenterString("[ 退出返回桌面 ]", SCREEN_W / 2, curY + 11);
+            continue;
+        }
+
+        // 绘制具体数据项
+        if (subMode == SUB_SCREEN_FEED) {
+            const auto& food = FOOD_LIST[idx];
+            int count = g_pet.getFoodCount(idx);
+
+            // 第一行：食物名称 + 拥有数量
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
+            canvas.drawString(food.name, boxX + 6, curY + 4);
+
+            if (count > 0) {
+                canvas.setTextColor(canvas.color565(20, 140, 40));
+                canvas.drawRightString("拥有:" + String(count), boxX + boxW - 6, curY + 4);
+            } else {
+                canvas.setTextColor(canvas.color565(220, 60, 60));
+                canvas.drawRightString("缺货", boxX + boxW - 6, curY + 4);
+            }
+
+            // 第二行：属性加成
+            canvas.setTextColor(isSelected ? canvas.color565(200, 100, 0) : canvas.color565(140, 150, 160));
+            String effectStr = "+" + String(food.hunger_gain) + "饱食";
+            if (food.mood_gain > 0) effectStr += "/+" + String(food.mood_gain) + "心";
+            canvas.drawString(effectStr, boxX + 6, curY + 19);
+
+        } else if (subMode == SUB_SCREEN_CURE) {
+            const auto& med = MEDICINE_LIST[idx];
+            int count = g_pet.getMedCount(idx);
+            bool isMatching = (g_pet.isSick() && strcmp(st.illness, med.target_illness) == 0) ||
+                              (g_pet.isDead() && strcmp(med.id, "60001") == 0);
+
+            // 第一行：药品名称 + 拥有数量
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
+            canvas.drawString(med.name, boxX + 6, curY + 4);
+
+            if (count > 0) {
+                canvas.setTextColor(canvas.color565(20, 140, 40));
+                canvas.drawRightString("拥有:" + String(count), boxX + boxW - 6, curY + 4);
+            } else {
+                canvas.setTextColor(canvas.color565(220, 60, 60));
+                canvas.drawRightString("无药", boxX + boxW - 6, curY + 4);
+            }
+
+            // 第二行：主治病症 (对症时高亮绿标)
+            if (isMatching) {
+                canvas.setTextColor(canvas.color565(0, 160, 50));
+                canvas.drawString("[对症] 主治: " + String(med.target_illness), boxX + 6, curY + 19);
+            } else {
+                canvas.setTextColor(isSelected ? canvas.color565(180, 90, 0) : canvas.color565(140, 150, 160));
+                canvas.drawString("主治: " + String(med.target_illness), boxX + 6, curY + 19);
+            }
+
+        } else if (subMode == SUB_SCREEN_SHOP) {
+            const auto& prod = SHOP_PRODUCTS[idx];
+            
+            // 第一行：商品名称 + 价格
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
+            canvas.drawString(prod.name, boxX + 6, curY + 4);
+
+            canvas.setTextColor(canvas.color565(220, 120, 0));
+            canvas.drawRightString(String(prod.price) + "Y", boxX + boxW - 6, curY + 4);
+
+            // 第二行：效果描述
+            canvas.setTextColor(isSelected ? canvas.color565(0, 120, 180) : canvas.color565(140, 150, 160));
+            canvas.drawString(prod.desc, boxX + 6, curY + 19);
+        }
+    }
+
+    // 4. 底部操作指引栏 (Y=216 ~ 238)
+    int botY = SCREEN_H - 22;
+    canvas.fillRoundRect(2, botY, SCREEN_W - 4, 20, 4, canvas.color565(30, 45, 65));
+    canvas.drawRoundRect(2, botY, SCREEN_W - 4, 20, 4, canvas.color565(100, 140, 190));
+
+    canvas.setTextColor(canvas.color565(255, 220, 80));
+    if (subMode == SUB_SCREEN_FEED) {
+        canvas.drawCenterString("BtnB切换 | BtnA喂食", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_CURE) {
+        canvas.drawCenterString("BtnB切换 | BtnA服药", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_SHOP) {
+        canvas.drawCenterString("BtnB切换 | BtnA购买", SCREEN_W / 2, botY + 4);
+    }
+}
+
+
 
 
 

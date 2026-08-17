@@ -22,7 +22,34 @@ struct MedicineInfo {
     const char* id;
     const char* name;
     const char* target_illness;
+    int price;
 };
+
+// 食物道具定义
+struct FoodItemInfo {
+    const char* id;
+    const char* name;
+    const char* desc;
+    int hunger_gain;
+    int mood_gain;
+    int price;
+};
+
+// 商城商品项定义
+struct ShopProductInfo {
+    const char* id;
+    const char* name;
+    const char* desc;
+    int price;
+    const char* category; // "food", "clean", "med"
+};
+
+extern const FoodItemInfo FOOD_LIST[];
+extern const size_t FOOD_COUNT;
+extern const MedicineInfo MEDICINE_LIST[];
+extern const size_t MEDICINE_COUNT;
+extern const ShopProductInfo SHOP_PRODUCTS[];
+extern const size_t SHOP_PRODUCT_COUNT;
 
 // 经验等级与属性计算
 int calculateLevel(float growth, int& currentLevelMinGrowth, int& nextLevelGrowth);
@@ -35,6 +62,7 @@ const char* getRandomClassicQuote(const char* context);
 // 商城价格查询
 int getItemPrice(const char* itemId);
 const char* getItemName(const char* itemId);
+
 
 
 // 经典台词场景

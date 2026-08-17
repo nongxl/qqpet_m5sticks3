@@ -11,12 +11,18 @@ enum MenuOption {
     MENU_STUDY,
     MENU_TRIP,
     MENU_CURE,
+    MENU_SHOP,        // 🛍️ 元宝道具商城
     MENU_STATUS,
     MENU_WEB_CONFIG,
     MENU_COUNT
 };
 
-
+enum SubScreenMode {
+    SUB_SCREEN_NONE = 0,
+    SUB_SCREEN_FEED,   // 全屏食物选择背包
+    SUB_SCREEN_CURE,   // 全屏对症药品药箱
+    SUB_SCREEN_SHOP    // 全屏元宝道具商城
+};
 
 class DisplayEngine {
 public:
@@ -25,6 +31,15 @@ public:
     void update(int petOffsetX = 0, int petOffsetY = 0);
     void drawAdoptionScreen(uint8_t selectedGender);
 
+    // 全屏子界面控制 (食物选择、看病药箱、元宝商城)
+    void openSubScreen(SubScreenMode mode);
+    void closeSubScreen();
+    bool isSubScreenOpen() const { return subMode != SUB_SCREEN_NONE; }
+    SubScreenMode getSubScreenMode() const { return subMode; }
+    void nextSubScreenItem();
+    void prevSubScreenItem();
+    int getSubScreenIndex() const { return subIndex; }
+    void renderSubScreen();
 
     // 气泡对话控制
     void showBubble(const String& text, uint32_t durationMs = 4500);
@@ -57,6 +72,11 @@ private:
     float wheelTargetAngle;  // 目标旋转角度
     uint32_t menuLastActiveTime;
     MenuOption currentOption;
+
+    // 全屏子界面状态
+    SubScreenMode subMode;
+    int subIndex;
+
 
     // 气泡对话状态
     String bubbleText;

@@ -28,10 +28,14 @@ struct PetState {
     int charm;              // 魅力值 (通过学习与打扮提升)
     uint8_t bg_id;          // 当前壁纸编号 (0: 纯色默认, 1~16: 原版精选壁纸)
 
-    int food_count;         // 食物库存 (次)
-    int soap_count;         // 清洁用品库存 (次)
+    int food_count;         // 基础小鱼干库存 (次)
+    int food_salmon;        // 鲜嫩三文鱼库存 (次)
+    int food_icecream;      // 企鹅雪糕库存 (次)
+    int food_feast;         // 满汉海鲜大餐库存 (次)
+    int soap_count;         // 清洁用品香皂库存 (次)
     int revival_count;      // 还魂丹库存
     MedicineInventoryItem medicines[13]; // 常用药品库存
+
 
     // 系统配置
     char wifi_ssid[64];

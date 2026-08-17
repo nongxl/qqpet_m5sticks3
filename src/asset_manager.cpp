@@ -2,9 +2,14 @@
 
 AssetManager g_assets;
 
+static constexpr uint16_t CHROMA_KEY = 0x0001;
+
 AssetManager::AssetManager() 
-    : isFsMounted(false), currentLoadedGender(255), currentLoadedStage(""), currentClipFps(8),
+    : isFsMounted(false),
+      currentLoadedGender(255), currentLoadedStage(""), currentClipFps(8),
       adoptFramesLoaded(false), currentLoadedBgId(255), iconsLoaded(false) {}
+
+
 
 
 bool AssetManager::begin() {
@@ -120,6 +125,7 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
 }
 
 void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
+
     if (!isFsMounted) return;
     if (currentLoadedAction == actionName && currentLoadedGender == gender && currentLoadedStage == stage && !currentClipFrames.empty()) {
         return; // 命中当前动作内存缓存，零延迟
@@ -156,7 +162,7 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
         }
     }
 
-    // 顺序读取序列帧 f_00.png, f_01.png ...
+    // 将序列帧 PNG 一次性载入内存 (仅 ~20KB，零 Flash I/O 阻塞)
     for (int i = 0; i < 30; ++i) {
         char filename[64];
         snprintf(filename, sizeof(filename), "%s/f_%02d.png", dirPath.c_str(), i);
@@ -188,29 +194,30 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
 
     size_t frameIdx = (currentMillis * currentClipFps / 1000) % currentClipFrames.size();
     const InMemoryFrame& frame = currentClipFrames[frameIdx];
+    
+    // 直接内存解压进行原生逐像素 32 位 Alpha 物理混合 (彻底消灭蛋壳黑边与杂色)
     canvas.drawPng(frame.buffer.data(), frame.buffer.size(), x, y);
 }
-
 
 void AssetManager::loadMenuIcons() {
     if (!isFsMounted || iconsLoaded) return;
 
-    static const char* iconNames[] = {
-        "feed", "bath", "play", "cure", "status", "web"
+    static const char* iconNames[10] = {
+        "feed", "bath", "play", "work", "study", "trip", "cure", "shop", "status", "web"
     };
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 10; ++i) {
         String normPath = String("/assets/icons/") + iconNames[i] + "_norm.png";
         String actPath = String("/assets/icons/") + iconNames[i] + "_act.png";
 
         sprIconsNorm[i].setColorDepth(16);
         sprIconsNorm[i].createSprite(20, 20);
-        sprIconsNorm[i].fillScreen(0);
+        sprIconsNorm[i].fillScreen(CHROMA_KEY);
         sprIconsNorm[i].drawPngFile(LittleFS, normPath.c_str(), 0, 0);
 
         sprIconsAct[i].setColorDepth(16);
         sprIconsAct[i].createSprite(28, 28);
-        sprIconsAct[i].fillScreen(0);
+        sprIconsAct[i].fillScreen(CHROMA_KEY);
         sprIconsAct[i].drawPngFile(LittleFS, actPath.c_str(), 0, 0);
     }
     iconsLoaded = true;
@@ -278,20 +285,16 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
 }
 
 void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex, bool active) {
-
-    if (optionIndex < 0 || optionIndex >= 9) return;
-
-    // 将 9 项菜单映射到 6 个官方图标资源 (0:feed, 1:bath, 2:play, 3:work->play, 4:study->feed, 5:trip->bath, 6:cure, 7:status, 8:web)
-    static const int iconMap[9] = {0, 1, 2, 2, 0, 1, 3, 4, 5};
-    int iconIdx = iconMap[optionIndex];
-    if (iconIdx < 0 || iconIdx >= 6) return;
+    if (optionIndex < 0 || optionIndex >= 10) return;
 
     if (active) {
-        sprIconsAct[iconIdx].pushSprite(&canvas, x, y, 0);
+        sprIconsAct[optionIndex].pushSprite(&canvas, x, y, CHROMA_KEY);
     } else {
-        sprIconsNorm[iconIdx].pushSprite(&canvas, x, y, 0);
+        sprIconsNorm[optionIndex].pushSprite(&canvas, x, y, CHROMA_KEY);
     }
 }
+
+
 
 
 

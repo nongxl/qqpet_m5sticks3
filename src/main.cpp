@@ -26,14 +26,9 @@ void executeMenuAction(MenuOption opt) {
     String msg;
     switch (opt) {
         case MENU_FEED:
-            if (g_pet.feed(1000)) {
-                g_haptics.trigger(HAPTIC_SUCCESS);
-                g_display.showToast("喂食 +1000 饥饿", 2000);
-                g_ai.requestDialog("hungry");
-            } else {
-                g_haptics.trigger(HAPTIC_ALERT);
-                g_display.showToast("食物不足/无法喂食", 2000);
-            }
+            // 进入全屏食物选择背包
+            g_display.openSubScreen(SUB_SCREEN_FEED);
+            g_haptics.trigger(HAPTIC_CLICK);
             break;
 
         case MENU_BATH:
@@ -43,7 +38,7 @@ void executeMenuAction(MenuOption opt) {
                 g_ai.requestDialog("dirty");
             } else {
                 g_haptics.trigger(HAPTIC_ALERT);
-                g_display.showToast("香皂不足/无法洗澡", 2000);
+                g_display.showToast("香皂不足！请前往商城购买。", 2000);
             }
             break;
 
@@ -97,17 +92,16 @@ void executeMenuAction(MenuOption opt) {
             }
             break;
 
-
-
         case MENU_CURE:
-            if (g_pet.autoHeal(msg)) {
-                g_haptics.trigger(HAPTIC_SUCCESS);
-                g_display.showToast(msg, 3000);
-                g_ai.requestDialog("idle");
-            } else {
-                g_haptics.trigger(HAPTIC_ALERT);
-                g_display.showToast(msg, 3000);
-            }
+            // 进入全屏对症药箱
+            g_display.openSubScreen(SUB_SCREEN_CURE);
+            g_haptics.trigger(HAPTIC_CLICK);
+            break;
+
+        case MENU_SHOP:
+            // 进入全屏元宝道具商城
+            g_display.openSubScreen(SUB_SCREEN_SHOP);
+            g_haptics.trigger(HAPTIC_CLICK);
             break;
 
         case MENU_STATUS:
@@ -115,13 +109,12 @@ void executeMenuAction(MenuOption opt) {
             g_haptics.trigger(HAPTIC_CLICK);
             break;
 
-
-
         case MENU_WEB_CONFIG:
             g_net.startAP(); // 确保 AP 热点 100% 开启广播
             g_display.showWebPortalCard(20000);
             g_haptics.trigger(HAPTIC_SUCCESS);
             break;
+
 
         default:
             break;
@@ -204,8 +197,49 @@ void loop() {
 
     // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽)
     if (M5.BtnA.wasClicked()) {
+        if (g_display.isSubScreenOpen()) {
+            int idx = g_display.getSubScreenIndex();
+            SubScreenMode mode = g_display.getSubScreenMode();
+            int totalItems = (mode == SUB_SCREEN_FEED) ? (FOOD_COUNT + 1) : 
+                             ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : (SHOP_PRODUCT_COUNT + 1));
 
-        if (g_display.isStatusCardOpen()) {
+            // 如果点击了最后一项 [返回桌面]
+            if (idx == totalItems - 1) {
+                g_display.closeSubScreen();
+                g_haptics.trigger(HAPTIC_CLICK);
+            } else if (mode == SUB_SCREEN_FEED) {
+                String feedMsg;
+                if (g_pet.feedFood(idx, feedMsg)) {
+                    g_haptics.trigger(HAPTIC_SUCCESS);
+                    g_display.showToast(feedMsg, 3000);
+                    g_display.closeSubScreen();
+                    g_ai.requestDialog("hungry");
+                } else {
+                    g_haptics.trigger(HAPTIC_ALERT);
+                    g_display.showToast(feedMsg, 3000);
+                }
+            } else if (mode == SUB_SCREEN_CURE) {
+                String cureMsg;
+                if (g_pet.cureWithMed(idx, cureMsg)) {
+                    g_haptics.trigger(HAPTIC_SUCCESS);
+                    g_display.showToast(cureMsg, 3000);
+                    g_display.closeSubScreen();
+                    g_ai.requestDialog("idle");
+                } else {
+                    g_haptics.trigger(HAPTIC_ALERT);
+                    g_display.showToast(cureMsg, 3000);
+                }
+            } else if (mode == SUB_SCREEN_SHOP) {
+                String buyMsg;
+                if (g_pet.buyShopProduct(idx, 1, buyMsg)) {
+                    g_haptics.trigger(HAPTIC_SUCCESS);
+                    g_display.showToast(buyMsg, 2500);
+                } else {
+                    g_haptics.trigger(HAPTIC_ALERT);
+                    g_display.showToast(buyMsg, 2500);
+                }
+            }
+        } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isWebPortalOpen()) {
@@ -222,6 +256,7 @@ void loop() {
             g_ai.requestDialog("happy");
         }
     }
+
 
     // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾
     static bool dragStarted = false;
@@ -260,9 +295,12 @@ void loop() {
         dragOffsetY = 0;
     }
 
-    // 2. 处理按键 BtnB (侧边按键: 呼出菜单 / 轮换切换 / 关闭状态卡片)
+    // 2. 处理按键 BtnB (侧边按键: 呼出菜单 / 轮换切换 / 关闭状态卡片 / 子界面滚动)
     if (M5.BtnB.wasClicked()) {
-        if (g_display.isStatusCardOpen()) {
+        if (g_display.isSubScreenOpen()) {
+            g_display.nextSubScreenItem();
+            g_haptics.trigger(HAPTIC_CLICK);
+        } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else {
@@ -279,7 +317,10 @@ void loop() {
             g_haptics.trigger(HAPTIC_CLICK);
         }
     } else if (M5.BtnB.wasHold()) {
-        if (g_display.isStatusCardOpen()) {
+        if (g_display.isSubScreenOpen()) {
+            g_display.closeSubScreen();
+            g_haptics.trigger(HAPTIC_CLICK);
+        } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isMenuOpen()) {
@@ -287,6 +328,7 @@ void loop() {
             g_haptics.trigger(HAPTIC_CLICK);
         }
     }
+
 
 
     // 3. 处理 IMU 姿态与体感 (菜单打开时不响应晃动)

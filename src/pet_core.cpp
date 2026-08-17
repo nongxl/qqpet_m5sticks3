@@ -31,9 +31,13 @@ void PetCore::initDefault() {
     state.intellect = 100;
     state.charm = 100;
     state.bg_id = 1;   // 默认 1 号经典壁纸
-    state.food_count = 50;
+    state.food_count = 50;     // 初始小鱼干 50
+    state.food_salmon = 10;    // 初始三文鱼 10
+    state.food_icecream = 5;   // 初始雪糕 5
+    state.food_feast = 2;      // 初始大餐 2
     state.soap_count = 50;
     state.revival_count = 5;
+
     state.volume = 120;
     static const char* defaultMeds[] = {
         "10001", "板蓝根",
@@ -162,47 +166,7 @@ bool PetCore::trip(String& outMsg) {
 
 
 
-bool PetCore::buyItem(const char* itemId, int count, String& outMsg) {
-    if (!itemId || count <= 0) {
-        outMsg = "参数错误！";
-        return false;
-    }
-    int pricePerUnit = getItemPrice(itemId);
-    int totalPrice = pricePerUnit * count;
 
-    if (state.coins < totalPrice) {
-        outMsg = String("元宝不足！需要 ") + totalPrice + " 元宝，当前只有 " + state.coins + " 元宝。";
-        return false;
-    }
-
-    state.coins -= totalPrice;
-
-    if (strcmp(itemId, "food") == 0) {
-        state.food_count += count;
-    } else if (strcmp(itemId, "soap") == 0) {
-        state.soap_count += count;
-    } else if (strcmp(itemId, "60001") == 0) {
-        state.revival_count += count;
-    } else {
-        bool found = false;
-        for (int i = 0; i < 13; ++i) {
-            if (strcmp(state.medicines[i].id, itemId) == 0) {
-                state.medicines[i].count += count;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            // 退款
-            state.coins += totalPrice;
-            outMsg = "未找到该药品！";
-            return false;
-        }
-    }
-
-    outMsg = String("购买成功！花费 ") + totalPrice + " 元宝，获得 " + count + " 个[" + getItemName(itemId) + "]！";
-    return true;
-}
 
 
 int PetCore::getLevel() const {
@@ -232,22 +196,156 @@ void PetCore::checkLevelUp(int oldLevel) {
     }
 }
 
-bool PetCore::feed(int amount) {
-    if (isDead()) return false;
-    if (state.food_count <= 0) return false;
-    
-    state.food_count--;
+int PetCore::getFoodCount(int foodIndex) const {
+    switch (foodIndex) {
+        case 0: return state.food_count;
+        case 1: return state.food_salmon;
+        case 2: return state.food_icecream;
+        case 3: return state.food_feast;
+        default: return 0;
+    }
+}
+
+int PetCore::getMedCount(int medIndex) const {
+    if (medIndex >= 0 && medIndex < 13) {
+        if (strcmp(MEDICINE_LIST[medIndex].id, "60001") == 0) {
+            return state.revival_count;
+        }
+        return state.medicines[medIndex].count;
+    }
+    return 0;
+}
+
+bool PetCore::feedFood(int foodIndex, String& outMsg) {
+    if (isDead()) {
+        outMsg = "宠物已死亡，无法进食！";
+        return false;
+    }
+    if (foodIndex < 0 || foodIndex >= (int)FOOD_COUNT) {
+        outMsg = "未知的食物！";
+        return false;
+    }
+
+    int count = getFoodCount(foodIndex);
+    if (count <= 0) {
+        outMsg = String(FOOD_LIST[foodIndex].name) + " 库存不足！请前往商城购买。";
+        return false;
+    }
+
+    // 扣减库存
+    switch (foodIndex) {
+        case 0: state.food_count--; break;
+        case 1: state.food_salmon--; break;
+        case 2: state.food_icecream--; break;
+        case 3: state.food_feast--; break;
+    }
+
     int maxH = getMaxHunger();
-    state.hunger = std::min(state.hunger + amount, maxH);
-    addGrowth(10.0f);
+    state.hunger = std::min(state.hunger + FOOD_LIST[foodIndex].hunger_gain, maxH);
+    if (FOOD_LIST[foodIndex].mood_gain > 0) {
+        state.mood = std::min(state.mood + FOOD_LIST[foodIndex].mood_gain, 1000);
+    }
+    addGrowth(15.0f);
     triggerTransientAnim(ANIM_EAT, 3500);
+
+    outMsg = String("喂食了[") + FOOD_LIST[foodIndex].name + "]，饱食度 +" + String(FOOD_LIST[foodIndex].hunger_gain) + "！";
     return true;
+}
+
+bool PetCore::cureWithMed(int medIndex, String& outMsg) {
+    if (medIndex < 0 || medIndex >= (int)MEDICINE_COUNT) {
+        outMsg = "未知的药品！";
+        return false;
+    }
+
+    const auto& med = MEDICINE_LIST[medIndex];
+    int count = getMedCount(medIndex);
+    if (count <= 0) {
+        outMsg = String(med.name) + " 库存不足！请前往商城购买。";
+        return false;
+    }
+
+    if (strcmp(med.id, "60001") == 0) { // 还魂丹
+        if (!isDead()) {
+            outMsg = "宠物生命体征正常，无需使用还魂丹！";
+            return false;
+        }
+        revive();
+        outMsg = "使用还魂丹成功复活！";
+        return true;
+    }
+
+    if (isDead()) {
+        outMsg = "宠物已死亡，请使用还魂丹！";
+        return false;
+    }
+
+    if (!isSick()) {
+        outMsg = "身体极健康，无需吃药！";
+        return false;
+    }
+
+    if (strcmp(state.illness, med.target_illness) != 0) {
+        outMsg = String("药不对症！") + med.name + " 主治 " + med.target_illness + "，无法治疗 " + state.illness + "。";
+        return false;
+    }
+
+    // 扣减药品
+    state.medicines[medIndex].count--;
+    state.health = HEALTH_NORMAL;
+    state.illness[0] = '\0';
+    addGrowth(25.0f);
+    triggerTransientAnim(ANIM_CURE, 3500);
+    outMsg = String("服用[") + med.name + "]，成功治愈了 " + med.target_illness + "！";
+    return true;
+}
+
+bool PetCore::buyShopProduct(int productIndex, int count, String& outMsg) {
+    if (productIndex < 0 || productIndex >= (int)SHOP_PRODUCT_COUNT) {
+        outMsg = "商品不存在！";
+        return false;
+    }
+    if (count <= 0) count = 1;
+
+    const auto& prod = SHOP_PRODUCTS[productIndex];
+    int totalCost = prod.price * count;
+
+    if (state.coins < totalCost) {
+        outMsg = String("元宝不足！需要 ") + String(totalCost) + " 元宝，当前拥有 " + String(state.coins) + " 元宝。";
+        return false;
+    }
+
+    state.coins -= totalCost;
+
+    // 分配到对应库存
+    if (strcmp(prod.id, "food_fish") == 0) state.food_count += count;
+    else if (strcmp(prod.id, "food_salmon") == 0) state.food_salmon += count;
+    else if (strcmp(prod.id, "food_icecream") == 0) state.food_icecream += count;
+    else if (strcmp(prod.id, "food_feast") == 0) state.food_feast += count;
+    else if (strcmp(prod.id, "soap") == 0) state.soap_count += count;
+    else if (strcmp(prod.id, "60001") == 0) state.revival_count += count;
+    else {
+        for (int i = 0; i < 13; ++i) {
+            if (strcmp(state.medicines[i].id, prod.id) == 0) {
+                state.medicines[i].count += count;
+                break;
+            }
+        }
+    }
+
+    outMsg = String("购买成功！获得了 ") + String(count) + " 个[" + prod.name + "]！";
+    return true;
+}
+
+bool PetCore::feed(int amount) {
+
+    String msg;
+    return feedFood(0, msg);
 }
 
 bool PetCore::bath(int amount) {
     if (isDead()) return false;
     if (state.soap_count <= 0) return false;
-
     state.soap_count--;
     int maxC = getMaxClean();
     state.clean = std::min(state.clean + amount, maxC);
@@ -257,6 +355,7 @@ bool PetCore::bath(int amount) {
 }
 
 bool PetCore::play(int amount) {
+
     if (isDead()) return false;
     state.mood = std::min(state.mood + amount, 1000);
     addGrowth(5.0f);
@@ -459,5 +558,23 @@ PetAnimState PetCore::getCurrentAnimState() const {
     // 6. 正常健康态下的自主日常杂耍动作流转
     return currentIdleSubAction;
 }
+
+bool PetCore::buyItem(const char* itemId, int count, String& outMsg) {
+    if (!itemId) {
+        outMsg = "物品不存在！";
+        return false;
+    }
+    for (size_t i = 0; i < SHOP_PRODUCT_COUNT; ++i) {
+        if (strcmp(SHOP_PRODUCTS[i].id, itemId) == 0) {
+            return buyShopProduct(i, count, outMsg);
+        }
+    }
+    if (strcmp(itemId, "food") == 0) {
+        return buyShopProduct(0, count, outMsg);
+    }
+    outMsg = "未找到对应商品！";
+    return false;
+}
+
 
 

@@ -321,8 +321,12 @@ void WebServerPortal::begin() {
         doc["charm"] = st.charm;
         doc["bg_id"] = st.bg_id;
         doc["food_count"] = st.food_count;
+        doc["food_salmon"] = st.food_salmon;
+        doc["food_icecream"] = st.food_icecream;
+        doc["food_feast"] = st.food_feast;
         doc["soap_count"] = st.soap_count;
         doc["revival_count"] = st.revival_count;
+
 
         String out;
         serializeJson(doc, out);

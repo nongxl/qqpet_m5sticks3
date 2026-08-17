@@ -31,12 +31,12 @@ public:
 private:
     bool isFsMounted;
     
-    // 当前载入动作的内存缓存 (单动作轻量缓存，仅占用 ~20KB，开机秒开，绝不撑爆内存)
+    // 当前动作序列帧的轻量内存池 (直接内存解码，进行真正 32-bit Alpha 原生混合，彻底消除蛋壳黑边)
     String currentLoadedAction;
     uint8_t currentLoadedGender;
     String currentLoadedStage;
-    std::vector<InMemoryFrame> currentClipFrames;
     uint8_t currentClipFps;
+    std::vector<InMemoryFrame> currentClipFrames;
 
     // 领养仪式专属双星缓存
     std::vector<InMemoryFrame> adoptGgFrames;
@@ -47,10 +47,11 @@ private:
     uint8_t currentLoadedBgId;
     InMemoryFrame currentBgFrame;
 
-    // 预解码原生 Sprite (feed, bath, play, cure, status, web) 6个20x20与6个28x28，极速 Blit
-    M5Canvas sprIconsNorm[6];
-    M5Canvas sprIconsAct[6];
+    // 预解码 10 款原生 Sprite (feed, bath, play, work, study, trip, cure, shop, status, web) 10个20x20与10个28x28
+    M5Canvas sprIconsNorm[10];
+    M5Canvas sprIconsAct[10];
     bool iconsLoaded;
+
 
 
 
