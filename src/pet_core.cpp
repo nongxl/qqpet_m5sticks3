@@ -40,8 +40,9 @@ void PetCore::initDefault() {
     state.revival_count = 5;
     state.costume_owned_mask = (1 << 3) | (1 << 5); // 初始默认赠送红领巾(3)和粉红蝴蝶结(5)
     state.equipped_head = 0;
-    state.equipped_neck = 3; // 默认戴红领巾
+    state.equipped_neck = 0;
     state.equipped_hand = 0;
+
 
     state.volume = 120;
 
@@ -80,22 +81,51 @@ void PetCore::resetAdoption() {
 
 
 bool PetCore::startTask(PetTaskType type, uint32_t durationSec, String& outMsg) {
+    int curLv = getLevel();
+    const char* hName = (strlen(state.host) > 0) ? state.host : "主人";
+
     if (isDead()) {
-        outMsg = "宠物已死亡，无法开启作业！";
+        outMsg = "您的宠物已死亡，请使用还魂丹复活~";
         return false;
     }
-    if (state.health <= 2) {
-        outMsg = "宠物病情严重，快去给它看病吧！";
+    if (isSick() || state.health < HEALTH_NORMAL) {
+        if (type == TASK_WORK) {
+            outMsg = String(hName) + "~ 我生病了，等我治疗好了再赚元宝吧~~";
+        } else if (type == TASK_STUDY) {
+            outMsg = String(hName) + "~ 我生病了，等我治疗好了再上学吧~~";
+        } else {
+            outMsg = String(hName) + "~ 我生病身体难受，治好病再去旅行吧~~";
+        }
         return false;
     }
-    if (state.hunger < 200 || state.clean < 200) {
+
+    // 1. 打工等级门槛 (原版需 Lv.5 破壳成熟)
+    if (type == TASK_WORK && curLv < 5) {
+        outMsg = String(hName) + "~ 我的等级不够哦(需Lv.5)，陪我长大再试试吧~~";
+        return false;
+    }
+
+    // 2. 学习等级门槛 (原版小学需 Lv.5 入学)
+    if (type == TASK_STUDY && curLv < 5) {
+        outMsg = String(hName) + "~ 我还太小啦(需Lv.5)，等我破壳长大了再去上学吧~~";
+        return false;
+    }
+
+    // 3. 神州旅行等级门槛 (原版需 Lv.12 成年远行)
+    if (type == TASK_TRIP && curLv < 12) {
+        outMsg = String(hName) + "~ 外面世界好大(需Lv.12)，等我长成大企鹅再去环游神州吧~~";
+        return false;
+    }
+
+    if (state.hunger < 300 || state.clean < 300) {
         outMsg = "太饿或太脏了，先吃饱洗干净再去吧！";
         return false;
     }
     if (type == TASK_TRIP && state.coins < 80) {
-        outMsg = "元宝不足！背包旅行需要 80 元宝路费。";
+        outMsg = "哎呀，路费元宝不够了(需80Y)，先去打工或小游戏赚点路费吧~";
         return false;
     }
+
 
     if (isTaskActive()) {
         String oldMsg;

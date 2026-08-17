@@ -40,29 +40,46 @@ void DisplayEngine::showToast(const String& msg, uint32_t durationMs) {
     toastEndTime = millis() + durationMs;
 }
 
-static const float MENU_ITEM_ANGLE = 26.0f;
-
 void DisplayEngine::toggleMenu() {
     menuVisible = !menuVisible;
     menuLastActiveTime = millis();
-    wheelTargetAngle = static_cast<float>(currentOption) * MENU_ITEM_ANGLE;
+}
+
+void DisplayEngine::updateMenuWithTilt(float tiltX, float tiltY) {
+    if (!menuVisible) return;
+    float mag = std::sqrt(tiltX * tiltX + tiltY * tiltY);
+    if (mag > 0.16f) {
+        // 计算当前手腕倾斜方位角 (0为正右，PI/2为正下，-PI/2为正上)
+        float angle = std::atan2(tiltY, tiltX);
+        // 图标从正上方 -PI/2 顺时针排列
+        float normalizedAngle = angle + (3.14159265f / 2.0f);
+        if (normalizedAngle < 0) normalizedAngle += (2.0f * 3.14159265f);
+        
+        float sector = (2.0f * 3.14159265f) / static_cast<float>(MENU_COUNT);
+        int nearestIdx = static_cast<int>(std::round(normalizedAngle / sector)) % MENU_COUNT;
+        
+        if (nearestIdx != static_cast<int>(currentOption)) {
+            currentOption = static_cast<MenuOption>(nearestIdx);
+            menuLastActiveTime = millis();
+            g_haptics.trigger(HAPTIC_CLICK);
+        }
+    }
 }
 
 void DisplayEngine::nextMenuOption() {
     currentOption = static_cast<MenuOption>((static_cast<int>(currentOption) + 1) % MENU_COUNT);
     menuLastActiveTime = millis();
-    wheelTargetAngle = static_cast<float>(currentOption) * MENU_ITEM_ANGLE;
 }
 
 void DisplayEngine::prevMenuOption() {
     currentOption = static_cast<MenuOption>((static_cast<int>(currentOption) + MENU_COUNT - 1) % MENU_COUNT);
     menuLastActiveTime = millis();
-    wheelTargetAngle = static_cast<float>(currentOption) * MENU_ITEM_ANGLE;
 }
 
 void DisplayEngine::closeMenu() {
     menuVisible = false;
 }
+
 
 void DisplayEngine::openSubScreen(SubScreenMode mode) {
     subMode = mode;
@@ -316,99 +333,80 @@ void DisplayEngine::drawBubble() {
 #include <cmath>
 
 void DisplayEngine::drawRightBubbleMenu() {
-    // 官方原版右侧旋转半椭圆轮盘 (紧贴右侧边缘，横向 rx=44px，纵向 ry=86px 上下拉开)
-    int cx = SCREEN_W + 6; // 141
-    int cy = 128;
-    float rx = menuSlideProgress * 44.0f; // 横向半轴 (探出深度)
-    float ry = menuSlideProgress * 86.0f; // 纵向半轴 (上下大幅度拉开)
+    int cx = SCREEN_W / 2; // 67 px (企鹅水平中心)
+    int cy = 130;          // 企鹅竖直中心
+    float radius = menuSlideProgress * 49.0f; // 环绕半径 49px
 
-    // 轮盘平滑旋转阻尼插值 (物理阻尼惯性，极速丝滑响应)
-    wheelCurrentAngle += (wheelTargetAngle - wheelCurrentAngle) * 0.35f;
-
-    static const char* MENU_NAMES[] = {
-        "喂食", "洗澡", "逗玩", "打工", "学习", "旅游", "看病", "商城", "状态", "后台"
+    static const char* MENU_NAMES[11] = {
+        "喂食", "洗澡", "游戏", "衣橱", "打工", "学习", "旅游", "看病", "商城", "状态", "设置"
     };
 
     const PetState& st = g_pet.getState();
 
-
-    // 1. 绘制向左拱起的半椭圆轮盘轨道微弱淡蓝虚线弧
-    if (menuSlideProgress > 0.4f) {
-        for (int a = -76; a <= 76; a += 10) {
-            float rad = a * 0.0174532925f;
-            int dotX = cx - static_cast<int>(rx * std::cos(rad));
-            int dotY = cy + static_cast<int>(ry * std::sin(rad));
-            if (dotY >= 26 && dotY <= SCREEN_H - 12) {
-                canvas.drawPixel(dotX, dotY, canvas.color565(165, 205, 245));
-            }
-        }
+    // 1. 绘制围绕企鹅的半透明发光导轨圆环
+    if (menuSlideProgress > 0.3f) {
+        int rInt = static_cast<int>(radius);
+        canvas.drawCircle(cx, cy, rInt, canvas.color565(180, 215, 255));
+        canvas.drawCircle(cx, cy, rInt + 1, canvas.color565(210, 235, 255));
     }
 
+    // 2. 绘制 11 个围绕企鹅的菜单图标
+    float sector = (2.0f * 3.14159265f) / static_cast<float>(MENU_COUNT);
 
-    // 2. 先绘制非选中项 (按半椭圆参数方程计算位置)
     for (int i = 0; i < MENU_COUNT; ++i) {
         if (i == currentOption) continue; // 选中项稍后在顶层突出绘制
 
-        float itemAngle = (static_cast<float>(i) * MENU_ITEM_ANGLE) - wheelCurrentAngle;
-        if (std::abs(itemAngle) > 80.0f) continue; // 超出上下可视范围的不绘制
+        float itemRad = - (3.14159265f / 2.0f) + (static_cast<float>(i) * sector);
+        int bx = cx + static_cast<int>(radius * std::cos(itemRad));
+        int by = cy + static_cast<int>(radius * std::sin(itemRad));
 
-        float rad = itemAngle * 0.0174532925f;
-        int bx = cx - static_cast<int>(rx * std::cos(rad));
-        int by = cy + static_cast<int>(ry * std::sin(rad));
-
-        if (by < 26 || by > SCREEN_H - 12) continue;
-
-        // 半透明淡蓝小圆底座
-        canvas.fillCircle(bx, by, 11, canvas.color565(232, 245, 255));
+        // 半透明白蓝圆形底座 (22x22)
+        canvas.fillCircle(bx, by, 11, canvas.color565(240, 248, 255));
         canvas.drawCircle(bx, by, 11, canvas.color565(140, 190, 240));
 
-        // 渲染 20x20 原版小图标
+        // 渲染 20x20 精致图标
         g_assets.drawMenuIcon(canvas, bx - 10, by - 10, i, false);
     }
 
-    // 3. 顶层突出绘制当前选中项 (紧贴右侧最前沿，放大 1.4 倍，恒定完美居中)
+    // 3. 顶层突出绘制当前【重力感应高亮选中项】(放大到 34x34，金色双层发光外环)
     int selIdx = currentOption;
-    float selAngle = (static_cast<float>(selIdx) * MENU_ITEM_ANGLE) - wheelCurrentAngle;
-    float selRad = selAngle * 0.0174532925f;
-    int selX = cx - static_cast<int>(rx * std::cos(selRad));
-    int selY = cy + static_cast<int>(ry * std::sin(selRad));
+    float selRad = - (3.14159265f / 2.0f) + (static_cast<float>(selIdx) * sector);
+    int selX = cx + static_cast<int>(radius * std::cos(selRad));
+    int selY = cy + static_cast<int>(radius * std::sin(selRad));
 
+    canvas.fillCircle(selX, selY, 17, canvas.color565(255, 215, 40));
+    canvas.drawCircle(selX, selY, 17, canvas.color565(255, 250, 180));
+    canvas.drawCircle(selX, selY, 18, canvas.color565(255, 160, 0));
 
-    if (selY < 32) selY = 32;
-    if (selY > SCREEN_H - 24) selY = SCREEN_H - 24;
-
-    // 亮金黄 + 亮白双层高光放大圆盘
-    canvas.fillCircle(selX, selY, 17, canvas.color565(255, 210, 50));
-    canvas.drawCircle(selX, selY, 17, canvas.color565(255, 245, 160));
-    canvas.drawCircle(selX, selY, 18, canvas.color565(255, 170, 0));
-
-    // 渲染 28x28 放大图标
+    // 渲染 28x28 放大高光图标
     g_assets.drawMenuIcon(canvas, selX - 14, selY - 14, selIdx, true);
 
-    // 4. 在选中图标正下方悬浮展示选项标签
+    // 4. 底部中央悬浮展示当前选中的功能胶囊气泡 + 提示
     String label = MENU_NAMES[selIdx];
     if (selIdx == MENU_FEED) label += "(" + String(st.food_count) + ")";
     else if (selIdx == MENU_BATH) label += "(" + String(st.soap_count) + ")";
+    else if (selIdx == MENU_WARDROBE) label += "(换装)";
     else if (selIdx == MENU_WORK) label += "(+150Y)";
     else if (selIdx == MENU_STUDY) label += "(+智力)";
-    else if (selIdx == MENU_TRIP) label += "(-100Y)";
+    else if (selIdx == MENU_TRIP) label += "(旅行)";
     else if (selIdx == MENU_CURE && strlen(st.illness) > 0) label += "·" + String(st.illness);
 
-
     canvas.setFont(&fonts::efontCN_12);
-    int tagW = canvas.textWidth(label) + 12;
+    int tagW = canvas.textWidth(label) + 16;
     int tagH = 20;
-    int tagX = selX - (tagW / 2); // 居中对齐在图标正下方
-    if (tagX + tagW > SCREEN_W - 3) tagX = SCREEN_W - 3 - tagW;
-    if (tagX < 4) tagX = 4;
-    int tagY = selY + 22; // 位于 18px 放大底座的正下方
-    if (tagY + tagH > SCREEN_H - 10) tagY = selY - 26; // 如果靠底部则自动浮动至图标上方
+    int tagX = (SCREEN_W - tagW) / 2;
+    int tagY = SCREEN_H - 42;
 
-    canvas.fillRoundRect(tagX, tagY, tagW, tagH, 5, canvas.color565(35, 45, 60));
-    canvas.drawRoundRect(tagX, tagY, tagW, tagH, 5, canvas.color565(180, 215, 250));
-    canvas.setTextColor(TFT_WHITE);
-    canvas.drawCenterString(label, tagX + (tagW / 2), tagY + 4);
+    canvas.fillRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(30, 45, 65));
+    canvas.drawRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(255, 215, 80));
+    canvas.setTextColor(canvas.color565(255, 240, 120));
+    canvas.drawCenterString(label, SCREEN_W / 2, tagY + 4);
+
+    // 底部操作指引
+    canvas.setTextColor(canvas.color565(70, 95, 125));
+    canvas.drawCenterString("倾斜选择 | A确认 | B关闭", SCREEN_W / 2, SCREEN_H - 18);
 }
+
 
 
 
@@ -883,11 +881,23 @@ void DisplayEngine::renderSubScreen() {
             canvas.drawString(prod.desc, boxX + 6, curY + 19);
         } else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) {
             const auto& opt = TASK_OPTS[idx];
+            int curLv = g_pet.getLevel();
+            bool isLocked = (subMode == SUB_SCREEN_WORK && curLv < 5) || 
+                            (subMode == SUB_SCREEN_STUDY && curLv < 5) || 
+                            (subMode == SUB_SCREEN_TRIP && curLv < 12);
+
             canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
             canvas.drawString(opt.name, boxX + 6, curY + 4);
 
+            if (isLocked) {
+                canvas.setTextColor(canvas.color565(230, 70, 70));
+                canvas.drawRightString((subMode == SUB_SCREEN_TRIP) ? "🔒需Lv.12" : "🔒需Lv.5", boxX + boxW - 6, curY + 4);
+            }
+
             canvas.setTextColor(isSelected ? canvas.color565(220, 100, 0) : canvas.color565(140, 150, 160));
-            if (subMode == SUB_SCREEN_WORK) {
+            if (isLocked) {
+                canvas.drawString((subMode == SUB_SCREEN_TRIP) ? "成年长成大企鹅后方可远行" : "破壳长大后方可解锁", boxX + 6, curY + 19);
+            } else if (subMode == SUB_SCREEN_WORK) {
                 canvas.drawString(opt.workDesc, boxX + 6, curY + 19);
             } else if (subMode == SUB_SCREEN_STUDY) {
                 canvas.drawString(opt.studyDesc, boxX + 6, curY + 19);
@@ -895,6 +905,8 @@ void DisplayEngine::renderSubScreen() {
                 canvas.drawString(opt.tripDesc, boxX + 6, curY + 19);
             }
         } else if (subMode == SUB_SCREEN_WARDROBE) {
+
+
             const auto& c = COSTUME_LIST[idx];
             bool owned = g_pet.ownsCostume(c.id);
             bool isEquipped = (g_pet.getEquippedCostume(c.category) == c.id);

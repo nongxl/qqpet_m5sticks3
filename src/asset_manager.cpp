@@ -252,11 +252,12 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
 void AssetManager::loadMenuIcons() {
     if (!isFsMounted || iconsLoaded) return;
 
-    static const char* iconNames[10] = {
-        "feed", "bath", "play", "work", "study", "trip", "cure", "shop", "status", "web"
+    static const char* iconNames[11] = {
+        "feed", "bath", "play", "wardrobe", "work", "study", "trip", "cure", "shop", "status", "web"
     };
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 11; ++i) {
+
         String normPath = String("/assets/icons/") + iconNames[i] + "_norm.png";
         String actPath = String("/assets/icons/") + iconNames[i] + "_act.png";
 
@@ -335,7 +336,7 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
 }
 
 void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex, bool active) {
-    if (optionIndex < 0 || optionIndex >= 10) return;
+    if (optionIndex < 0 || optionIndex >= 11) return;
 
     if (active) {
         sprIconsAct[optionIndex].pushSprite(&canvas, x, y, CHROMA_KEY);
@@ -343,6 +344,7 @@ void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex,
         sprIconsNorm[optionIndex].pushSprite(&canvas, x, y, CHROMA_KEY);
     }
 }
+
 
 
 

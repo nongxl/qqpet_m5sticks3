@@ -51,10 +51,11 @@ private:
     uint8_t currentLoadedBgId;
     InMemoryFrame currentBgFrame;
 
-    // 预解码 10 款原生 Sprite (feed, bath, play, work, study, trip, cure, shop, status, web) 10个20x20与10个28x28
-    M5Canvas sprIconsNorm[10];
-    M5Canvas sprIconsAct[10];
+    // 预解码 11 款原生 Sprite (feed, bath, play, wardrobe, work, study, trip, cure, shop, status, web)
+    M5Canvas sprIconsNorm[11];
+    M5Canvas sprIconsAct[11];
     bool iconsLoaded;
+
 
 
 

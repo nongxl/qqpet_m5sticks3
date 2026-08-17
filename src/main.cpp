@@ -49,6 +49,13 @@ void executeMenuAction(MenuOption opt) {
             g_haptics.trigger(HAPTIC_CLICK);
             break;
 
+        case MENU_WARDROBE:
+            // 👗 进入全屏企鹅换装衣橱
+            g_display.openSubScreen(SUB_SCREEN_WARDROBE);
+            g_haptics.trigger(HAPTIC_CLICK);
+            break;
+
+
 
         case MENU_WORK:
             if (g_pet.isTaskActive() && g_pet.getCurrentTask() == TASK_WORK) {
@@ -372,10 +379,10 @@ void loop() {
             dragOffsetX = 0;
             dragOffsetY = 0;
 
-            if (!g_display.isMenuOpen()) {
-                g_display.toggleMenu();
+            if (g_display.isMenuOpen()) {
+                g_display.closeMenu();
             } else {
-                g_display.nextMenuOption();
+                g_display.toggleMenu();
             }
             g_haptics.trigger(HAPTIC_CLICK);
         }
@@ -389,14 +396,20 @@ void loop() {
         } else if (g_display.isStatusCardOpen()) {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
+        } else if (g_display.isMenuOpen()) {
+            g_display.closeMenu();
+            g_haptics.trigger(HAPTIC_CLICK);
         }
     }
 
-    // 3. 处理 IMU 姿态与体感更新 (若在小游戏中则驱动小游戏，否则处理摇一摇)
+    // 3. 处理 IMU 姿态与体感更新 (小游戏驱动 / 环形菜单倾斜选择 / 待机摇一摇)
     if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
         g_imu.update();
         MiniGameManager::getInstance().update(g_imu.getTiltX(), g_imu.getTiltY(), g_imu.getAccelZ());
-    } else if (!g_display.isMenuOpen()) {
+    } else if (g_display.isMenuOpen()) {
+        g_imu.update();
+        g_display.updateMenuWithTilt(g_imu.getTiltX(), g_imu.getTiltY());
+    } else {
         ImuEventType imuEvt = g_imu.update();
         if (imuEvt == IMU_EVENT_SHAKE) {
             g_pet.play(80);
@@ -404,6 +417,7 @@ void loop() {
             g_ai.requestDialog("happy");
         }
     }
+
 
 
     // 4. 定时状态衰减 (每 30 秒递减一次属性)

@@ -7,6 +7,7 @@ enum MenuOption {
     MENU_FEED = 0,
     MENU_BATH,
     MENU_PLAY,
+    MENU_WARDROBE,    // 👗 企鹅换装衣橱
     MENU_WORK,
     MENU_STUDY,
     MENU_TRIP,
@@ -16,6 +17,7 @@ enum MenuOption {
     MENU_WEB_CONFIG,
     MENU_COUNT
 };
+
 
 enum SubScreenMode {
     SUB_SCREEN_NONE = 0,
@@ -52,13 +54,15 @@ public:
     // 气泡对话控制
     void showBubble(const String& text, uint32_t durationMs = 4500);
     
-    // 菜单控制
+    // 菜单控制 (环绕企鹅圆圈菜单 + 重力感应选择)
     void toggleMenu();
+    void updateMenuWithTilt(float tiltX, float tiltY);
     void nextMenuOption();
     void prevMenuOption();
     void closeMenu();
     bool isMenuOpen() const { return menuVisible; }
     MenuOption getSelectedMenuOption() const { return currentOption; }
+
 
     // 拖拽悬空状态
     void setDragging(bool dragging) { isDragging = dragging; }
