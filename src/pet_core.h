@@ -32,6 +32,11 @@ public:
     PetCore();
     void initDefault();
     
+    // 领养与重生系统
+    bool isAdopted() const { return state.is_adopted; }
+    void adopt(uint8_t gender);
+    void resetAdoption();
+
     // 基础操作
     bool feed(int amount = 1000);
     bool bath(int amount = 1000);
@@ -43,6 +48,7 @@ public:
     bool study(String& outMsg);
     bool trip(String& outMsg);
     bool buyItem(const char* itemId, int count, String& outMsg);
+
 
     // 周期衰减与恶化处理
     void tickDecay(uint32_t deltaSeconds);

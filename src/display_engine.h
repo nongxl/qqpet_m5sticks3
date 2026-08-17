@@ -23,6 +23,8 @@ public:
     DisplayEngine();
     void begin();
     void update(int petOffsetX = 0, int petOffsetY = 0);
+    void drawAdoptionScreen(uint8_t selectedGender);
+
 
     // 气泡对话控制
     void showBubble(const String& text, uint32_t durationMs = 4500);
@@ -40,7 +42,9 @@ public:
 
     // 弹窗与状态卡片控制
     void showToast(const String& msg, uint32_t durationMs = 2500);
-    void showStatusCard(uint32_t durationMs = 5000);
+    void showStatusCard();
+    void closeStatusCard() { statusCardVisible = false; }
+    bool isStatusCardOpen() const { return statusCardVisible; }
     void showWebPortalCard(uint32_t durationMs = 20000);
     void closeWebPortalCard() { webPortalCardEndTime = 0; }
     bool isWebPortalOpen() const { return millis() <= webPortalCardEndTime; }
@@ -63,8 +67,9 @@ private:
     // 提示 Toast、状态卡片与后台面板
     String toastText;
     uint32_t toastEndTime;
-    uint32_t statusCardEndTime;
+    bool statusCardVisible;
     uint32_t webPortalCardEndTime;
+
 
     // 电池缓存 (防止频繁 I2C 读取导致背光闪烁)
     int cachedBattery;

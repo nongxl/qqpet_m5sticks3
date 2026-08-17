@@ -11,7 +11,8 @@ DisplayEngine::DisplayEngine()
       wheelCurrentAngle(0.0f), wheelTargetAngle(0.0f),
       menuLastActiveTime(0), currentOption(MENU_FEED), bubbleEndTime(0),
       typewriterIndex(0), lastTypewriterTime(0), toastEndTime(0),
-      cachedBattery(100), lastBatteryCheckTime(0), animFrame(0), isDragging(false) {}
+      statusCardVisible(false), cachedBattery(100), lastBatteryCheckTime(0), animFrame(0), isDragging(false) {}
+
 
 void DisplayEngine::begin() {
     M5.Display.setRotation(0); // 竖屏 135 x 240
@@ -249,8 +250,8 @@ void DisplayEngine::drawRightBubbleMenu() {
     float rx = menuSlideProgress * 44.0f; // 横向半轴 (探出深度)
     float ry = menuSlideProgress * 86.0f; // 纵向半轴 (上下大幅度拉开)
 
-    // 轮盘平滑旋转阻尼插值 (物理阻尼惯性)
-    wheelCurrentAngle += (wheelTargetAngle - wheelCurrentAngle) * 0.24f;
+    // 轮盘平滑旋转阻尼插值 (物理阻尼惯性，极速丝滑响应)
+    wheelCurrentAngle += (wheelTargetAngle - wheelCurrentAngle) * 0.35f;
 
     static const char* MENU_NAMES[] = {
         "喂食", "洗澡", "逗玩", "打工", "学习", "旅游", "看病", "状态", "后台"
@@ -260,7 +261,7 @@ void DisplayEngine::drawRightBubbleMenu() {
 
     // 1. 绘制向左拱起的半椭圆轮盘轨道微弱淡蓝虚线弧
     if (menuSlideProgress > 0.4f) {
-        for (int a = -78; a <= 78; a += 6) {
+        for (int a = -76; a <= 76; a += 10) {
             float rad = a * 0.0174532925f;
             int dotX = cx - static_cast<int>(rx * std::cos(rad));
             int dotY = cy + static_cast<int>(ry * std::sin(rad));
@@ -269,6 +270,7 @@ void DisplayEngine::drawRightBubbleMenu() {
             }
         }
     }
+
 
     // 2. 先绘制非选中项 (按半椭圆参数方程计算位置)
     for (int i = 0; i < MENU_COUNT; ++i) {
@@ -341,13 +343,14 @@ void DisplayEngine::drawRightBubbleMenu() {
 
 
 
-void DisplayEngine::showStatusCard(uint32_t durationMs) {
-    statusCardEndTime = millis() + durationMs;
+void DisplayEngine::showStatusCard() {
+    statusCardVisible = true;
 }
 
 void DisplayEngine::showWebPortalCard(uint32_t durationMs) {
     webPortalCardEndTime = millis() + durationMs;
 }
+
 
 #include "network_manager.h"
 
@@ -403,74 +406,239 @@ void DisplayEngine::drawToast() {
         return;
     }
 
-    // 2. 如果有操作提示 (Toast)，优先弹出黑色提示条
+    // 2. 如果有操作提示 (Toast)，弹出自适应多行深色提示条 (彻底杜绝文字超出边框)
     if (millis() <= toastEndTime && toastText.length() > 0) {
-        int boxH = 26;
-        int boxY = SCREEN_H - 34;
-        canvas.fillRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(35, 35, 45));
         canvas.setFont(&fonts::efontCN_12);
+        
+        // 自动按最大 9 个汉字折行，自适应计算行高
+        std::vector<String> lines;
+        String curLine = "";
+        int curCharCount = 0;
+        int len = toastText.length();
+        
+        for (int i = 0; i < len;) {
+            uint8_t c = (uint8_t)toastText[i];
+            int charLen = 1;
+            if (c >= 0xE0) charLen = 3;      // 3 字节 UTF-8 汉字
+            else if (c >= 0xC0) charLen = 2;
+            
+            String ch = toastText.substring(i, i + charLen);
+            i += charLen;
+            
+            curLine += ch;
+            curCharCount += (charLen > 1) ? 2 : 1;
+            
+            if (curCharCount >= 18) { // 满 9 个汉字自动折行
+                lines.push_back(curLine);
+                curLine = "";
+                curCharCount = 0;
+                if (lines.size() >= 3) break;
+            }
+        }
+        if (curLine.length() > 0 && lines.size() < 3) {
+            lines.push_back(curLine);
+        }
+        if (lines.empty()) lines.push_back(toastText);
+
+        int lineCount = lines.size();
+        int boxH = 14 + lineCount * 14;
+        int boxY = SCREEN_H - boxH - 6;
+        int tX = 4;
+        int tW = SCREEN_W - 8; // 127px
+
+        // 深黑蓝高级圆角底座 + 柔和光晕边框
+        canvas.fillRoundRect(tX, boxY, tW, boxH, 6, canvas.color565(30, 35, 45));
+        canvas.drawRoundRect(tX, boxY, tW, boxH, 6, canvas.color565(120, 155, 195));
+
         canvas.setTextColor(TFT_WHITE);
-        canvas.drawCenterString(toastText, SCREEN_W / 2, boxY + 6);
-        return;
-    }
-
-    // 3. 如果用户选择了【宠物状态】，弹出双行精致五维状态卡片
-    if (millis() <= statusCardEndTime) {
-        int boxH = 50;
-        int boxY = SCREEN_H - 58;
-
-        const PetState& st = g_pet.getState();
-        canvas.fillRoundRect(boxX, boxY, boxW, boxH, 8, canvas.color565(245, 250, 255));
-        canvas.drawRoundRect(boxX, boxY, boxW, boxH, 8, canvas.color565(140, 185, 235));
-
-        canvas.setFont(&fonts::efontCN_12);
-        canvas.setTextSize(1);
-
-        int hMax = g_pet.getMaxHunger();
-        int cMax = g_pet.getMaxClean();
-        int hungerW = (hMax > 0) ? (st.hunger * 28 / hMax) : 0;
-        int cleanW = (cMax > 0) ? (st.clean * 28 / cMax) : 0;
-        int moodW = st.mood * 28 / 1000;
-        if (hungerW > 28) hungerW = 28;
-        if (cleanW > 28) cleanW = 28;
-        if (moodW > 28) moodW = 28;
-
-        // 第一行：【饱】进度条 (左) + 【洁】进度条 (右)
-        // 饱
-        canvas.setTextColor(canvas.color565(220, 100, 30));
-        canvas.drawString("饱", boxX + 6, boxY + 7);
-        canvas.fillRoundRect(boxX + 20, boxY + 9, 28, 8, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 20, boxY + 9, hungerW, 8, 3, (st.hunger < HUNGER_THRESHOLD) ? TFT_RED : canvas.color565(255, 140, 0));
-
-        // 洁
-        canvas.setTextColor(canvas.color565(30, 120, 220));
-        canvas.drawString("洁", boxX + 58, boxY + 7);
-        canvas.fillRoundRect(boxX + 72, boxY + 9, 28, 8, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 72, boxY + 9, cleanW, 8, 3, (st.clean < CLEAN_THRESHOLD) ? TFT_RED : canvas.color565(40, 160, 255));
-
-        // 第二行：【心】进度条 (左) + 健康/生病状态 (右)
-        // 心
-        canvas.setTextColor(canvas.color565(220, 60, 120));
-        canvas.drawString("心", boxX + 6, boxY + 28);
-        canvas.fillRoundRect(boxX + 20, boxY + 30, 28, 8, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 20, boxY + 30, moodW, 8, 3, (st.mood < MOOD_THRESHOLD) ? TFT_RED : canvas.color565(255, 90, 150));
-
-        // 状态说明 (健康/生病)
-        if (g_pet.isDead()) {
-            canvas.setTextColor(TFT_RED);
-            canvas.drawString("状态:已死亡", boxX + 56, boxY + 28);
-        } else if (g_pet.isSick()) {
-            canvas.setTextColor(canvas.color565(220, 100, 0));
-            canvas.drawString(String("病:") + st.illness, boxX + 56, boxY + 28);
-        } else {
-            canvas.setTextColor(canvas.color565(40, 160, 60));
-            canvas.drawString("状态:极健康", boxX + 56, boxY + 28);
+        int textStartY = boxY + 6;
+        for (size_t l = 0; l < lines.size(); ++l) {
+            canvas.drawCenterString(lines[l], SCREEN_W / 2, textStartY + l * 14);
         }
         return;
     }
 
+
+    // 3. 如果用户选择了【宠物状态】，在上方状态栏下方(Y=26)弹出精致全维属性状态卡片 (常驻显示，按任意键关闭)
+    if (statusCardVisible) {
+        int boxX = 4;
+        int boxW = SCREEN_W - 8; // 127
+        int boxY = 26;           // 位于顶部状态栏(0~24)正下方，上方视野开阔不遮挡底部企鹅
+        int boxH = 76;
+
+        const PetState& st = g_pet.getState();
+        int minG = 0, nextG = 0;
+        int level = calculateLevel(st.growth, minG, nextG);
+
+        // 高级毛玻璃浅蓝卡片底座
+        canvas.fillRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(242, 248, 255));
+        canvas.drawRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(130, 180, 235));
+
+        canvas.setFont(&fonts::efontCN_12);
+        canvas.setTextSize(1);
+
+        // 1. 第一行 (Y=30): 等级、性别与经验进度条
+        canvas.setTextColor(canvas.color565(20, 60, 120));
+        String lvStr = "Lv." + String(level) + ((st.gender == 1) ? "(MM)" : "(GG)");
+        canvas.drawString(lvStr, boxX + 5, boxY + 4);
+
+        int expRange = (nextG > minG) ? (nextG - minG) : 100;
+        int curExp = static_cast<int>(st.growth) - minG;
+        if (curExp < 0) curExp = 0;
+        int expBarW = (curExp * 36) / expRange;
+        if (expBarW > 36) expBarW = 36;
+
+        canvas.setTextColor(canvas.color565(100, 110, 130));
+        canvas.drawString("EXP", boxX + 60, boxY + 4);
+        canvas.fillRoundRect(boxX + 83, boxY + 6, 36, 7, 3, canvas.color565(215, 225, 235));
+        canvas.fillRoundRect(boxX + 83, boxY + 6, expBarW, 7, 3, canvas.color565(80, 175, 255));
+
+        // 2. 第二行 (Y=46): 饱食度条 (左) + 清洁度条 (右)
+        int hMax = g_pet.getMaxHunger();
+        int cMax = g_pet.getMaxClean();
+        int hungerW = (hMax > 0) ? (st.hunger * 28 / hMax) : 0;
+        int cleanW = (cMax > 0) ? (st.clean * 28 / cMax) : 0;
+        if (hungerW > 28) hungerW = 28;
+        if (cleanW > 28) cleanW = 28;
+
+        canvas.setTextColor(canvas.color565(220, 100, 30));
+        canvas.drawString("饱", boxX + 5, boxY + 22);
+        canvas.fillRoundRect(boxX + 20, boxY + 24, 28, 7, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 20, boxY + 24, hungerW, 7, 3, g_pet.isHungry() ? TFT_RED : canvas.color565(255, 140, 0));
+
+        canvas.setTextColor(canvas.color565(30, 120, 220));
+        canvas.drawString("洁", boxX + 60, boxY + 22);
+        canvas.fillRoundRect(boxX + 75, boxY + 24, 28, 7, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 75, boxY + 24, cleanW, 7, 3, g_pet.isDirty() ? TFT_RED : canvas.color565(40, 160, 255));
+
+        // 3. 第三行 (Y=62): 心情条 (左) + 智力与元宝 (右)
+        int moodW = st.mood * 28 / 1000;
+        if (moodW > 28) moodW = 28;
+
+        canvas.setTextColor(canvas.color565(220, 60, 120));
+        canvas.drawString("心", boxX + 5, boxY + 40);
+        canvas.fillRoundRect(boxX + 20, boxY + 42, 28, 7, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 20, boxY + 42, moodW, 7, 3, (st.mood < MOOD_THRESHOLD) ? TFT_RED : canvas.color565(255, 90, 150));
+
+        canvas.setTextColor(canvas.color565(60, 70, 90));
+        String intelStr = "智" + String(st.intellect);
+        canvas.drawString(intelStr, boxX + 54, boxY + 40);
+
+        // 绘制 10x8 精致金元宝矢量小图标 (金黄元宝底座 + 椭圆金顶高光)
+        int coinX = boxX + 88;
+        int coinY = boxY + 42;
+        canvas.fillRoundRect(coinX, coinY + 2, 10, 5, 2, canvas.color565(255, 185, 0));
+        canvas.fillCircle(coinX + 5, coinY + 2, 2, canvas.color565(255, 235, 90));
+        canvas.drawRoundRect(coinX, coinY + 2, 10, 5, 2, canvas.color565(210, 140, 0));
+
+        String coinStr = String(st.coins);
+        canvas.drawString(coinStr, coinX + 13, boxY + 40);
+
+        // 4. 第四行 (Y=78): 健康状态/疾病
+        if (g_pet.isDead()) {
+            canvas.setTextColor(TFT_RED);
+            canvas.drawString("● 状态: 已死亡(需还魂丹)", boxX + 5, boxY + 58);
+        } else if (g_pet.isSick()) {
+            canvas.setTextColor(canvas.color565(220, 90, 0));
+            canvas.drawString(String("● 生病: ") + st.illness + " (请吃药)", boxX + 5, boxY + 58);
+        } else {
+            canvas.setTextColor(canvas.color565(30, 150, 60));
+            canvas.drawString("● 状态: 极健康活泼", boxX + 5, boxY + 58);
+        }
+        return;
+    }
+
+
     // 4. 默认状态：完全不绘制，保持主屏纯净
 }
+
+void DisplayEngine::drawAdoptionScreen(uint8_t selectedGender) {
+    // 1. 背景：经典晴空草地
+    g_assets.drawBackground(canvas, 1);
+
+    // 2. 顶部领养仪式横幅 (全宽舒展，留有舒适呼吸边距)
+    canvas.fillRoundRect(2, 4, SCREEN_W - 4, 38, 6, canvas.color565(30, 55, 95));
+    canvas.drawRoundRect(2, 4, SCREEN_W - 4, 38, 6, canvas.color565(140, 185, 235));
+    canvas.setFont(&fonts::efontCN_12);
+    canvas.setTextColor(canvas.color565(255, 220, 80));
+    canvas.drawCenterString("👑 QQ宠物领养仪式", SCREEN_W / 2, 9);
+    canvas.setTextColor(TFT_WHITE);
+    canvas.drawCenterString("选择陪伴一生的专属萌宠", SCREEN_W / 2, 23);
+
+
+    // 3. 中间并排展示两只活泼企鹅 (左GG 帅哥 vs 右MM 妹子)
+    uint32_t now = millis();
+
+    // --- 左侧 GG 企鹅 ---
+    bool isGg = (selectedGender == 0);
+    int ggX = 35;
+    int ggY = 126;
+    if (isGg) {
+        // 金色高亮光环
+        canvas.fillEllipse(ggX, ggY, 24, 10, canvas.color565(255, 220, 50));
+        canvas.drawEllipse(ggX, ggY, 24, 10, canvas.color565(255, 160, 0));
+    } else {
+        canvas.fillEllipse(ggX, ggY, 20, 7, canvas.color565(180, 200, 220));
+    }
+    // 极速绘制 GG 企鹅帧 (零 Flash I/O 冲突，满速 30 FPS)
+    g_assets.drawAdoptionPet(canvas, ggX - 48, ggY - 78, 0, isGg, now);
+    
+    // GG 标签
+    if (isGg) {
+        canvas.fillRoundRect(ggX - 24, ggY + 8, 48, 16, 4, canvas.color565(255, 180, 0));
+        canvas.setTextColor(TFT_WHITE);
+        canvas.drawCenterString("GG 帅哥", ggX, ggY + 10);
+    } else {
+        canvas.fillRoundRect(ggX - 22, ggY + 8, 44, 16, 4, canvas.color565(210, 225, 240));
+        canvas.setTextColor(canvas.color565(80, 95, 115));
+        canvas.drawCenterString("GG 帅哥", ggX, ggY + 10);
+    }
+
+    // --- 右侧 MM 企鹅 ---
+    bool isMm = (selectedGender == 1);
+    int mmX = 99;
+    int mmY = 126;
+    if (isMm) {
+        // 粉红高亮光环
+        canvas.fillEllipse(mmX, mmY, 24, 10, canvas.color565(255, 140, 180));
+        canvas.drawEllipse(mmX, mmY, 24, 10, canvas.color565(230, 60, 120));
+    } else {
+        canvas.fillEllipse(mmX, mmY, 20, 7, canvas.color565(180, 200, 220));
+    }
+    // 极速绘制 MM 企鹅帧 (零 Flash I/O 冲突，满速 30 FPS)
+    g_assets.drawAdoptionPet(canvas, mmX - 48, mmY - 78, 1, isMm, now);
+
+
+    // MM 标签
+    if (isMm) {
+        canvas.fillRoundRect(mmX - 24, mmY + 8, 48, 16, 4, canvas.color565(255, 90, 140));
+        canvas.setTextColor(TFT_WHITE);
+        canvas.drawCenterString("MM 妹子", mmX, mmY + 10);
+    } else {
+        canvas.fillRoundRect(mmX - 22, mmY + 8, 44, 16, 4, canvas.color565(210, 225, 240));
+        canvas.setTextColor(canvas.color565(80, 95, 115));
+        canvas.drawCenterString("MM 妹子", mmX, mmY + 10);
+    }
+
+    // 4. 底部操作指引卡片 (全宽舒适排版)
+    int guideY = 158;
+    canvas.fillRoundRect(3, guideY, SCREEN_W - 6, 76, 6, canvas.color565(248, 252, 255));
+    canvas.drawRoundRect(3, guideY, SCREEN_W - 6, 76, 6, canvas.color565(140, 185, 235));
+
+    canvas.setTextColor(canvas.color565(40, 80, 140));
+    canvas.drawString("👉 按【侧键BtnB】切换", 8, guideY + 6);
+    canvas.setTextColor(canvas.color565(220, 100, 0));
+    canvas.drawString("✨ 按【面板BtnA】领养", 8, guideY + 24);
+    canvas.setTextColor(canvas.color565(120, 130, 150));
+    canvas.drawString("注: 领养后将终生绑定性别", 8, guideY + 44);
+    canvas.drawString("专属陪伴，不可随意更换", 8, guideY + 58);
+
+
+    // 推送画布
+    canvas.pushSprite(0, 0);
+}
+
+
 
 
 

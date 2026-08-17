@@ -3,7 +3,9 @@
 AssetManager g_assets;
 
 AssetManager::AssetManager() 
-    : isFsMounted(false), currentLoadedGender(255), currentLoadedStage(""), currentClipFps(8), currentLoadedBgId(255), iconsLoaded(false) {}
+    : isFsMounted(false), currentLoadedGender(255), currentLoadedStage(""), currentClipFps(8),
+      adoptFramesLoaded(false), currentLoadedBgId(255), iconsLoaded(false) {}
+
 
 bool AssetManager::begin() {
     isFsMounted = LittleFS.begin(false);
@@ -197,35 +199,86 @@ void AssetManager::loadMenuIcons() {
         "feed", "bath", "play", "cure", "status", "web"
     };
 
-    menuIconsNorm.clear();
-    menuIconsAct.clear();
-
     for (int i = 0; i < 6; ++i) {
         String normPath = String("/assets/icons/") + iconNames[i] + "_norm.png";
         String actPath = String("/assets/icons/") + iconNames[i] + "_act.png";
 
-        InMemoryFrame normFrame;
-        File f1 = LittleFS.open(normPath.c_str(), "r");
-        if (f1) {
-            normFrame.buffer.resize(f1.size());
-            f1.read(normFrame.buffer.data(), f1.size());
-            f1.close();
-        }
-        menuIconsNorm.push_back(std::move(normFrame));
+        sprIconsNorm[i].setColorDepth(16);
+        sprIconsNorm[i].createSprite(20, 20);
+        sprIconsNorm[i].fillScreen(0);
+        sprIconsNorm[i].drawPngFile(LittleFS, normPath.c_str(), 0, 0);
 
-        InMemoryFrame actFrame;
-        File f2 = LittleFS.open(actPath.c_str(), "r");
-        if (f2) {
-            actFrame.buffer.resize(f2.size());
-            f2.read(actFrame.buffer.data(), f2.size());
-            f2.close();
-        }
-        menuIconsAct.push_back(std::move(actFrame));
+        sprIconsAct[i].setColorDepth(16);
+        sprIconsAct[i].createSprite(28, 28);
+        sprIconsAct[i].fillScreen(0);
+        sprIconsAct[i].drawPngFile(LittleFS, actPath.c_str(), 0, 0);
     }
     iconsLoaded = true;
 }
 
+void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gender, bool active, uint32_t currentMillis) {
+    if (!isFsMounted) {
+        canvas.fillCircle(x + 48, y + 48, 24, (gender == 1) ? canvas.color565(255, 120, 180) : canvas.color565(50, 150, 255));
+        return;
+    }
+
+    if (!adoptFramesLoaded) {
+        adoptGgFrames.clear();
+        adoptMmFrames.clear();
+
+        // 1. 载入 GG 雏鸟动作 (stand)
+        for (int i = 0; i < 20; ++i) {
+            char fn[64];
+            snprintf(fn, sizeof(fn), "/assets/GG/Egg/stand/f_%02d.png", i);
+            if (!LittleFS.exists(fn)) break;
+            File f = LittleFS.open(fn, "r");
+            if (f) {
+                InMemoryFrame fr;
+                fr.buffer.resize(f.size());
+                f.read(fr.buffer.data(), f.size());
+                f.close();
+                adoptGgFrames.push_back(std::move(fr));
+            }
+        }
+
+        // 2. 载入 MM 雏鸟动作 (stand)
+        for (int i = 0; i < 20; ++i) {
+            char fn[64];
+            snprintf(fn, sizeof(fn), "/assets/MM/Egg/stand/f_%02d.png", i);
+            if (!LittleFS.exists(fn)) break;
+            File f = LittleFS.open(fn, "r");
+            if (f) {
+                InMemoryFrame fr;
+                fr.buffer.resize(f.size());
+                f.read(fr.buffer.data(), f.size());
+                f.close();
+                adoptMmFrames.push_back(std::move(fr));
+            }
+        }
+        adoptFramesLoaded = true;
+    }
+
+    const auto& frames = (gender == 1) ? adoptMmFrames : adoptGgFrames;
+    if (frames.empty()) {
+        canvas.fillCircle(x + 48, y + 48, 24, (gender == 1) ? canvas.color565(255, 120, 180) : canvas.color565(50, 150, 255));
+        return;
+    }
+
+    // 选中时欢快高频蹦跳 (10 fps)，未选中时温和呼吸 (6 fps)
+    uint8_t fps = active ? 10 : 6;
+    size_t fIdx = (currentMillis * fps / 1000) % frames.size();
+    
+    // 如果被选中，叠加微弱上下蹦跳位移
+    int drawY = y;
+    if (active) {
+        drawY += (fIdx % 4 > 2) ? -4 : 0;
+    }
+
+    canvas.drawPng(frames[fIdx].buffer.data(), frames[fIdx].buffer.size(), x, drawY);
+}
+
 void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex, bool active) {
+
     if (optionIndex < 0 || optionIndex >= 9) return;
 
     // 将 9 项菜单映射到 6 个官方图标资源 (0:feed, 1:bath, 2:play, 3:work->play, 4:study->feed, 5:trip->bath, 6:cure, 7:status, 8:web)
@@ -234,14 +287,13 @@ void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex,
     if (iconIdx < 0 || iconIdx >= 6) return;
 
     if (active) {
-        if (iconIdx < (int)menuIconsAct.size() && !menuIconsAct[iconIdx].buffer.empty()) {
-            canvas.drawPng(menuIconsAct[iconIdx].buffer.data(), menuIconsAct[iconIdx].buffer.size(), x, y);
-        }
+        sprIconsAct[iconIdx].pushSprite(&canvas, x, y, 0);
     } else {
-        if (iconIdx < (int)menuIconsNorm.size() && !menuIconsNorm[iconIdx].buffer.empty()) {
-            canvas.drawPng(menuIconsNorm[iconIdx].buffer.data(), menuIconsNorm[iconIdx].buffer.size(), x, y);
-        }
+        sprIconsNorm[iconIdx].pushSprite(&canvas, x, y, 0);
     }
 }
+
+
+
 
 

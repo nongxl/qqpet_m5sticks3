@@ -13,7 +13,9 @@ struct PetState {
     char name[32];          // 宠物昵称
     char host[32];          // 主人称呼
     uint8_t gender;         // 0: GG, 1: MM
+    bool is_adopted;        // 是否已完成领养仪式 (false: 进入首次并排选性别领养仪式)
     float growth;           // 成长经验值
+
     int hunger;             // 当前饥饿度
     int clean;              // 当前清洁度
     int mood;               // 当前心情值

@@ -17,7 +17,8 @@ void PetCore::initDefault() {
     strncpy(state.name, "Q宝", sizeof(state.name) - 1);
     strncpy(state.host, "主人", sizeof(state.host) - 1);
     state.gender = 0;
-    state.growth = 120.0f; // 初始 2 级
+    state.is_adopted = false; // 初始未领养，触发首次并排选性别领养仪式
+    state.growth = 120.0f;    // 初始 2 级雏鸟
     state.health = HEALTH_NORMAL;
     state.illness[0] = '\0';
     
@@ -34,8 +35,6 @@ void PetCore::initDefault() {
     state.soap_count = 50;
     state.revival_count = 5;
     state.volume = 120;
-    state.brightness = 200;
-
     static const char* defaultMeds[] = {
         "10001", "板蓝根",
         "10002", "消食片",
@@ -57,6 +56,18 @@ void PetCore::initDefault() {
         state.medicines[i].count = 5;
     }
 }
+
+void PetCore::adopt(uint8_t gender) {
+    state.gender = (gender == 1) ? 1 : 0;
+    state.is_adopted = true;
+    transientAnim = ANIM_LEVELUP;
+    transientAnimEndTime = millis() + 4000;
+}
+
+void PetCore::resetAdoption() {
+    initDefault();
+}
+
 
 bool PetCore::work(String& outMsg) {
     if (isDead()) {
@@ -123,15 +134,31 @@ bool PetCore::trip(String& outMsg) {
         return false;
     }
 
+    static const char* SCENE_NAMES[] = {
+        "经典桌面", "阳光草地", "森林小道", "浪漫海滩", "夜幕星空",
+        "企鹅客厅", "梦幻冰屋", "落叶枫林", "童话乐园", "蔚蓝深海",
+        "飞舞樱花", "魔法城堡", "农场庄园", "太空星云", "暖冬雪景",
+        "新春庭阁", "都市天际"
+    };
+
     state.coins -= 100;
     state.hunger = std::max(0, state.hunger - 60);
     state.mood = 1000;
     addGrowth(50.0f);
-    state.bg_id = static_cast<uint8_t>(random(1, 17));
+    
+    // 随机漫游到新风景 (1~16)
+    uint8_t newBg = static_cast<uint8_t>(random(1, 17));
+    if (newBg == state.bg_id) {
+        newBg = (newBg % 16) + 1;
+    }
+    state.bg_id = newBg;
+
     triggerTransientAnim(ANIM_TRIP, 4500);
-    outMsg = String("背包旅行归来！心情回满，带回 ") + String(state.bg_id) + " 号风景明信片，经验 +50！";
+    const char* sceneName = (state.bg_id <= 16) ? SCENE_NAMES[state.bg_id] : "未知秘境";
+    outMsg = String("背包旅行归来！来到了【") + sceneName + "】，带回明信片，经验+50！";
     return true;
 }
+
 
 
 

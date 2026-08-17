@@ -134,9 +134,14 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
     <!-- 壁纸与装扮选择 -->
     <div class="card">
-        <div class="card-title">🖼️ 16 款原版壁纸与性别换装</div>
+        <div class="card-title">🖼️ 企鹅领养身份与 16 款原版壁纸</div>
+        <div class="form-group">
+            <label>当前领养性别 (专属陪伴终生绑定)</label>
+            <div id="disp-gender" style="font-size:14px; font-weight:bold; color:var(--primary); padding:8px 0;">👦 GG (帅哥男鹅)</div>
+        </div>
         <div class="form-group">
             <label>选择桌面壁纸 (1~16 款原版壁纸 / 0 为经典极简)</label>
+
             <select id="sel-bg" class="form-input" onchange="setBg(this.value)">
                 <option value="0">0 - 极简天蓝纯色</option>
                 <option value="1">1 - 经典阳光草地</option>
@@ -158,6 +163,7 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
             </select>
         </div>
     </div>
+
 
     <!-- 系统配置 -->
     <div class="card">
@@ -202,6 +208,17 @@ function refresh() {
         if (document.getElementById('sel-bg')) {
             document.getElementById('sel-bg').value = data.bg_id || 0;
         }
+        if (document.getElementById('disp-gender')) {
+            document.getElementById('disp-gender').innerText = (data.gender == 1) ? '👧 MM (甜美女企鹅 · 终生绑定)' : '👦 GG (帅气男企鹅 · 终生绑定)';
+        }
+    });
+}
+
+function resetAdoption() {
+    if (!confirm('确定要重新开启领养仪式并选择新萌宠吗？')) return;
+    fetch('/api/reset_adoption').then(r => r.json()).then(res => {
+        alert(res.msg);
+        refresh();
     });
 }
 
@@ -211,6 +228,8 @@ function doAction(act) {
         refresh();
     });
 }
+
+
 
 function doWork() {
     fetch('/api/work').then(r => r.json()).then(res => {
@@ -392,6 +411,21 @@ void WebServerPortal::begin() {
         serializeJson(doc, out);
         server.send(200, "application/json", out);
     });
+
+    // 重置并重新开启领养仪式 API (仅死亡或用户主动重置时允许)
+    server.on("/api/reset_adoption", HTTP_GET, [this]() {
+        g_pet.resetAdoption();
+        g_storage.savePetState(g_pet.getState());
+
+        DynamicJsonDocument doc(256);
+        doc["success"] = true;
+        doc["msg"] = "已重置宠物状态，设备屏幕已开启全新领养仪式！请在屏幕上选拔新萌宠~";
+        String out;
+        serializeJson(doc, out);
+        server.send(200, "application/json", out);
+    });
+
+
 
     // 互动动作 API
     server.on("/api/action", HTTP_GET, [this]() {
