@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+        #pet-wrapper { width: 200px; height: 200px; }
+    </style>
+</head>
+<body>
+    <div id="pet-wrapper"></div>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+            player.style.width = "100%";
+            player.style.height = "100%";
+            player.config = {
+                autoplay: "on",
+                unmuteOverlay: "hidden",
+                letterbox: "off",
+                backgroundColor: null,
+                wmode: "transparent"
+            };
+            document.getElementById("pet-wrapper").appendChild(player);
+            player.load("/doc/qqpet_automation/qq-pet-macos/src/assets/Action/MM/Adult/LevUp.swf");
+        });
+    </script>
+</body>
+</html>

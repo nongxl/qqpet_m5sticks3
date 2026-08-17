@@ -1,0 +1,18 @@
+# PlatformIO 构建产物与临时文件
+.pio/
+.vscode/
+*.bin
+*.elf
+*.o
+
+# Python 缓存与工具临时文件
+__pycache__/
+*.pyc
+
+# 敏感与开发提示文件
+doc/
+prompt.md
+src/secrets.h
+**/config.json
+**/wifi.json
+

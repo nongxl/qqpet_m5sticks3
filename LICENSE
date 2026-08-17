@@ -1,0 +1,42 @@
+MIT License
+
+Copyright (c) 2026 xuemian168 & QQPet-StickS3 Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+SCOPE OF THIS LICENSE / 本许可证适用范围
+
+The MIT License above applies ONLY to the original work in this repository,
+specifically:
+
+  - Embedded C++ firmware & rendering engine for M5Stack StickS3 (src/)
+  - Flash asset quantization and LittleFS tooling (tools/)
+  - PlatformIO configuration and partition tables
+
+The MIT License DOES NOT cover, grant, or imply any rights to:
+
+  - The "QQ宠物" / "QQ Pet" name, trademark, character designs, artwork,
+    sprites, audio assets, or any other intellectual property of
+    Tencent Holdings Ltd. (腾讯控股有限公司). All such rights are reserved
+    by their respective owners.
+  - Bundled third-party binaries or libraries (M5Unified, M5GFX, LittleFS, ArduinoJson).
+
+上述 MIT 许可仅适用于本项目原创的嵌入式 C++ 固件、渲染引擎与构建工具。"QQ宠物" 名称、商标、角色形象、美术素材等知识产权均归 腾讯控股有限公司 及其关联方所有。本项目仅出于个人学习、复古硬件研究与情怀纪念目的开发。
