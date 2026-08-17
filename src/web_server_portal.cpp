@@ -141,7 +141,6 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
         <div class="form-group">
             <label>选择桌面壁纸 (1~16 款原版壁纸 / 0 为经典极简)</label>
-
             <select id="sel-bg" class="form-input" onchange="setBg(this.value)">
                 <option value="0">0 - 极简天蓝纯色</option>
                 <option value="1">1 - 经典阳光草地</option>
@@ -161,6 +160,10 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
                 <option value="15">15 - 中国风新春庭阁</option>
                 <option value="16">16 - 摩登都市天际线</option>
             </select>
+        </div>
+        <div style="margin-top:14px; padding-top:10px; border-top:1px dashed #e8e8e8;">
+            <button class="btn" style="background:#ff4d4f; width:100%;" onclick="resetAdoption()">🔄 重置萌宠并重新开启领养仪式</button>
+            <small style="display:block; color:#8c8c8c; margin-top:4px; text-align:center;">点击后设备屏幕将立即开启 GG/MM 雏鸟并排选拔仪式</small>
         </div>
     </div>
 
@@ -187,7 +190,7 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <script>
 function refresh() {
     fetch('/api/status').then(r => r.json()).then(data => {
-        document.getElementById('pet-name').innerText = 'QQ 宠物 · ' + data.name + (data.gender == 1 ? ' (MM 妹子)' : ' (GG 帅哥)');
+        document.getElementById('pet-name').innerText = 'QQ 宠物 · ' + data.name;
         document.getElementById('pet-sub').innerText = '主人: ' + data.host + ' | Lv.' + data.level + ' | 💰 ' + data.coins + ' 元宝';
         document.getElementById('hunger-val').innerText = data.hunger + '/' + data.max_hunger;
         document.getElementById('hunger-bar').style.width = (data.hunger / data.max_hunger * 100) + '%';
@@ -199,37 +202,29 @@ function refresh() {
         
         let badge = document.getElementById('health-badge');
         if (data.health == 0) {
-            badge.innerText = '已死亡'; badge.style.background = 'var(--danger)';
-        } else if (data.illness && data.illness.length > 0) {
-            badge.innerText = '生病: ' + data.illness; badge.style.background = 'var(--warning)';
+            badge.innerText = '已死亡 (需还魂丹)';
+            badge.style.background = '#ff4d4f';
+        } else if (data.health < 5 || (data.illness && data.illness.length > 0)) {
+            badge.innerText = '生病中 (' + data.illness + ')';
+            badge.style.background = '#faad14';
         } else {
-            badge.innerText = '健康'; badge.style.background = 'var(--success)';
+            badge.innerText = '健康活泼';
+            badge.style.background = '#52c41a';
         }
-        if (document.getElementById('sel-bg')) {
-            document.getElementById('sel-bg').value = data.bg_id || 0;
-        }
-        if (document.getElementById('disp-gender')) {
-            document.getElementById('disp-gender').innerText = (data.gender == 1) ? '👧 MM (甜美女企鹅 · 终生绑定)' : '👦 GG (帅气男企鹅 · 终生绑定)';
+
+        document.getElementById('disp-gender').innerText = (data.gender == 1) ? '👧 MM (靓妹女鹅)' : '👦 GG (帅哥男鹅)';
+        if (document.getElementById('sel-bg').value != data.bg_id) {
+            document.getElementById('sel-bg').value = data.bg_id;
         }
     });
 }
 
-function resetAdoption() {
-    if (!confirm('确定要重新开启领养仪式并选择新萌宠吗？')) return;
-    fetch('/api/reset_adoption').then(r => r.json()).then(res => {
+function doAction(type) {
+    fetch('/api/action?type=' + type).then(r => r.json()).then(res => {
         alert(res.msg);
         refresh();
     });
 }
-
-function doAction(act) {
-    fetch('/api/action?type=' + act).then(r => r.json()).then(res => {
-        alert(res.msg);
-        refresh();
-    });
-}
-
-
 
 function doWork() {
     fetch('/api/work').then(r => r.json()).then(res => {
@@ -252,7 +247,6 @@ function doTrip() {
     });
 }
 
-
 function buyItem(item, count) {
     fetch('/api/shop/buy?item=' + item + '&count=' + count).then(r => r.json()).then(res => {
         alert(res.msg);
@@ -265,6 +259,21 @@ function setBg(bgId) {
         refresh();
     });
 }
+
+function resetAdoption() {
+    if (confirm("⚠️ 确定要重置当前宠物并重新开启领养仪式吗？")) {
+        fetch('/api/reset_adoption')
+            .then(r => r.json())
+            .then(res => {
+                alert(res.msg);
+                refresh();
+            })
+            .catch(err => {
+                alert("请求失败: " + err);
+            });
+    }
+}
+
 
 function saveConfig() {
     let payload = {
