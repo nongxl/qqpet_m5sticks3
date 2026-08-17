@@ -2,7 +2,9 @@
 #include "config.h"
 #include "asset_manager.h"
 #include "mini_game_manager.h"
+#include "haptics.h"
 #include <M5Unified.h>
+
 
 
 DisplayEngine g_display;
