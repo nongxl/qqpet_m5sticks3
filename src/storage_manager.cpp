@@ -30,9 +30,18 @@ bool StorageManager::loadPetState(PetState& state) {
             if (state.food_icecream <= 0) state.food_icecream = 5;
             if (state.food_feast <= 0) state.food_feast = 2;
             if (state.growth > 0) state.is_adopted = true; // 已有经验值则终生保持领养
+            if (state.costume_owned_mask == 0) {
+                state.costume_owned_mask = (1 << 3) | (1 << 5);
+                state.equipped_neck = 3;
+            }
             savePetState(state); // 自动平滑升级为新版本结构体
         }
+        if (state.costume_owned_mask == 0) {
+            state.costume_owned_mask = (1 << 3) | (1 << 5);
+            state.equipped_neck = 3;
+        }
         return true;
+
     }
     return false;
 }

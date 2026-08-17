@@ -203,7 +203,8 @@ void loop() {
             int idx = g_display.getSubScreenIndex();
             int totalItems = (mode == SUB_SCREEN_FEED) ? (FOOD_COUNT + 1) : 
                              ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : 
-                             ((mode == SUB_SCREEN_SHOP) ? (SHOP_PRODUCT_COUNT + 1) : (4 + 1)));
+                             ((mode == SUB_SCREEN_SHOP) ? (SHOP_PRODUCT_COUNT + 1) : 
+                             ((mode == SUB_SCREEN_WARDROBE) ? (COSTUME_COUNT + 1) : (4 + 1))));
 
             static const int TASK_DURATIONS[4] = {300, 900, 1800, 3600};
 
@@ -234,15 +235,22 @@ void loop() {
                     g_display.showToast(cureMsg, 5500);
                 }
             } else if (mode == SUB_SCREEN_SHOP) {
-                String buyMsg;
-                if (g_pet.buyShopProduct(idx, 1, buyMsg)) {
-                    g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(buyMsg, 5500);
+                if (idx == 0) {
+                    // 点击了第一项【👗 企鹅衣橱】，无缝进入全屏衣橱
+                    g_display.openSubScreen(SUB_SCREEN_WARDROBE);
+                    g_haptics.trigger(HAPTIC_CLICK);
                 } else {
-                    g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(buyMsg, 5500);
+                    String buyMsg;
+                    if (g_pet.buyShopProduct(idx, 1, buyMsg)) {
+                        g_haptics.trigger(HAPTIC_SUCCESS);
+                        g_display.showToast(buyMsg, 5500);
+                    } else {
+                        g_haptics.trigger(HAPTIC_ALERT);
+                        g_display.showToast(buyMsg, 5500);
+                    }
                 }
             } else if (mode == SUB_SCREEN_WORK || mode == SUB_SCREEN_STUDY || mode == SUB_SCREEN_TRIP) {
+
                 PetTaskType targetTask = (mode == SUB_SCREEN_WORK) ? TASK_WORK : ((mode == SUB_SCREEN_STUDY) ? TASK_STUDY : TASK_TRIP);
                 String taskMsg;
                 if (g_pet.startTask(targetTask, TASK_DURATIONS[idx], taskMsg)) {
@@ -253,7 +261,27 @@ void loop() {
                     g_haptics.trigger(HAPTIC_ALERT);
                     g_display.showToast(taskMsg, 5500);
                 }
+            } else if (mode == SUB_SCREEN_WARDROBE) {
+                int costumeId = idx + 1;
+                String cosMsg;
+                if (!g_pet.ownsCostume(costumeId)) {
+                    if (g_pet.buyCostume(costumeId, cosMsg)) {
+                        g_haptics.trigger(HAPTIC_SUCCESS);
+                        g_display.showToast(cosMsg, 4000);
+                        String eqMsg;
+                        g_pet.toggleEquipCostume(costumeId, eqMsg);
+                    } else {
+                        g_haptics.trigger(HAPTIC_ALERT);
+                        g_display.showToast(cosMsg, 4000);
+                    }
+                } else {
+                    if (g_pet.toggleEquipCostume(costumeId, cosMsg)) {
+                        g_haptics.trigger(HAPTIC_CLICK);
+                        g_display.showToast(cosMsg, 3000);
+                    }
+                }
             }
+
         } else if (g_display.isToastVisible()) {
             g_display.closeToast();
             g_haptics.trigger(HAPTIC_CLICK);

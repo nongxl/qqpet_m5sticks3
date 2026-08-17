@@ -28,6 +28,10 @@ public:
     // 绘制领养仪式专用双星企鹅 (GG 与 MM 独立内存缓存，零 Flash I/O 冲突，满速 30 FPS 丝滑响应)
     void drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gender, bool active, uint32_t currentMillis);
 
+    // 绘制穿戴饰品 (逐帧锚点贴合律动)
+    void drawCostume(M5Canvas& canvas, int costumeId, int petCenterX, int petCenterY, int level, uint32_t currentMillis);
+
+
 private:
     bool isFsMounted;
     

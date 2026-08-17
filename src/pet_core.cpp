@@ -38,8 +38,13 @@ void PetCore::initDefault() {
     state.food_feast = 2;      // 初始大餐 2
     state.soap_count = 50;
     state.revival_count = 5;
+    state.costume_owned_mask = (1 << 3) | (1 << 5); // 初始默认赠送红领巾(3)和粉红蝴蝶结(5)
+    state.equipped_head = 0;
+    state.equipped_neck = 3; // 默认戴红领巾
+    state.equipped_hand = 0;
 
     state.volume = 120;
+
     static const char* defaultMeds[] = {
         "10001", "板蓝根",
         "10002", "消食片",
@@ -656,6 +661,79 @@ bool PetCore::buyItem(const char* itemId, int count, String& outMsg) {
     outMsg = "未找到对应商品！";
     return false;
 }
+
+bool PetCore::ownsCostume(int costumeId) const {
+
+    if (costumeId < 1 || costumeId > COSTUME_COUNT) return false;
+    return (state.costume_owned_mask & (1 << costumeId)) != 0;
+}
+
+bool PetCore::buyCostume(int costumeId, String& outMsg) {
+    if (costumeId < 1 || costumeId > COSTUME_COUNT) {
+        outMsg = "饰品不存在！";
+        return false;
+    }
+    const auto& c = COSTUME_LIST[costumeId - 1];
+    if (ownsCostume(costumeId)) {
+        outMsg = String("已拥有【") + c.name + "】，无需重复购买！";
+        return false;
+    }
+    if (state.coins < c.price) {
+        outMsg = String("元宝不足！【") + c.name + "】售价 " + c.price + "Y，当前仅有 " + state.coins + "Y";
+        return false;
+    }
+    state.coins -= c.price;
+    state.costume_owned_mask |= (1 << costumeId);
+    state.charm += c.charm_gain;
+    outMsg = String("🎉 购买成功！获得【") + c.name + "】魅力+" + c.charm_gain + "！";
+    return true;
+}
+
+bool PetCore::toggleEquipCostume(int costumeId, String& outMsg) {
+    if (costumeId < 1 || costumeId > COSTUME_COUNT) {
+        outMsg = "饰品不存在！";
+        return false;
+    }
+    const auto& c = COSTUME_LIST[costumeId - 1];
+    if (!ownsCostume(costumeId)) {
+        outMsg = String("未拥有【") + c.name + "】，请先前往商城购买！";
+        return false;
+    }
+
+    if (c.category == 0) { // 头部
+        if (state.equipped_head == costumeId) {
+            state.equipped_head = 0;
+            outMsg = String("已脱下【") + c.name + "】";
+        } else {
+            state.equipped_head = costumeId;
+            outMsg = String("✨ 已戴上【") + c.name + "】";
+        }
+    } else if (c.category == 1) { // 颈部
+        if (state.equipped_neck == costumeId) {
+            state.equipped_neck = 0;
+            outMsg = String("已脱下【") + c.name + "】";
+        } else {
+            state.equipped_neck = costumeId;
+            outMsg = String("✨ 已戴上【") + c.name + "】";
+        }
+    } else { // 随身
+        if (state.equipped_hand == costumeId) {
+            state.equipped_hand = 0;
+            outMsg = String("已收起【") + c.name + "】";
+        } else {
+            state.equipped_hand = costumeId;
+            outMsg = String("✨ 已装备【") + c.name + "】";
+        }
+    }
+    return true;
+}
+
+int PetCore::getEquippedCostume(int category) const {
+    if (category == 0) return state.equipped_head;
+    if (category == 1) return state.equipped_neck;
+    return state.equipped_hand;
+}
+
 
 
 

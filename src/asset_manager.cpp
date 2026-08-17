@@ -182,6 +182,45 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
     }
 }
 
+void AssetManager::drawCostume(M5Canvas& canvas, int costumeId, int petCenterX, int petCenterY, int level, uint32_t currentMillis) {
+    if (costumeId < 1 || costumeId > COSTUME_COUNT || !isFsMounted) return;
+    const auto& c = COSTUME_LIST[costumeId - 1];
+
+    String path = String("/assets/costumes/") + c.file;
+    if (!LittleFS.exists(path)) return;
+
+    // 锚点偏移计算 (Egg 较小，Kid 中等，Adult 较高大)
+    int headOffsetY = (level < 5) ? -28 : ((level < 12) ? -33 : -38);
+    int neckOffsetY = (level < 5) ? -12 : ((level < 12) ? -15 : -18);
+    int handOffsetX = (level < 5) ? 22 : ((level < 12) ? 26 : 30);
+    int handOffsetY = (level < 5) ? -6 : ((level < 12) ? -8 : -10);
+
+    // 身体上下自然呼吸微位移
+    int breath = ((currentMillis / 250) % 2 == 0) ? -1 : 0;
+
+    int drawX = petCenterX;
+    int drawY = petCenterY + breath;
+
+    if (c.category == 0) { // 头部
+        drawX -= 16;
+        drawY += headOffsetY;
+        if (costumeId == 4) drawY -= 8; // 天使光环悬浮
+    } else if (c.category == 1) { // 颈部
+        drawX -= 13;
+        drawY += neckOffsetY;
+    } else { // 随身挂件/小背包/魔杖
+        if (costumeId == 7) {
+            drawX -= 32;
+            drawY += neckOffsetY + 2;
+        } else {
+            drawX += handOffsetX - 8;
+            drawY += handOffsetY;
+        }
+    }
+
+    canvas.drawPngFile(LittleFS, path.c_str(), drawX, drawY);
+}
+
 void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState anim, uint8_t gender, int level, uint32_t currentMillis) {
     uint8_t fps = 8;
     String stage = (level < 5) ? "Egg" : ((level < 12) ? "Kid" : "Adult");
@@ -197,9 +236,18 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
     size_t frameIdx = (currentMillis * currentClipFps / 1000) % currentClipFrames.size();
     const InMemoryFrame& frame = currentClipFrames[frameIdx];
     
-    // 直接内存解压进行原生逐像素 32 位 Alpha 物理混合 (彻底消灭蛋壳黑边与杂色)
+    // 1. 直接内存解压进行原生逐像素 32 位 Alpha 物理混合
     canvas.drawPng(frame.buffer.data(), frame.buffer.size(), x, y);
+
+    // 2. 动态叠加当前佩戴的头/颈/手持饰品 (随企鹅身体呼吸与律动自然贴合)
+    const PetState& st = g_pet.getState();
+    int centerX = x + 48;
+    int centerY = y + 48;
+    if (st.equipped_head > 0) drawCostume(canvas, st.equipped_head, centerX, centerY, level, currentMillis);
+    if (st.equipped_neck > 0) drawCostume(canvas, st.equipped_neck, centerX, centerY, level, currentMillis);
+    if (st.equipped_hand > 0) drawCostume(canvas, st.equipped_hand, centerX, centerY, level, currentMillis);
 }
+
 
 void AssetManager::loadMenuIcons() {
     if (!isFsMounted || iconsLoaded) return;

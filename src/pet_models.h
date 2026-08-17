@@ -15,6 +15,30 @@ enum PetTaskType : uint8_t {
     TASK_TRIP = 3   // 背包神州漫游
 };
 
+// 换装饰品定义
+struct CostumeItem {
+    int id;               // 1 ~ 8
+    const char* name;     // 饰品名称
+    const char* file;     // 文件名
+    int category;         // 0: 头部帽子, 1: 颈部配饰, 2: 随身挂饰
+    int price;            // 元宝商城售价
+    int charm_gain;       // 魅力加成
+    const char* desc;     // 描述
+};
+
+static const CostumeItem COSTUME_LIST[] = {
+    {1, "学霸博士帽", "hat_grad.png", 0, 120, 15, "智力与学霸象征"},
+    {2, "酷炫墨镜", "glass_cool.png", 0, 150, 20, "帅气遮阳拉风"},
+    {3, "鲜艳红领巾", "scarf_red.png", 1, 80, 10, "朝气蓬勃红领巾"},
+    {4, "天使金色光环", "hat_halo.png", 0, 200, 30, "神圣纯洁发光光环"},
+    {5, "萌粉蝴蝶结", "bow_pink.png", 1, 90, 12, "甜美可爱MM最爱"},
+    {6, "尊贵黄金皇冠", "hat_crown.png", 0, 300, 50, "王者荣耀闪闪发光"},
+    {7, "探险家小背包", "pack_explorer.png", 2, 100, 15, "环游世界必备行囊"},
+    {8, "魔法星月魔杖", "wand_magic.png", 2, 180, 25, "神秘梦幻星月魔力"}
+};
+static const int COSTUME_COUNT = sizeof(COSTUME_LIST) / sizeof(COSTUME_LIST[0]);
+
+
 // 宠物完整状态模型
 struct PetState {
     char name[32];          // 宠物昵称
@@ -49,12 +73,19 @@ struct PetState {
     uint32_t task_duration;     // 目标设定时长 (秒，例如 300, 900, 1800, 3600)
     uint32_t task_elapsed_sec;  // 已实际进行有效秒数
 
+    // 换装衣橱系统
+    uint16_t costume_owned_mask; // 位图，bit 1~8 对应 8 款饰品
+    int8_t equipped_head;        // 头部饰品 ID (0 为无)
+    int8_t equipped_neck;        // 颈部饰品 ID (0 为无)
+    int8_t equipped_hand;        // 随身饰品 ID (0 为无)
+
     // 系统配置
     char wifi_ssid[64];
     char wifi_pwd[64];
     char deepseek_key[128];
     uint8_t volume;
     uint8_t brightness;
+
     
     uint32_t last_active_time; // 上次运行时间戳 (秒)
 };

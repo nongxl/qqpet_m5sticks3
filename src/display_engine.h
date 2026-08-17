@@ -25,8 +25,10 @@ enum SubScreenMode {
     SUB_SCREEN_WORK,   // 打工时长选择
     SUB_SCREEN_STUDY,  // 学习时长选择
     SUB_SCREEN_TRIP,   // 旅游时长选择
-    SUB_SCREEN_GAMES   // 5大体感小游戏大厅
+    SUB_SCREEN_GAMES,  // 5大体感小游戏大厅
+    SUB_SCREEN_WARDROBE// 👗 企鹅换装衣橱
 };
+
 
 
 

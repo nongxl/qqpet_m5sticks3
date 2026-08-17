@@ -82,6 +82,7 @@ void DisplayEngine::nextSubScreenItem() {
     else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1; // 13种药 + 1个退出项
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1; // 18种商品 + 1个退出项
     else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1; // 4个时长档位 + 1个退出项
+    else if (subMode == SUB_SCREEN_WARDROBE) maxItems = COSTUME_COUNT + 1; // 8款饰品 + 1个退出项
     
     subIndex = (subIndex + 1) % maxItems;
 }
@@ -93,9 +94,11 @@ void DisplayEngine::prevSubScreenItem() {
     else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1;
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1;
     else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1;
+    else if (subMode == SUB_SCREEN_WARDROBE) maxItems = COSTUME_COUNT + 1;
     
     subIndex = (subIndex + maxItems - 1) % maxItems;
 }
+
 
 
 void DisplayEngine::update(int petOffsetX, int petOffsetY) {
@@ -753,7 +756,12 @@ void DisplayEngine::renderSubScreen() {
         titleStr = "【背包旅行】";
         rightInfoStr = "路费:80Y";
         totalItems = 4 + 1;
+    } else if (subMode == SUB_SCREEN_WARDROBE) {
+        titleStr = "【👗 企鹅衣橱】";
+        rightInfoStr = "魅力:" + String(st.charm);
+        totalItems = COSTUME_COUNT + 1;
     }
+
 
     canvas.setTextColor(canvas.color565(255, 220, 80));
     canvas.drawString(titleStr, 6, 6);
@@ -886,6 +894,37 @@ void DisplayEngine::renderSubScreen() {
             } else {
                 canvas.drawString(opt.tripDesc, boxX + 6, curY + 19);
             }
+        } else if (subMode == SUB_SCREEN_WARDROBE) {
+            const auto& c = COSTUME_LIST[idx];
+            bool owned = g_pet.ownsCostume(c.id);
+            bool isEquipped = (g_pet.getEquippedCostume(c.category) == c.id);
+
+            // 第一行：饰品名称 + 状态/售价
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
+            canvas.drawString(c.name, boxX + 6, curY + 4);
+
+            if (isEquipped) {
+                canvas.setTextColor(canvas.color565(0, 160, 60));
+                canvas.drawRightString("✨已戴上", boxX + boxW - 6, curY + 4);
+            } else if (owned) {
+                canvas.setTextColor(canvas.color565(20, 120, 220));
+                canvas.drawRightString("已拥有", boxX + boxW - 6, curY + 4);
+            } else {
+                canvas.setTextColor(canvas.color565(220, 120, 0));
+                canvas.drawRightString(String(c.price) + "Y", boxX + boxW - 6, curY + 4);
+            }
+
+            // 第二行：效果与穿戴提示
+            if (isEquipped) {
+                canvas.setTextColor(canvas.color565(0, 140, 50));
+                canvas.drawString("[已穿戴] 魅力+" + String(c.charm_gain) + " (按A脱下)", boxX + 6, curY + 19);
+            } else if (owned) {
+                canvas.setTextColor(isSelected ? canvas.color565(0, 100, 200) : canvas.color565(120, 140, 160));
+                canvas.drawString("魅力+" + String(c.charm_gain) + " (按A戴上)", boxX + 6, curY + 19);
+            } else {
+                canvas.setTextColor(isSelected ? canvas.color565(200, 90, 0) : canvas.color565(140, 150, 160));
+                canvas.drawString(c.desc, boxX + 6, curY + 19);
+            }
         }
     }
 
@@ -907,7 +946,10 @@ void DisplayEngine::renderSubScreen() {
         canvas.drawCenterString("BtnB切换 | BtnA开始自习", SCREEN_W / 2, botY + 4);
     } else if (subMode == SUB_SCREEN_TRIP) {
         canvas.drawCenterString("BtnB切换 | BtnA出发漫游", SCREEN_W / 2, botY + 4);
+    } else if (subMode == SUB_SCREEN_WARDROBE) {
+        canvas.drawCenterString("BtnB切换 | BtnA穿脱/购买", SCREEN_W / 2, botY + 4);
     }
+
 }
 
 

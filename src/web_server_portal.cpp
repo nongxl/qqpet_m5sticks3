@@ -192,6 +192,14 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
     </div>
 
 
+    <!-- 👗 企鹅衣橱与换装商城 -->
+    <div class="card">
+        <div class="card-title">👗 企鹅衣橱 & 换装商城</div>
+        <div id="costume-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px;">
+            <!-- 由 JS 动态渲染 8 款饰品 -->
+        </div>
+    </div>
+
     <!-- 系统配置 -->
     <div class="card">
         <div class="card-title">⚙️ 系统与 Wi-Fi 配网设置</div>
@@ -212,6 +220,56 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
 </div>
 
 <script>
+const COSTUMES = [
+    {id:1, name:"🎓 学霸博士帽", price:120, charm:15, cat:0, desc:"智力与学霸象征"},
+    {id:2, name:"🕶️ 酷炫墨镜", price:150, charm:20, cat:0, desc:"帅气遮阳拉风"},
+    {id:3, name:"🧣 鲜艳红领巾", price:80, charm:10, cat:1, desc:"朝气蓬勃红领巾"},
+    {id:4, name:"👼 天使金色光环", price:200, charm:30, cat:0, desc:"神圣发光光环"},
+    {id:5, name:"🎀 萌粉蝴蝶结", price:90, charm:12, cat:1, desc:"甜美可爱MM最爱"},
+    {id:6, name:"👑 尊贵黄金皇冠", price:300, charm:50, cat:0, desc:"王者荣耀闪闪发光"},
+    {id:7, name:"🎒 探险家小背包", price:100, charm:15, cat:2, desc:"环游世界必备行囊"},
+    {id:8, name:"🪄 魔法星月魔杖", price:180, charm:25, cat:2, desc:"神秘梦幻魔力"}
+];
+
+function renderCostumes(mask, eqHead, eqNeck, eqHand) {
+    let grid = document.getElementById('costume-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    COSTUMES.forEach(c => {
+        let owned = (mask & (1 << c.id)) !== 0;
+        let isEq = (c.cat === 0 && eqHead === c.id) || (c.cat === 1 && eqNeck === c.id) || (c.cat === 2 && eqHand === c.id);
+        
+        let card = document.createElement('div');
+        card.style.border = isEq ? '2px solid #52c41a' : (owned ? '1px solid #1890ff' : '1px solid #e8e8e8');
+        card.style.background = isEq ? '#f6ffed' : (owned ? '#e6f7ff' : '#fafafa');
+        card.style.borderRadius = '8px';
+        card.style.padding = '8px';
+        card.style.textAlign = 'center';
+        
+        card.innerHTML = `
+            <div style="font-weight:bold; font-size:13px; margin-bottom:4px;">${c.name}</div>
+            <div style="font-size:11px; color:#8c8c8c; margin-bottom:6px;">魅力+${c.charm}</div>
+            ${isEq ? `<button class="btn" style="background:#faad14; font-size:11px; padding:3px 8px; width:100%;" onclick="toggleCostume(${c.id})">✨ 脱下</button>` :
+              (owned ? `<button class="btn" style="background:#52c41a; font-size:11px; padding:3px 8px; width:100%;" onclick="toggleCostume(${c.id})">👕 戴上</button>` :
+               `<button class="btn" style="background:#1890ff; font-size:11px; padding:3px 8px; width:100%;" onclick="buyCostume(${c.id})">💰 ${c.price}Y 购买</button>`)}
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function buyCostume(id) {
+    fetch('/api/costume/buy?id=' + id).then(r => r.json()).then(res => {
+        alert(res.msg);
+        refresh();
+    });
+}
+
+function toggleCostume(id) {
+    fetch('/api/costume/equip?id=' + id).then(r => r.json()).then(res => {
+        refresh();
+    });
+}
+
 function refresh() {
     fetch('/api/status').then(r => r.json()).then(data => {
         document.getElementById('pet-name').innerText = 'QQ 宠物 · ' + data.name;
@@ -255,8 +313,11 @@ function refresh() {
         } else {
             taskBox.style.display = 'none';
         }
+
+        renderCostumes(data.costume_mask, data.eq_head, data.eq_neck, data.eq_hand);
     });
 }
+
 
 function doAction(type) {
     fetch('/api/action?type=' + type).then(r => r.json()).then(res => {
@@ -384,6 +445,12 @@ void WebServerPortal::begin() {
         doc["soap_count"] = st.soap_count;
         doc["revival_count"] = st.revival_count;
 
+        // 换装衣橱状态
+        doc["costume_mask"] = st.costume_owned_mask;
+        doc["eq_head"] = st.equipped_head;
+        doc["eq_neck"] = st.equipped_neck;
+        doc["eq_hand"] = st.equipped_hand;
+
         // 作业挂机字段
         doc["current_task"] = st.current_task;
         doc["task_remaining"] = g_pet.getTaskRemainingSec();
@@ -394,6 +461,42 @@ void WebServerPortal::begin() {
         serializeJson(doc, out);
         server.send(200, "application/json", out);
     });
+
+    // 换装衣橱 API
+    server.on("/api/costume/buy", HTTP_GET, [this]() {
+        int id = server.hasArg("id") ? server.arg("id").toInt() : 0;
+        String msg;
+        bool ok = g_pet.buyCostume(id, msg);
+        if (ok) {
+            g_storage.savePetState(g_pet.getState());
+            g_haptics.trigger(HAPTIC_SUCCESS);
+            g_display.showToast(msg, 3500);
+        }
+        DynamicJsonDocument doc(256);
+        doc["success"] = ok;
+        doc["msg"] = msg;
+        String out;
+        serializeJson(doc, out);
+        server.send(200, "application/json", out);
+    });
+
+    server.on("/api/costume/equip", HTTP_GET, [this]() {
+        int id = server.hasArg("id") ? server.arg("id").toInt() : 0;
+        String msg;
+        bool ok = g_pet.toggleEquipCostume(id, msg);
+        if (ok) {
+            g_storage.savePetState(g_pet.getState());
+            g_haptics.trigger(HAPTIC_CLICK);
+            g_display.showToast(msg, 2500);
+        }
+        DynamicJsonDocument doc(256);
+        doc["success"] = ok;
+        doc["msg"] = msg;
+        String out;
+        serializeJson(doc, out);
+        server.send(200, "application/json", out);
+    });
+
 
     // 打工 API
     server.on("/api/work", HTTP_GET, [this]() {

@@ -63,6 +63,13 @@ public:
     int getFoodCount(int foodIndex) const;
     int getMedCount(int medIndex) const;
 
+    // 换装衣橱管理
+    bool ownsCostume(int costumeId) const;
+    bool buyCostume(int costumeId, String& outMsg);
+    bool toggleEquipCostume(int costumeId, String& outMsg);
+    int getEquippedCostume(int category) const;
+
+
     // 周期衰减与恶化处理
     void tickDecay(uint32_t deltaSeconds);
 
