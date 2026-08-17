@@ -21,10 +21,12 @@ enum PetAnimState {
     ANIM_CLEAN,          // 搓澡全身泡泡
     ANIM_CURE,           // 喝药康复
     ANIM_LEVELUP,        // 升级跳跃星星
+    ANIM_SLEEP,          // 💤 专属戴睡帽闭眼深睡打呼噜冒泡动画
     ANIM_DYING,          // 虚弱濒死
     ANIM_DEAD,           // 死亡
     ANIM_DRAG            // 悬空扑腾挣扎
 };
+
 
 
 class PetCore {

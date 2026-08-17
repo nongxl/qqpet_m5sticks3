@@ -49,10 +49,14 @@ void DisplayEngine::toggleMenu() {
 
 void DisplayEngine::updateMenuWithTilt(float tiltX, float tiltY) {
     if (!menuVisible) return;
-    float mag = std::sqrt(tiltX * tiltX + tiltY * tiltY);
+    // 精确对齐 M5StickS3 竖屏 IMU 传感器轴向 (对准 12/3/6/9 点钟方向)
+    float effX = -tiltY;
+    float effY = -tiltX;
+    float mag = std::sqrt(effX * effX + effY * effY);
+
     if (mag > 0.16f) {
         // 计算当前手腕倾斜方位角 (0为正右，PI/2为正下，-PI/2为正上)
-        float angle = std::atan2(tiltY, tiltX);
+        float angle = std::atan2(effY, effX);
         // 图标从正上方 -PI/2 顺时针排列
         float normalizedAngle = angle + (3.14159265f / 2.0f);
         if (normalizedAngle < 0) normalizedAngle += (2.0f * 3.14159265f);
@@ -67,6 +71,7 @@ void DisplayEngine::updateMenuWithTilt(float tiltX, float tiltY) {
         }
     }
 }
+
 
 void DisplayEngine::nextMenuOption() {
     currentOption = static_cast<MenuOption>((static_cast<int>(currentOption) + 1) % MENU_COUNT);
@@ -150,10 +155,10 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
     // 2. 绘制顶部信息栏
     drawTopBar();
 
-    // 3. 计算企鹅位置 (当右侧菜单展开时，企鹅平滑向左让位)
-    int shiftLeft = static_cast<int>(menuSlideProgress * 38.0f);
-    int petX = (SCREEN_W / 2) - shiftLeft + petOffsetX;
+    // 3. 计算企鹅位置 (圆圈菜单模式下企鹅端坐在圆心正中央)
+    int petX = (SCREEN_W / 2) + petOffsetX;
     int petY = 158 + petOffsetY;
+
     
     PetAnimState anim = g_pet.getCurrentAnimState();
     if (isDragging) {

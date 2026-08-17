@@ -34,9 +34,14 @@ static const CostumeItem COSTUME_LIST[] = {
     {5, "萌粉蝴蝶结", "bow_pink.png", 1, 90, 12, "甜美可爱MM最爱"},
     {6, "尊贵黄金皇冠", "hat_crown.png", 0, 300, 50, "王者荣耀闪闪发光"},
     {7, "探险家小背包", "pack_explorer.png", 2, 100, 15, "环游世界必备行囊"},
-    {8, "魔法星月魔杖", "wand_magic.png", 2, 180, 25, "神秘梦幻星月魔力"}
+    {8, "魔法星月魔杖", "wand_magic.png", 2, 180, 25, "神秘梦幻星月魔力"},
+    {9, "圣诞狂欢红帽", "hat_xmas.png", 0, 160, 22, "欢庆圣诞毛绒红帽"},
+    {10, "神秘巫师高帽", "hat_wizard.png", 0, 220, 35, "星月暗夜魔法巫师"},
+    {11, "七彩飘空气球", "prop_balloon.png", 2, 110, 18, "梦幻童年随身气球"},
+    {12, "晴雨折叠遮阳伞", "prop_umbrella.png", 2, 130, 20, "遮阳挡雨户外神器"}
 };
 static const int COSTUME_COUNT = sizeof(COSTUME_LIST) / sizeof(COSTUME_LIST[0]);
+
 
 
 // 宠物完整状态模型

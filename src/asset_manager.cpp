@@ -63,16 +63,23 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 8;
             return "stand";
         case ANIM_IDLE_LOOK:
+            outFps = 10;
+            return "play"; // 雏鸟/幼年抛玩球动作
         case ANIM_IDLE_BOUNCE:
         case ANIM_HAPPY:
             outFps = 10;
-            return "happy";
+            return "happy"; // 欢快蹦跳
         case ANIM_IDLE_SCRATCH:
+            outFps = 8;
+            return "stand";
         case ANIM_IDLE_STRETCH:
+            outFps = 10;
+            return "play";
         case ANIM_IDLE_DOZE:
         case ANIM_IDLE_PAT_BELLY:
             outFps = 8;
             return "stand";
+
 
         case ANIM_PLAY:
             outFps = 10;
@@ -116,6 +123,9 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
         case ANIM_CURE:
             outFps = 10;
             return "cure";
+        case ANIM_SLEEP:
+            outFps = 6;
+            return "sleep";
         case ANIM_LEVELUP:
         case ANIM_DRAG:
             outFps = 10;
@@ -124,6 +134,7 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 8;
             return "stand";
     }
+
 }
 
 void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
@@ -239,13 +250,16 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
     // 1. 直接内存解压进行原生逐像素 32 位 Alpha 物理混合
     canvas.drawPng(frame.buffer.data(), frame.buffer.size(), x, y);
 
-    // 2. 动态叠加当前佩戴的头/颈/手持饰品 (随企鹅身体呼吸与律动自然贴合)
-    const PetState& st = g_pet.getState();
-    int centerX = x + 48;
-    int centerY = y + 48;
-    if (st.equipped_head > 0) drawCostume(canvas, st.equipped_head, centerX, centerY, level, currentMillis);
-    if (st.equipped_neck > 0) drawCostume(canvas, st.equipped_neck, centerX, centerY, level, currentMillis);
-    if (st.equipped_hand > 0) drawCostume(canvas, st.equipped_hand, centerX, centerY, level, currentMillis);
+    // 2. 动态叠加当前佩戴的头/颈/手持饰品 (仅幼年期与成年期支持，雏鸟蛋壳期不叠加)
+    if (level >= 5) {
+        const PetState& st = g_pet.getState();
+        int centerX = x + 48;
+        int centerY = y + 48;
+        if (st.equipped_head > 0) drawCostume(canvas, st.equipped_head, centerX, centerY, level, currentMillis);
+        if (st.equipped_neck > 0) drawCostume(canvas, st.equipped_neck, centerX, centerY, level, currentMillis);
+        if (st.equipped_hand > 0) drawCostume(canvas, st.equipped_hand, centerX, centerY, level, currentMillis);
+    }
+
 }
 
 

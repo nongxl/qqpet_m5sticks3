@@ -9,6 +9,7 @@
 #include "network_manager.h"
 #include "web_server_portal.h"
 #include "ai_client.h"
+#include "sound_manager.h"
 #include "game_data.h"
 #include "mini_game_manager.h"
 
@@ -17,6 +18,8 @@
 static uint32_t lastDecayTime = 0;
 static uint32_t lastSaveTime = 0;
 static uint32_t lastIdleQuoteTime = 0;
+static uint32_t lastUserInteractTime = 0; // 用户最后一次操作时间
+
 
 // 拖拽模式
 static bool isDraggingMode = false;
@@ -146,7 +149,8 @@ void setup() {
         }
     }
 
-    // 初始化网络与后台
+    // 初始化声音、网络与后台
+    g_sound.begin();
     g_net.begin();
     g_webPortal.begin();
     g_ai.begin();
@@ -154,12 +158,15 @@ void setup() {
     lastDecayTime = millis();
     lastSaveTime = millis();
     lastIdleQuoteTime = millis();
+    lastUserInteractTime = millis();
 
     // 启动问候气泡 (仅在已领养状态下)
     if (g_pet.isAdopted()) {
+        g_sound.playSound(SOUND_HAPPY);
         g_haptics.trigger(HAPTIC_CLICK);
         g_display.showBubble("主人早上好！我是你的QQ小桌宠~", 4000);
     }
+
 }
 
 void loop() {
@@ -196,11 +203,27 @@ void loop() {
         return;
     }
 
+    uint32_t nowTime = millis();
+    bool isSleeping = (nowTime - lastUserInteractTime > 90000) && !g_pet.isTaskActive() && 
+                      !g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead();
+
+    if (isSleeping) {
+        // 进入睡梦打呼噜状态
+        g_pet.triggerTransientAnim(ANIM_SLEEP, 3000);
+        static uint32_t lastSnoreSoundTime = 0;
+        if (nowTime - lastSnoreSoundTime > 9000) {
+            lastSnoreSoundTime = nowTime;
+            g_sound.playSound(SOUND_SNORE);
+        }
+    }
+
     g_pet.updateAnimState();
 
     // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽 / 游戏主键)
     if (M5.BtnA.wasClicked()) {
+        lastUserInteractTime = nowTime; // 唤醒与重置待机
         if (g_display.isSubScreenOpen()) {
+
             SubScreenMode mode = g_display.getSubScreenMode();
             if (mode == SUB_SCREEN_GAMES) {
                 MiniGameManager::getInstance().onBtnA();
@@ -359,7 +382,9 @@ void loop() {
 
     // 2. 处理按键 BtnB (侧边按键: 呼出菜单 / 轮换切换 / 关闭状态卡片 / 子界面滚动)
     if (M5.BtnB.wasClicked()) {
+        lastUserInteractTime = millis();
         if (g_display.isToastVisible()) {
+
             g_display.closeToast();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isSubScreenOpen()) {

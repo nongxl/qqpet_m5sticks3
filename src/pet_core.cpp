@@ -1,6 +1,8 @@
 #include "pet_core.h"
+#include "sound_manager.h"
 #include <cstring>
 #include <algorithm>
+
 
 PetCore g_pet;
 
@@ -143,12 +145,16 @@ bool PetCore::startTask(PetTaskType type, uint32_t durationSec, String& outMsg) 
 
     int mins = state.task_duration / 60;
     if (type == TASK_WORK) {
+        g_sound.playSound(SOUND_WORK);
         outMsg = String("开始搬砖打工！预计时长: ") + mins + " 分钟。随时按键可提前召回结算！";
     } else if (type == TASK_STUDY) {
+        g_sound.playSound(SOUND_STUDY);
         outMsg = String("开始认真自习！预计时长: ") + mins + " 分钟。智力与学业成长UP！";
     } else if (type == TASK_TRIP) {
+        g_sound.playSound(SOUND_HAPPY);
         outMsg = String("背起行囊旅行！预计时长: ") + mins + " 分钟。尽享神州美景！";
     }
+
     return true;
 }
 
@@ -266,9 +272,11 @@ void PetCore::addGrowth(float val) {
 void PetCore::checkLevelUp(int oldLevel) {
     int curLv = getLevel();
     if (curLv > oldLevel) {
+        g_sound.playSound(SOUND_LEVELUP);
         triggerTransientAnim(ANIM_LEVELUP, 4500);
     }
 }
+
 
 int PetCore::getFoodCount(int foodIndex) const {
     switch (foodIndex) {
@@ -300,11 +308,6 @@ bool PetCore::feedFood(int foodIndex, String& outMsg) {
         return false;
     }
 
-    int count = getFoodCount(foodIndex);
-    if (count <= 0) {
-        outMsg = String(FOOD_LIST[foodIndex].name) + " 库存不足！请前往商城购买。";
-        return false;
-    }
 
     // 扣减库存
     switch (foodIndex) {
@@ -321,6 +324,7 @@ bool PetCore::feedFood(int foodIndex, String& outMsg) {
     }
     addGrowth(15.0f);
     triggerTransientAnim(ANIM_EAT, 3500);
+    g_sound.playSound(SOUND_EAT);
 
     outMsg = String("喂食了[") + FOOD_LIST[foodIndex].name + "]，饱食度 +" + String(FOOD_LIST[foodIndex].hunger_gain) + "！";
     return true;
@@ -345,6 +349,7 @@ bool PetCore::cureWithMed(int medIndex, String& outMsg) {
             return false;
         }
         revive();
+        g_sound.playSound(SOUND_HAPPY);
         outMsg = "使用还魂丹成功复活！";
         return true;
     }
@@ -360,23 +365,28 @@ bool PetCore::cureWithMed(int medIndex, String& outMsg) {
     }
 
     if (strcmp(state.illness, med.target_illness) != 0) {
-        outMsg = String("药不对症！") + med.name + " 主治 " + med.target_illness + "，无法治疗 " + state.illness + "。";
+        outMsg = String("用药不对症！当前患有 [") + state.illness + "]，请选用对症药物。";
         return false;
     }
 
     // 扣减药品
     state.medicines[medIndex].count--;
-    state.health = HEALTH_NORMAL;
+
+    // 治愈疾病
     state.illness[0] = '\0';
-    addGrowth(25.0f);
-    triggerTransientAnim(ANIM_CURE, 3500);
-    outMsg = String("服用[") + med.name + "]，成功治愈了 " + med.target_illness + "！";
+    state.health = HEALTH_NORMAL;
+    state.mood = std::min(state.mood + 300, 1000);
+    addGrowth(20.0f);
+    triggerTransientAnim(ANIM_CURE, 4000);
+    g_sound.playSound(SOUND_HAPPY);
+
+    outMsg = String("对症下药！成功治愈了[") + med.target_illness + "]，健康度恢复满值！";
     return true;
 }
 
 bool PetCore::buyShopProduct(int productIndex, int count, String& outMsg) {
     if (productIndex < 0 || productIndex >= (int)SHOP_PRODUCT_COUNT) {
-        outMsg = "商品不存在！";
+        outMsg = "未知的商品！";
         return false;
     }
     if (count <= 0) count = 1;
@@ -390,6 +400,7 @@ bool PetCore::buyShopProduct(int productIndex, int count, String& outMsg) {
     }
 
     state.coins -= totalCost;
+    g_sound.playSound(SOUND_COIN);
 
     // 分配到对应库存
     if (strcmp(prod.id, "food_fish") == 0) state.food_count += count;
@@ -600,35 +611,17 @@ void PetCore::triggerTransientAnim(PetAnimState anim, uint32_t durationMs) {
 void PetCore::switchRandomIdleAction() {
     // 根据宠物当前心情和状态自主抉择日常动作
     if (isHungry()) {
-        currentIdleSubAction = (random(0, 2) == 0) ? ANIM_IDLE_PAT_BELLY : ANIM_IDLE_STAND;
+        currentIdleSubAction = (random(0, 2) == 0) ? ANIM_IDLE_LOOK : ANIM_IDLE_STAND;
         return;
     }
 
     int r = random(0, 100);
-    if (state.mood >= 800) {
-        // 心情极佳：高概率欢快摇摆(happy)、蹦跳(bounce)或四处张望(look)
-        if (r < 45) {
-            currentIdleSubAction = ANIM_HAPPY;
-        } else if (r < 65) {
-            currentIdleSubAction = ANIM_IDLE_BOUNCE;
-        } else if (r < 80) {
-            currentIdleSubAction = ANIM_IDLE_LOOK;
-        } else {
-            currentIdleSubAction = ANIM_IDLE_STAND;
-        }
+    if (r < 35) {
+        currentIdleSubAction = ANIM_IDLE_STAND;  // 待机呼吸 (stand)
+    } else if (r < 65) {
+        currentIdleSubAction = ANIM_IDLE_LOOK;   // 抛玩球/活泼动作 (play)
     } else {
-        // 平静日常：站立呼吸、张望、抓痒、伸懒腰、打瞌睡
-        if (r < 35) {
-            currentIdleSubAction = ANIM_IDLE_STAND;
-        } else if (r < 55) {
-            currentIdleSubAction = ANIM_IDLE_LOOK;
-        } else if (r < 75) {
-            currentIdleSubAction = ANIM_IDLE_SCRATCH;
-        } else if (r < 90) {
-            currentIdleSubAction = ANIM_IDLE_STRETCH;
-        } else {
-            currentIdleSubAction = ANIM_IDLE_DOZE;
-        }
+        currentIdleSubAction = ANIM_IDLE_BOUNCE; // 欢快蹦跳 (happy)
     }
 }
 
@@ -638,12 +631,13 @@ void PetCore::updateAnimState() {
         transientAnim = ANIM_IDLE_STAND;
     }
 
-    // 自主日常动作轮换 (每 4~6 秒随机切换一次)
-    if (now - lastIdleSwitchTime > (4500 + random(0, 2500))) {
+    // 自主日常动作轮换 (每 3.5~6 秒随机切换一次)
+    if (now - lastIdleSwitchTime > (3500 + random(0, 2500))) {
         lastIdleSwitchTime = now;
         switchRandomIdleAction();
     }
 }
+
 
 PetAnimState PetCore::getCurrentAnimState() const {
     // 1. 死亡状态

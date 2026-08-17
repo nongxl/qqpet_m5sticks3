@@ -1,4 +1,6 @@
 #include "storage_manager.h"
+#include "game_data.h"
+
 
 StorageManager g_storage;
 
@@ -38,9 +40,17 @@ bool StorageManager::loadPetState(PetState& state) {
         }
         if (state.costume_owned_mask == 0) {
             state.costume_owned_mask = (1 << 3) | (1 << 5);
+        }
+        // 如果处于雏鸟蛋壳期，强制清空任何测试残留的饰品穿戴
+        int minG = 0, nextG = 0;
+        int lvl = calculateLevel(state.growth, minG, nextG);
+        if (lvl < 5) {
+            state.equipped_head = 0;
             state.equipped_neck = 0;
+            state.equipped_hand = 0;
         }
         return true;
+
 
 
     }
