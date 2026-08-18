@@ -322,9 +322,14 @@ void loop() {
             g_display.closeWebPortalCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isMenuOpen()) {
-            // 菜单模式下: 确认选中项
+            // 菜单模式下: 确认选中项并执行
             executeMenuAction(g_display.getSelectedMenuOption());
             g_display.closeMenu();
+        } else if (isSleeping) {
+            // 睡眠状态下按键: 温柔唤醒小企鹅
+            g_sound.playSound(SOUND_HAPPY);
+            g_haptics.trigger(HAPTIC_CLICK);
+            g_display.showBubble("唔... 主人把我叫醒啦~ 伸个懒腰！", 4000);
         } else {
             // 待机模式下: 如果正在作业，按 A 键召回结算；否则摸摸互动
             if (g_pet.isTaskActive()) {
@@ -340,9 +345,6 @@ void loop() {
         }
     }
 
-
-
-
     // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾
     static bool dragStarted = false;
     static float baseTiltX = 0;
@@ -350,7 +352,7 @@ void loop() {
     static float smoothOffsetX = 0;
     static float smoothOffsetY = 0;
 
-    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen() && !g_display.isSubScreenOpen()) {
+    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen() && !g_display.isSubScreenOpen() && !isSleeping) {
         if (!dragStarted) {
             dragStarted = true;
             baseTiltX = g_imu.getTiltX();
@@ -380,11 +382,10 @@ void loop() {
         dragOffsetY = 0;
     }
 
-    // 2. 处理按键 BtnB (侧边按键: 呼出菜单 / 轮换切换 / 关闭状态卡片 / 子界面滚动)
+    // 2. 处理按键 BtnB (侧边按键: 呼出/顺时针轮换菜单 / 关闭状态卡片 / 子界面滚动)
     if (M5.BtnB.wasClicked()) {
         lastUserInteractTime = millis();
         if (g_display.isToastVisible()) {
-
             g_display.closeToast();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isSubScreenOpen()) {
@@ -395,23 +396,23 @@ void loop() {
                 g_haptics.trigger(HAPTIC_CLICK);
             }
         } else if (g_display.isStatusCardOpen()) {
-
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
+        } else if (g_display.isMenuOpen()) {
+            // 菜单已打开状态下: 短按 BtnB 顺时针选择下一项 (清脆微触感)
+            g_display.nextMenuOption();
+            g_haptics.trigger(HAPTIC_CLICK);
         } else {
+            // 菜单未打开: 短按 BtnB 呼出环绕圆圈菜单
             isDraggingMode = false;
             g_display.setDragging(false);
             dragOffsetX = 0;
             dragOffsetY = 0;
-
-            if (g_display.isMenuOpen()) {
-                g_display.closeMenu();
-            } else {
-                g_display.toggleMenu();
-            }
+            g_display.openMenu();
             g_haptics.trigger(HAPTIC_CLICK);
         }
     } else if (M5.BtnB.wasHold()) {
+        lastUserInteractTime = millis();
         if (g_display.isSubScreenOpen()) {
             if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
                 MiniGameManager::getInstance().stopGame();
@@ -422,28 +423,34 @@ void loop() {
             g_display.closeStatusCard();
             g_haptics.trigger(HAPTIC_CLICK);
         } else if (g_display.isMenuOpen()) {
+            // 菜单模式下长按 BtnB: 关闭菜单
             g_display.closeMenu();
             g_haptics.trigger(HAPTIC_CLICK);
         }
     }
 
-    // 3. 处理 IMU 姿态与体感更新 (小游戏驱动 / 环形菜单倾斜选择 / 待机摇一摇)
+    // 3. 处理 IMU 姿态与体感更新 (小游戏驱动 / 待机摇一摇)
     if (g_display.getSubScreenMode() == SUB_SCREEN_GAMES) {
         g_imu.update();
         MiniGameManager::getInstance().update(g_imu.getTiltX(), g_imu.getTiltY(), g_imu.getAccelZ());
     } else if (g_display.isMenuOpen()) {
+        // 菜单模式已改回纯按键选择，不再调用 IMU 倾斜扰乱选项
         g_imu.update();
-        g_display.updateMenuWithTilt(g_imu.getTiltX(), g_imu.getTiltY());
     } else {
         ImuEventType imuEvt = g_imu.update();
         if (imuEvt == IMU_EVENT_SHAKE) {
-            g_pet.play(80);
-            g_haptics.trigger(HAPTIC_SUCCESS);
-            g_ai.requestDialog("happy");
+            lastUserInteractTime = millis();
+            if (isSleeping) {
+                g_sound.playSound(SOUND_HAPPY);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_display.showBubble("哇！被晃醒啦~ 揉揉眼睛！", 4000);
+            } else if (!g_pet.isTaskActive()) {
+                g_pet.play(80);
+                g_haptics.trigger(HAPTIC_SUCCESS);
+                g_ai.requestDialog("happy");
+            }
         }
     }
-
-
 
     // 4. 定时状态衰减 (每 30 秒递减一次属性)
     uint32_t now = millis();
@@ -453,11 +460,30 @@ void loop() {
         lastDecayTime = now;
     }
 
-    // 5. 待机状态下自主自言自语 (每 35~55 秒随机触发)
+    // 5. 待机状态下自主自言自语 (每 35~55 秒随机触发，严格对齐当前场景)
     if (now - lastIdleQuoteTime > (35000 + random(0, 20000))) {
         lastIdleQuoteTime = now;
-        if (!g_display.isMenuOpen() && !g_pet.isDead()) {
-            if (g_pet.isSick()) {
+        if (!g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead()) {
+            if (isSleeping) {
+                // 睡梦打呼噜中：只显示可爱的梦呓
+                static const char* SLEEP_QUOTES[] = {
+                    "呼噜噜... (梦到大龙虾了)",
+                    "zzZ... 呼呼...",
+                    "梦里考了100分... 嘿嘿",
+                    "唔... 别抢我的小鱼干... zzZ",
+                    "呼... 呼... 睡得好香~"
+                };
+                g_display.showBubble(SLEEP_QUOTES[random(0, 5)], 3500);
+            } else if (g_pet.isTaskActive()) {
+                // 作业中根据具体任务情境发言
+                if (g_pet.getState().current_task == TASK_WORK) {
+                    g_display.showBubble("搬砖加油中！为了赚元宝~", 3500);
+                } else if (g_pet.getState().current_task == TASK_STUDY) {
+                    g_display.showBubble("书中自有黄金屋~ 正在专心自习！", 3500);
+                } else if (g_pet.getState().current_task == TASK_TRIP) {
+                    g_display.showBubble("神州大地的风景真美呀~", 3500);
+                }
+            } else if (g_pet.isSick()) {
                 g_display.showBubble(getRandomClassicQuote("sick"), 4000);
             } else if (g_pet.isHungry() || g_pet.isDirty()) {
                 g_display.showBubble(getRandomClassicQuote("idle"), 4000);
@@ -467,12 +493,11 @@ void loop() {
         }
     }
 
-
-    // 6. 定时自动壁纸漫游换景 (每 10~15 分钟企鹅自动探索新场景，完全脱离手机)
+    // 6. 定时自动壁纸漫游换景 (每 10~15 分钟企鹅自动探索新场景，仅在清醒待机时漫游)
     static uint32_t lastAutoBgTime = millis();
     if (now - lastAutoBgTime > (10 * 60 * 1000 + random(0, 5 * 60 * 1000))) {
         lastAutoBgTime = now;
-        if (!g_display.isMenuOpen() && !g_pet.isDead()) {
+        if (!g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead() && !isSleeping && !g_pet.isTaskActive()) {
             static const char* SCENE_NAMES[] = {
                 "经典桌面", "阳光草地", "森林小道", "浪漫海滩", "夜幕星空",
                 "企鹅客厅", "梦幻冰屋", "落叶枫林", "童话乐园", "蔚蓝深海",
@@ -487,6 +512,7 @@ void loop() {
             g_display.showBubble(String("企鹅散步来到了【") + sName + "】~", 4000);
         }
     }
+
 
     // 7. 定时持久化存档 (每 60 秒自动写入 Flash)
     if (now - lastSaveTime >= 60000) {

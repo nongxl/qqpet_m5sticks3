@@ -18,13 +18,12 @@ public:
     void playTone(uint16_t freq, uint16_t durationMs);
 
 private:
-    void setVibration(bool on);
+    void setVibrationPWM(uint8_t pwmLevel);
 
     HapticPattern currentPattern;
     uint32_t stepStartTime;
     int stepIndex;
     bool isRunning;
 };
-
 
 extern HapticsEngine g_haptics;

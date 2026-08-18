@@ -610,18 +610,32 @@ void PetCore::triggerTransientAnim(PetAnimState anim, uint32_t durationMs) {
 
 void PetCore::switchRandomIdleAction() {
     // 根据宠物当前心情和状态自主抉择日常动作
-    if (isHungry()) {
-        currentIdleSubAction = (random(0, 2) == 0) ? ANIM_IDLE_LOOK : ANIM_IDLE_STAND;
+    if (isHungry() || isDirty()) {
+        currentIdleSubAction = (random(0, 3) == 0) ? ANIM_IDLE_LOOK : ANIM_IDLE_STAND;
         return;
     }
 
+    int curLv = getLevel();
     int r = random(0, 100);
-    if (r < 35) {
-        currentIdleSubAction = ANIM_IDLE_STAND;  // 待机呼吸 (stand)
-    } else if (r < 65) {
-        currentIdleSubAction = ANIM_IDLE_LOOK;   // 抛玩球/活泼动作 (play)
+
+    if (curLv < 5) {
+        // 宝宝/雏鸟期：以安静可爱的萌态呼吸站立为主 (75%)，偶尔轻微摇晃或小跳
+        if (r < 75) {
+            currentIdleSubAction = ANIM_IDLE_STAND;
+        } else if (r < 90) {
+            currentIdleSubAction = ANIM_IDLE_LOOK;   // 摇晃扑腾
+        } else {
+            currentIdleSubAction = ANIM_IDLE_BOUNCE; // 开心小跳
+        }
     } else {
-        currentIdleSubAction = ANIM_IDLE_BOUNCE; // 欢快蹦跳 (happy)
+        // 幼年及成年期：动作更丰富多元
+        if (r < 50) {
+            currentIdleSubAction = ANIM_IDLE_STAND;
+        } else if (r < 80) {
+            currentIdleSubAction = ANIM_IDLE_LOOK;
+        } else {
+            currentIdleSubAction = ANIM_IDLE_BOUNCE;
+        }
     }
 }
 
@@ -631,12 +645,16 @@ void PetCore::updateAnimState() {
         transientAnim = ANIM_IDLE_STAND;
     }
 
-    // 自主日常动作轮换 (每 3.5~6 秒随机切换一次)
-    if (now - lastIdleSwitchTime > (3500 + random(0, 2500))) {
+    // 自主日常动作轮换 (宝宝期 8~14 秒切换一次，成年期 6~10 秒，节奏从容自然)
+    int curLv = getLevel();
+    uint32_t interval = (curLv < 5) ? (8000 + random(0, 6000)) : (5000 + random(0, 4000));
+
+    if (now - lastIdleSwitchTime > interval) {
         lastIdleSwitchTime = now;
         switchRandomIdleAction();
     }
 }
+
 
 
 PetAnimState PetCore::getCurrentAnimState() const {

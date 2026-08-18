@@ -54,14 +54,15 @@ public:
     // 气泡对话控制
     void showBubble(const String& text, uint32_t durationMs = 4500);
     
-    // 菜单控制 (环绕企鹅圆圈菜单 + 重力感应选择)
+    // 菜单控制 (环绕企鹅圆圈菜单 + BtnB 顺时针按键切换)
+    void openMenu();
+    void closeMenu();
     void toggleMenu();
-    void updateMenuWithTilt(float tiltX, float tiltY);
     void nextMenuOption();
     void prevMenuOption();
-    void closeMenu();
     bool isMenuOpen() const { return menuVisible; }
     MenuOption getSelectedMenuOption() const { return currentOption; }
+
 
 
     // 拖拽悬空状态

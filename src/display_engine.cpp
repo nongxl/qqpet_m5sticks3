@@ -42,34 +42,18 @@ void DisplayEngine::showToast(const String& msg, uint32_t durationMs) {
     toastEndTime = millis() + durationMs;
 }
 
-void DisplayEngine::toggleMenu() {
-    menuVisible = !menuVisible;
+void DisplayEngine::openMenu() {
+    menuVisible = true;
     menuLastActiveTime = millis();
 }
 
-void DisplayEngine::updateMenuWithTilt(float tiltX, float tiltY) {
-    if (!menuVisible) return;
-    // 精确对齐 M5StickS3 竖屏 IMU 传感器轴向 (对准 12/3/6/9 点钟方向)
-    float effX = -tiltY;
-    float effY = -tiltX;
-    float mag = std::sqrt(effX * effX + effY * effY);
+void DisplayEngine::closeMenu() {
+    menuVisible = false;
+}
 
-    if (mag > 0.16f) {
-        // 计算当前手腕倾斜方位角 (0为正右，PI/2为正下，-PI/2为正上)
-        float angle = std::atan2(effY, effX);
-        // 图标从正上方 -PI/2 顺时针排列
-        float normalizedAngle = angle + (3.14159265f / 2.0f);
-        if (normalizedAngle < 0) normalizedAngle += (2.0f * 3.14159265f);
-        
-        float sector = (2.0f * 3.14159265f) / static_cast<float>(MENU_COUNT);
-        int nearestIdx = static_cast<int>(std::round(normalizedAngle / sector)) % MENU_COUNT;
-        
-        if (nearestIdx != static_cast<int>(currentOption)) {
-            currentOption = static_cast<MenuOption>(nearestIdx);
-            menuLastActiveTime = millis();
-            g_haptics.trigger(HAPTIC_CLICK);
-        }
-    }
+void DisplayEngine::toggleMenu() {
+    menuVisible = !menuVisible;
+    menuLastActiveTime = millis();
 }
 
 
@@ -83,9 +67,6 @@ void DisplayEngine::prevMenuOption() {
     menuLastActiveTime = millis();
 }
 
-void DisplayEngine::closeMenu() {
-    menuVisible = false;
-}
 
 
 void DisplayEngine::openSubScreen(SubScreenMode mode) {
@@ -402,17 +383,15 @@ void DisplayEngine::drawRightBubbleMenu() {
     int tagW = canvas.textWidth(label) + 16;
     int tagH = 20;
     int tagX = (SCREEN_W - tagW) / 2;
-    int tagY = SCREEN_H - 42;
+    int tagY = SCREEN_H - 32;
+
 
     canvas.fillRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(30, 45, 65));
     canvas.drawRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(255, 215, 80));
     canvas.setTextColor(canvas.color565(255, 240, 120));
     canvas.drawCenterString(label, SCREEN_W / 2, tagY + 4);
-
-    // 底部操作指引
-    canvas.setTextColor(canvas.color565(70, 95, 125));
-    canvas.drawCenterString("倾斜选择 | A确认 | B关闭", SCREEN_W / 2, SCREEN_H - 18);
 }
+
 
 
 
