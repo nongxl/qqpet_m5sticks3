@@ -519,91 +519,83 @@ void DisplayEngine::drawToast() {
     // 3. 如果用户选择了【宠物状态】，在上方状态栏下方(Y=26)弹出精致全维属性状态卡片 (常驻显示，按任意键关闭)
     if (statusCardVisible) {
         int boxX = 4;
-        int boxW = SCREEN_W - 8; // 127
-        int boxY = 26;           // 位于顶部状态栏(0~24)正下方，上方视野开阔不遮挡底部企鹅
-        int boxH = 76;
+        int boxW = SCREEN_W - 8; // 127px
+        int boxY = 24;           // 紧贴顶部状态栏下方
+        int boxH = 86;
 
         const PetState& st = g_pet.getState();
         int minG = 0, nextG = 0;
         int level = calculateLevel(st.growth, minG, nextG);
 
-        // 高级毛玻璃浅蓝卡片底座
-        canvas.fillRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(242, 248, 255));
+        // 高级浅蓝毛玻璃卡片底座 + 柔和边框
+        canvas.fillRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(245, 250, 255));
         canvas.drawRoundRect(boxX, boxY, boxW, boxH, 6, canvas.color565(130, 180, 235));
 
         canvas.setFont(&fonts::efontCN_12);
-        canvas.setTextSize(1);
 
-        // 1. 第一行 (Y=30): 等级、性别与经验进度条
-        canvas.setTextColor(canvas.color565(20, 60, 120));
-        String lvStr = "Lv." + String(level) + ((st.gender == 1) ? "(MM)" : "(GG)");
+        // 1. 第一行 (Y=28): 等级性别 (左) + 经验进度条 (右)
+        canvas.setTextColor(canvas.color565(20, 60, 130));
+        String lvStr = "Lv." + String(level) + ((st.gender == 1) ? " (MM)" : " (GG)");
         canvas.drawString(lvStr, boxX + 5, boxY + 4);
 
         int expRange = (nextG > minG) ? (nextG - minG) : 100;
         int curExp = static_cast<int>(st.growth) - minG;
         if (curExp < 0) curExp = 0;
-        int expBarW = (curExp * 36) / expRange;
-        if (expBarW > 36) expBarW = 36;
+        int expBarW = (curExp * 32) / expRange;
+        if (expBarW > 32) expBarW = 32;
 
-        canvas.setTextColor(canvas.color565(100, 110, 130));
+        canvas.setTextColor(canvas.color565(90, 110, 130));
         canvas.drawString("EXP", boxX + 60, boxY + 4);
-        canvas.fillRoundRect(boxX + 83, boxY + 6, 36, 7, 3, canvas.color565(215, 225, 235));
-        canvas.fillRoundRect(boxX + 83, boxY + 6, expBarW, 7, 3, canvas.color565(80, 175, 255));
+        canvas.fillRoundRect(boxX + 85, boxY + 6, 34, 6, 3, canvas.color565(215, 225, 235));
+        canvas.fillRoundRect(boxX + 85, boxY + 6, expBarW, 6, 3, canvas.color565(60, 160, 255));
 
-        // 2. 第二行 (Y=46): 饱食度条 (左) + 清洁度条 (右)
+        // 2. 第二行 (Y=48): 饱食度条 (左) + 清洁度条 (右)
         int hMax = g_pet.getMaxHunger();
         int cMax = g_pet.getMaxClean();
-        int hungerW = (hMax > 0) ? (st.hunger * 28 / hMax) : 0;
-        int cleanW = (cMax > 0) ? (st.clean * 28 / cMax) : 0;
-        if (hungerW > 28) hungerW = 28;
-        if (cleanW > 28) cleanW = 28;
+        int hungerW = (hMax > 0) ? (st.hunger * 26 / hMax) : 0;
+        int cleanW = (cMax > 0) ? (st.clean * 26 / cMax) : 0;
+        if (hungerW > 26) hungerW = 26;
+        if (cleanW > 26) cleanW = 26;
 
-        canvas.setTextColor(canvas.color565(220, 100, 30));
-        canvas.drawString("饱", boxX + 5, boxY + 22);
-        canvas.fillRoundRect(boxX + 20, boxY + 24, 28, 7, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 20, boxY + 24, hungerW, 7, 3, g_pet.isHungry() ? TFT_RED : canvas.color565(255, 140, 0));
+        canvas.setTextColor(canvas.color565(220, 90, 10));
+        canvas.drawString("饱", boxX + 5, boxY + 24);
+        canvas.fillRoundRect(boxX + 20, boxY + 26, 26, 6, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 20, boxY + 26, hungerW, 6, 3, g_pet.isHungry() ? TFT_RED : canvas.color565(255, 140, 0));
 
-        canvas.setTextColor(canvas.color565(30, 120, 220));
-        canvas.drawString("洁", boxX + 60, boxY + 22);
-        canvas.fillRoundRect(boxX + 75, boxY + 24, 28, 7, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 75, boxY + 24, cleanW, 7, 3, g_pet.isDirty() ? TFT_RED : canvas.color565(40, 160, 255));
+        canvas.setTextColor(canvas.color565(20, 120, 220));
+        canvas.drawString("洁", boxX + 60, boxY + 24);
+        canvas.fillRoundRect(boxX + 75, boxY + 26, 26, 6, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 75, boxY + 26, cleanW, 6, 3, g_pet.isDirty() ? TFT_RED : canvas.color565(40, 160, 255));
 
-        // 3. 第三行 (Y=62): 心情条 (左) + 智力与元宝 (右)
-        int moodW = st.mood * 28 / 1000;
-        if (moodW > 28) moodW = 28;
+        // 3. 第三行 (Y=68): 心情条 (左) + 智力与元宝 (右)
+        int moodW = st.mood * 26 / 1000;
+        if (moodW > 26) moodW = 26;
 
-        canvas.setTextColor(canvas.color565(220, 60, 120));
-        canvas.drawString("心", boxX + 5, boxY + 40);
-        canvas.fillRoundRect(boxX + 20, boxY + 42, 28, 7, 3, canvas.color565(215, 220, 225));
-        canvas.fillRoundRect(boxX + 20, boxY + 42, moodW, 7, 3, (st.mood < MOOD_THRESHOLD) ? TFT_RED : canvas.color565(255, 90, 150));
+        canvas.setTextColor(canvas.color565(220, 50, 110));
+        canvas.drawString("心", boxX + 5, boxY + 44);
+        canvas.fillRoundRect(boxX + 20, boxY + 46, 26, 6, 3, canvas.color565(215, 220, 225));
+        canvas.fillRoundRect(boxX + 20, boxY + 46, moodW, 6, 3, (st.mood < MOOD_THRESHOLD) ? TFT_RED : canvas.color565(255, 80, 140));
 
-        canvas.setTextColor(canvas.color565(60, 70, 90));
-        String intelStr = "智" + String(st.intellect);
-        canvas.drawString(intelStr, boxX + 54, boxY + 40);
+        canvas.setTextColor(canvas.color565(50, 70, 90));
+        canvas.drawString("智" + String(st.intellect), boxX + 54, boxY + 44);
 
-        // 绘制 10x8 精致金元宝矢量小图标 (金黄元宝底座 + 椭圆金顶高光)
-        int coinX = boxX + 88;
-        int coinY = boxY + 42;
-        canvas.fillRoundRect(coinX, coinY + 2, 10, 5, 2, canvas.color565(255, 185, 0));
-        canvas.fillCircle(coinX + 5, coinY + 2, 2, canvas.color565(255, 235, 90));
-        canvas.drawRoundRect(coinX, coinY + 2, 10, 5, 2, canvas.color565(210, 140, 0));
+        canvas.setTextColor(canvas.color565(210, 130, 0));
+        canvas.drawString(String(st.coins) + "Y", boxX + 90, boxY + 44);
 
-        String coinStr = String(st.coins);
-        canvas.drawString(coinStr, coinX + 13, boxY + 40);
-
-        // 4. 第四行 (Y=78): 健康状态/疾病
+        // 4. 第四行 (Y=88): 健康状态/疾病
         if (g_pet.isDead()) {
             canvas.setTextColor(TFT_RED);
-            canvas.drawString("● 状态: 已死亡(需还魂丹)", boxX + 5, boxY + 58);
+            canvas.drawString("● 状态: 已死亡(需还魂丹)", boxX + 5, boxY + 64);
         } else if (g_pet.isSick()) {
-            canvas.setTextColor(canvas.color565(220, 90, 0));
-            canvas.drawString(String("● 生病: ") + st.illness + " (请吃药)", boxX + 5, boxY + 58);
+            canvas.setTextColor(canvas.color565(220, 80, 0));
+            canvas.drawString(String("● 生病: ") + st.illness + " (需吃药)", boxX + 5, boxY + 64);
         } else {
-            canvas.setTextColor(canvas.color565(30, 150, 60));
-            canvas.drawString("● 状态: 极健康活泼", boxX + 5, boxY + 58);
+            canvas.setTextColor(canvas.color565(20, 150, 50));
+            canvas.drawString("● 状态: 健康活泼", boxX + 5, boxY + 64);
         }
         return;
     }
+
 
 
     // 4. 默认状态：完全不绘制，保持主屏纯净
@@ -717,43 +709,42 @@ void DisplayEngine::renderSubScreen() {
 
     int totalItems = 0;
     if (subMode == SUB_SCREEN_FEED) {
-        titleStr = "【食物背包】";
+        titleStr = "食物背包";
         rightInfoStr = "饱食:" + String(st.hunger);
         totalItems = FOOD_COUNT + 1;
     } else if (subMode == SUB_SCREEN_CURE) {
-        titleStr = "【对症药箱】";
-        rightInfoStr = g_pet.isSick() ? String("病:") + st.illness : (g_pet.isDead() ? "已死亡" : "健康");
+        titleStr = "对症药箱";
+        rightInfoStr = g_pet.isSick() ? String(st.illness) : "健康";
         totalItems = MEDICINE_COUNT + 1;
     } else if (subMode == SUB_SCREEN_SHOP) {
-        titleStr = "【元宝商城】";
-        rightInfoStr = String(st.coins) + " 元宝";
+        titleStr = "元宝商城";
+        rightInfoStr = String(st.coins) + " Y";
         totalItems = SHOP_PRODUCT_COUNT + 1;
     } else if (subMode == SUB_SCREEN_WORK) {
-        titleStr = "【打工搬砖】";
-        rightInfoStr = "收益:6Y/分";
+        titleStr = "打工搬砖";
+        rightInfoStr = "+6Y/分";
         totalItems = 4 + 1; // 4个档位 + 退出项
     } else if (subMode == SUB_SCREEN_STUDY) {
-        titleStr = "【认真自习】";
-        rightInfoStr = "智力+经验";
+        titleStr = "认真自习";
+        rightInfoStr = "+智力";
         totalItems = 4 + 1;
     } else if (subMode == SUB_SCREEN_TRIP) {
-        titleStr = "【背包旅行】";
-        rightInfoStr = "路费:80Y";
+        titleStr = "背包旅行";
+        rightInfoStr = "80Y/次";
         totalItems = 4 + 1;
     } else if (subMode == SUB_SCREEN_WARDROBE) {
-        titleStr = "【👗 企鹅衣橱】";
+        titleStr = "企鹅衣橱";
         rightInfoStr = "魅力:" + String(st.charm);
         totalItems = COSTUME_COUNT + 1;
     }
 
-
     canvas.setTextColor(canvas.color565(255, 220, 80));
-    canvas.drawString(titleStr, 6, 6);
+    canvas.drawString(titleStr, 8, 6);
     canvas.setTextColor(TFT_WHITE);
-    canvas.drawRightString(rightInfoStr, SCREEN_W - 6, 6);
+    canvas.drawRightString(rightInfoStr, SCREEN_W - 8, 6);
 
-    // 3. 中部滚动卡片列表 (Y=28 ~ 212, 每张卡片高 36px, 同时显示 4 项)
-    int cardH = 36;
+    // 3. 中部滚动卡片列表 (Y=28 ~ 202, 每张卡片高 42px, 左侧带 20x20 素材图标)
+    int cardH = 42;
     int visibleCount = 4;
     int startIdx = 0;
     if (subIndex >= visibleCount) {
@@ -770,10 +761,10 @@ void DisplayEngine::renderSubScreen() {
         const char* studyDesc;
         const char* tripDesc;
     } TASK_OPTS[] = {
-        {5, "5 分钟 (快速体验)", "+30 元宝 / +7 经验", "+2 智力 / +6 经验", "漫游周边，心情满格"},
-        {15, "15 分钟 (标准作业)", "+90 元宝 / +22 经验", "+7 智力 / +18 经验", "风景名胜，带回特产"},
-        {30, "30 分钟 (深度沉浸)", "+180 元宝 / +45 经验", "+15 智力 / +36 经验", "跨省漫游，结交好友"},
-        {60, "60 分钟 (长效挂机)", "+360 元宝 / +90 经验", "+30 智力 / +72 经验", "神州漫步，豪华特产"}
+        {5, "5分钟 体验", "+30元宝 / +7经验", "+2智力 / +6经验", "近郊漫游/心情满"},
+        {15, "15分钟 标准", "+90元宝 / +22经验", "+7智力 / +18经验", "名胜名产/心情满"},
+        {30, "30分钟 进阶", "+180元宝 / +45经验", "+15智力 / +36经验", "跨省漫步/特产UP"},
+        {60, "60分钟 挂机", "+360元宝 / +90经验", "+30智力 / +72经验", "神州漫步/特产丰"}
     };
 
     int startY = 28;
@@ -797,33 +788,35 @@ void DisplayEngine::renderSubScreen() {
 
         // 最后一项是退出项
         if (idx == totalItems - 1) {
-            canvas.setTextColor(isSelected ? canvas.color565(220, 50, 50) : canvas.color565(120, 130, 140));
-            canvas.drawCenterString("[ 退出返回桌面 ]", SCREEN_W / 2, curY + 11);
+            canvas.setTextColor(isSelected ? canvas.color565(220, 40, 40) : canvas.color565(110, 125, 140));
+            canvas.drawCenterString("[ 退出返回桌面 ]", SCREEN_W / 2, curY + 14);
             continue;
         }
 
-        // 绘制具体数据项
+        // 绘制具体数据项 (全宽清爽排版)
+        int textX = boxX + 6;
+
         if (subMode == SUB_SCREEN_FEED) {
             const auto& food = FOOD_LIST[idx];
             int count = g_pet.getFoodCount(idx);
 
-            // 第一行：食物名称 + 拥有数量
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
-            canvas.drawString(food.name, boxX + 6, curY + 4);
+            // 第一行 (Y+4): 食物名称 (左) + 拥有数量 (右)
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+            canvas.drawString(food.name, textX, curY + 4);
 
             if (count > 0) {
-                canvas.setTextColor(canvas.color565(20, 140, 40));
-                canvas.drawRightString("拥有:" + String(count), boxX + boxW - 6, curY + 4);
+                canvas.setTextColor(canvas.color565(15, 140, 40));
+                canvas.drawRightString("余:" + String(count), boxX + boxW - 6, curY + 4);
             } else {
-                canvas.setTextColor(canvas.color565(220, 60, 60));
+                canvas.setTextColor(canvas.color565(220, 50, 50));
                 canvas.drawRightString("缺货", boxX + boxW - 6, curY + 4);
             }
 
-            // 第二行：属性加成
-            canvas.setTextColor(isSelected ? canvas.color565(200, 100, 0) : canvas.color565(140, 150, 160));
+            // 第二行 (Y+22): 属性加成
+            canvas.setTextColor(isSelected ? canvas.color565(200, 90, 0) : canvas.color565(130, 140, 155));
             String effectStr = "+" + String(food.hunger_gain) + "饱食";
-            if (food.mood_gain > 0) effectStr += "/+" + String(food.mood_gain) + "心";
-            canvas.drawString(effectStr, boxX + 6, curY + 19);
+            if (food.mood_gain > 0) effectStr += " / +" + String(food.mood_gain) + "心";
+            canvas.drawString(effectStr, textX, curY + 22);
 
         } else if (subMode == SUB_SCREEN_CURE) {
             const auto& med = MEDICINE_LIST[idx];
@@ -831,40 +824,41 @@ void DisplayEngine::renderSubScreen() {
             bool isMatching = (g_pet.isSick() && strcmp(st.illness, med.target_illness) == 0) ||
                               (g_pet.isDead() && strcmp(med.id, "60001") == 0);
 
-            // 第一行：药品名称 + 拥有数量
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
-            canvas.drawString(med.name, boxX + 6, curY + 4);
+            // 第一行 (Y+4): 药品名称 (左) + 拥有数量 (右)
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+            canvas.drawString(med.name, textX, curY + 4);
 
             if (count > 0) {
-                canvas.setTextColor(canvas.color565(20, 140, 40));
-                canvas.drawRightString("拥有:" + String(count), boxX + boxW - 6, curY + 4);
+                canvas.setTextColor(canvas.color565(15, 140, 40));
+                canvas.drawRightString("余:" + String(count), boxX + boxW - 6, curY + 4);
             } else {
-                canvas.setTextColor(canvas.color565(220, 60, 60));
+                canvas.setTextColor(canvas.color565(220, 50, 50));
                 canvas.drawRightString("无药", boxX + boxW - 6, curY + 4);
             }
 
-            // 第二行：主治病症 (对症时高亮绿标)
+            // 第二行 (Y+22): 主治病症
             if (isMatching) {
-                canvas.setTextColor(canvas.color565(0, 160, 50));
-                canvas.drawString("[对症] 主治: " + String(med.target_illness), boxX + 6, curY + 19);
+                canvas.setTextColor(canvas.color565(0, 150, 40));
+                canvas.drawString("[对症] 治" + String(med.target_illness), textX, curY + 22);
             } else {
-                canvas.setTextColor(isSelected ? canvas.color565(180, 90, 0) : canvas.color565(140, 150, 160));
-                canvas.drawString("主治: " + String(med.target_illness), boxX + 6, curY + 19);
+                canvas.setTextColor(isSelected ? canvas.color565(180, 80, 0) : canvas.color565(130, 140, 155));
+                canvas.drawString("主治: " + String(med.target_illness), textX, curY + 22);
             }
 
         } else if (subMode == SUB_SCREEN_SHOP) {
             const auto& prod = SHOP_PRODUCTS[idx];
-            
-            // 第一行：商品名称 + 价格
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
-            canvas.drawString(prod.name, boxX + 6, curY + 4);
 
-            canvas.setTextColor(canvas.color565(220, 120, 0));
+            // 第一行 (Y+4): 商品名称 (左) + 价格 (右)
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+            canvas.drawString(prod.name, textX, curY + 4);
+
+            canvas.setTextColor(canvas.color565(210, 120, 0));
             canvas.drawRightString(String(prod.price) + "Y", boxX + boxW - 6, curY + 4);
 
-            // 第二行：效果描述
-            canvas.setTextColor(isSelected ? canvas.color565(0, 120, 180) : canvas.color565(140, 150, 160));
-            canvas.drawString(prod.desc, boxX + 6, curY + 19);
+            // 第二行 (Y+22): 效果描述
+            canvas.setTextColor(isSelected ? canvas.color565(0, 110, 180) : canvas.color565(130, 140, 155));
+            canvas.drawString(prod.desc, textX, curY + 22);
+
         } else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) {
             const auto& opt = TASK_OPTS[idx];
             int curLv = g_pet.getLevel();
@@ -872,81 +866,91 @@ void DisplayEngine::renderSubScreen() {
                             (subMode == SUB_SCREEN_STUDY && curLv < 5) || 
                             (subMode == SUB_SCREEN_TRIP && curLv < 12);
 
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
-            canvas.drawString(opt.name, boxX + 6, curY + 4);
+            // 第一行 (Y+4): 选项名称 (左) + 锁定/可用状态 (右)
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+            canvas.drawString(opt.name, textX, curY + 4);
 
             if (isLocked) {
-                canvas.setTextColor(canvas.color565(230, 70, 70));
-                canvas.drawRightString((subMode == SUB_SCREEN_TRIP) ? "🔒需Lv.12" : "🔒需Lv.5", boxX + boxW - 6, curY + 4);
-            }
-
-            canvas.setTextColor(isSelected ? canvas.color565(220, 100, 0) : canvas.color565(140, 150, 160));
-            if (isLocked) {
-                canvas.drawString((subMode == SUB_SCREEN_TRIP) ? "成年长成大企鹅后方可远行" : "破壳长大后方可解锁", boxX + 6, curY + 19);
-            } else if (subMode == SUB_SCREEN_WORK) {
-                canvas.drawString(opt.workDesc, boxX + 6, curY + 19);
-            } else if (subMode == SUB_SCREEN_STUDY) {
-                canvas.drawString(opt.studyDesc, boxX + 6, curY + 19);
+                canvas.setTextColor(canvas.color565(230, 40, 40));
+                canvas.drawRightString((subMode == SUB_SCREEN_TRIP) ? "[需Lv.12]" : "[需Lv.5]", boxX + boxW - 6, curY + 4);
             } else {
-                canvas.drawString(opt.tripDesc, boxX + 6, curY + 19);
+                canvas.setTextColor(canvas.color565(20, 140, 40));
+                canvas.drawRightString("可进行", boxX + boxW - 6, curY + 4);
             }
+
+            // 第二行 (Y+22): 任务收益描述
+            if (isLocked) {
+                canvas.setTextColor(canvas.color565(210, 80, 80));
+                canvas.drawString("等级不足 暂未解锁", textX, curY + 22);
+            } else {
+                canvas.setTextColor(isSelected ? canvas.color565(200, 90, 0) : canvas.color565(120, 135, 150));
+                if (subMode == SUB_SCREEN_WORK) {
+                    canvas.drawString(opt.workDesc, textX, curY + 22);
+                } else if (subMode == SUB_SCREEN_STUDY) {
+                    canvas.drawString(opt.studyDesc, textX, curY + 22);
+                } else {
+                    canvas.drawString(opt.tripDesc, textX, curY + 22);
+                }
+            }
+
         } else if (subMode == SUB_SCREEN_WARDROBE) {
-
-
             const auto& c = COSTUME_LIST[idx];
             bool owned = g_pet.ownsCostume(c.id);
             bool isEquipped = (g_pet.getEquippedCostume(c.category) == c.id);
 
-            // 第一行：饰品名称 + 状态/售价
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(60, 80, 100));
-            canvas.drawString(c.name, boxX + 6, curY + 4);
+            // 第一行 (Y+4): 饰品名称 (左) + 穿戴/拥有/价格 (右)
+            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+            canvas.drawString(c.name, textX, curY + 4);
 
             if (isEquipped) {
-                canvas.setTextColor(canvas.color565(0, 160, 60));
-                canvas.drawRightString("✨已戴上", boxX + boxW - 6, curY + 4);
+                canvas.setTextColor(canvas.color565(0, 150, 50));
+                canvas.drawRightString("已戴上", boxX + boxW - 6, curY + 4);
             } else if (owned) {
-                canvas.setTextColor(canvas.color565(20, 120, 220));
+                canvas.setTextColor(canvas.color565(20, 110, 210));
                 canvas.drawRightString("已拥有", boxX + boxW - 6, curY + 4);
             } else {
-                canvas.setTextColor(canvas.color565(220, 120, 0));
+                canvas.setTextColor(canvas.color565(210, 120, 0));
                 canvas.drawRightString(String(c.price) + "Y", boxX + boxW - 6, curY + 4);
             }
 
-            // 第二行：效果与穿戴提示
+            // 第二行 (Y+22): 穿戴与购买提示
             if (isEquipped) {
                 canvas.setTextColor(canvas.color565(0, 140, 50));
-                canvas.drawString("[已穿戴] 魅力+" + String(c.charm_gain) + " (按A脱下)", boxX + 6, curY + 19);
+                canvas.drawString("[已穿戴] 按A脱下", textX, curY + 22);
             } else if (owned) {
-                canvas.setTextColor(isSelected ? canvas.color565(0, 100, 200) : canvas.color565(120, 140, 160));
-                canvas.drawString("魅力+" + String(c.charm_gain) + " (按A戴上)", boxX + 6, curY + 19);
+                canvas.setTextColor(isSelected ? canvas.color565(0, 100, 200) : canvas.color565(110, 130, 150));
+                canvas.drawString("魅力+" + String(c.charm_gain) + " (按A戴上)", textX, curY + 22);
             } else {
-                canvas.setTextColor(isSelected ? canvas.color565(200, 90, 0) : canvas.color565(140, 150, 160));
-                canvas.drawString(c.desc, boxX + 6, curY + 19);
+                canvas.setTextColor(isSelected ? canvas.color565(190, 80, 0) : canvas.color565(130, 140, 155));
+                canvas.drawString(c.desc, textX, curY + 22);
             }
         }
     }
 
-    // 4. 底部操作指引栏 (Y=216 ~ 238)
-    int botY = SCREEN_H - 22;
-    canvas.fillRoundRect(2, botY, SCREEN_W - 4, 20, 4, canvas.color565(30, 45, 65));
-    canvas.drawRoundRect(2, botY, SCREEN_W - 4, 20, 4, canvas.color565(100, 140, 190));
+
+    // 4. 底部操作指引栏 (Y=214 ~ 236，精炼居中排版，舒适不越界)
+    int botY = SCREEN_H - 24;
+    canvas.fillRoundRect(8, botY, SCREEN_W - 16, 22, 5, canvas.color565(30, 45, 65));
+    canvas.drawRoundRect(8, botY, SCREEN_W - 16, 22, 5, canvas.color565(100, 140, 190));
 
     canvas.setTextColor(canvas.color565(255, 220, 80));
     if (subMode == SUB_SCREEN_FEED) {
-        canvas.drawCenterString("BtnB切换 | BtnA喂食", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A喂食", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_CURE) {
-        canvas.drawCenterString("BtnB切换 | BtnA服药", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A服药", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_SHOP) {
-        canvas.drawCenterString("BtnB切换 | BtnA购买", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A购买", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_WORK) {
-        canvas.drawCenterString("BtnB切换 | BtnA开始打工", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A打工", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_STUDY) {
-        canvas.drawCenterString("BtnB切换 | BtnA开始自习", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A自习", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_TRIP) {
-        canvas.drawCenterString("BtnB切换 | BtnA出发漫游", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A漫游", SCREEN_W / 2, botY + 5);
     } else if (subMode == SUB_SCREEN_WARDROBE) {
-        canvas.drawCenterString("BtnB切换 | BtnA穿脱/购买", SCREEN_W / 2, botY + 4);
+        canvas.drawCenterString("B切换 | A穿戴", SCREEN_W / 2, botY + 5);
     }
+
+
 
 }
 

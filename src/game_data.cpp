@@ -68,7 +68,8 @@ const size_t FOOD_COUNT = sizeof(FOOD_LIST) / sizeof(FOOD_LIST[0]);
 
 // 商城商品全量列表 (衣橱、食物、清洁与药品)
 const ShopProductInfo SHOP_PRODUCTS[] = {
-    {"wardrobe", "👗 企鹅衣橱", "试穿/穿戴/购买饰品", 0, "wardrobe"},
+    {"wardrobe", "企鹅衣橱", "试穿/穿戴/购买饰品", 0, "wardrobe"},
+
     {"food_fish", "小鱼干", "饱食+400", 10, "food"},
 
     {"food_salmon", "鲜嫩三文鱼", "饱食+1000", 25, "food"},

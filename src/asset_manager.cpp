@@ -63,22 +63,23 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 8;
             return "stand";
         case ANIM_IDLE_LOOK:
-            outFps = 10;
-            return "play"; // 雏鸟/幼年抛玩球动作
+            outFps = 8;
+            return "look"; // 左右歪头打量主人
+        case ANIM_IDLE_SCRATCH:
+            outFps = 8;
+            return "wobble"; // 憨态蹒跚左右摇晃
+        case ANIM_IDLE_STRETCH:
+            outFps = 8;
+            return "stretch"; // 伸个舒服小懒腰
         case ANIM_IDLE_BOUNCE:
         case ANIM_HAPPY:
             outFps = 10;
             return "happy"; // 欢快蹦跳
-        case ANIM_IDLE_SCRATCH:
-            outFps = 8;
-            return "stand";
-        case ANIM_IDLE_STRETCH:
-            outFps = 10;
-            return "play";
         case ANIM_IDLE_DOZE:
         case ANIM_IDLE_PAT_BELLY:
             outFps = 8;
-            return "stand";
+            return "play"; // 玩耍拍球/转圈
+
 
 
         case ANIM_PLAY:

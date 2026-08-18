@@ -609,33 +609,32 @@ void PetCore::triggerTransientAnim(PetAnimState anim, uint32_t durationMs) {
 }
 
 void PetCore::switchRandomIdleAction() {
-    // 根据宠物当前心情和状态自主抉择日常动作
+    // 根据宠物当前心情和状态自主抉择丰富的日常动作
     if (isHungry() || isDirty()) {
-        currentIdleSubAction = (random(0, 3) == 0) ? ANIM_IDLE_LOOK : ANIM_IDLE_STAND;
+        int r = random(0, 100);
+        if (r < 50) currentIdleSubAction = ANIM_IDLE_STAND;
+        else if (r < 75) currentIdleSubAction = ANIM_IDLE_LOOK;
+        else currentIdleSubAction = ANIM_IDLE_SCRATCH;
         return;
     }
 
-    int curLv = getLevel();
     int r = random(0, 100);
-
-    if (curLv < 5) {
-        // 宝宝/雏鸟期：以安静可爱的萌态呼吸站立为主 (75%)，偶尔轻微摇晃或小跳
-        if (r < 75) {
-            currentIdleSubAction = ANIM_IDLE_STAND;
-        } else if (r < 90) {
-            currentIdleSubAction = ANIM_IDLE_LOOK;   // 摇晃扑腾
-        } else {
-            currentIdleSubAction = ANIM_IDLE_BOUNCE; // 开心小跳
-        }
+    // 丰富生动的 5 重动作轮转体系：
+    // 1. 呼吸站立 (stand: 40%)
+    // 2. 好奇歪头张望 (look: 18%)
+    // 3. 憨态蹒跚摇晃 (wobble/scratch: 18%)
+    // 4. 伸伸小懒腰 (stretch: 12%)
+    // 5. 开心蹦跳跳跃 (happy/bounce: 12%)
+    if (r < 40) {
+        currentIdleSubAction = ANIM_IDLE_STAND;
+    } else if (r < 58) {
+        currentIdleSubAction = ANIM_IDLE_LOOK;
+    } else if (r < 76) {
+        currentIdleSubAction = ANIM_IDLE_SCRATCH;
+    } else if (r < 88) {
+        currentIdleSubAction = ANIM_IDLE_STRETCH;
     } else {
-        // 幼年及成年期：动作更丰富多元
-        if (r < 50) {
-            currentIdleSubAction = ANIM_IDLE_STAND;
-        } else if (r < 80) {
-            currentIdleSubAction = ANIM_IDLE_LOOK;
-        } else {
-            currentIdleSubAction = ANIM_IDLE_BOUNCE;
-        }
+        currentIdleSubAction = ANIM_IDLE_BOUNCE;
     }
 }
 
@@ -645,15 +644,13 @@ void PetCore::updateAnimState() {
         transientAnim = ANIM_IDLE_STAND;
     }
 
-    // 自主日常动作轮换 (宝宝期 8~14 秒切换一次，成年期 6~10 秒，节奏从容自然)
-    int curLv = getLevel();
-    uint32_t interval = (curLv < 5) ? (8000 + random(0, 6000)) : (5000 + random(0, 4000));
-
-    if (now - lastIdleSwitchTime > interval) {
+    // 自主日常动作轮换 (每 5~9 秒从容切换一次)
+    if (now - lastIdleSwitchTime > (5000 + random(0, 4000))) {
         lastIdleSwitchTime = now;
         switchRandomIdleAction();
     }
 }
+
 
 
 

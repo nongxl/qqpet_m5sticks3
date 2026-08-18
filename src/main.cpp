@@ -204,8 +204,10 @@ void loop() {
     }
 
     uint32_t nowTime = millis();
-    bool isSleeping = (nowTime - lastUserInteractTime > 90000) && !g_pet.isTaskActive() && 
+    // 待机超过 180 秒 (3 分钟) 无交互才进入深度睡眠，平时保持活泼可爱的多套日常动作
+    bool isSleeping = (nowTime - lastUserInteractTime > 180000) && !g_pet.isTaskActive() && 
                       !g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead();
+
 
     if (isSleeping) {
         // 进入睡梦打呼噜状态
