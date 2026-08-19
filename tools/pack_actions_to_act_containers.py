@@ -42,16 +42,28 @@ ACTION_CONFIG = {
         ("stand", "peaceful/Stand.swf", 12, 0.08),
         ("happy", "happy/Stand.swf", 14, 0.08),
         ("sad", "sad/Stand.swf", 12, 0.08),
-        ("play", "happy/play/P1.swf", 16, 0.07),
-        ("play_1", "happy/play/P2.swf", 16, 0.07),
-        ("play_2", "happy/play/P3.swf", 16, 0.07),
-        ("play_3", "happy/play/P4.swf", 16, 0.07),
-        ("play_4", "happy/play/P5.swf", 16, 0.07),
-        ("work", "peaceful/play/P3.swf", 20, 0.07),  # 20 帧完整大打工
-        ("study", "peaceful/play/P2.swf", 20, 0.07), # 20 帧完整大自习
-        ("trip", "happy/play/P4.swf", 16, 0.07),
-        ("eat", "Eat1.swf", 18, 0.07),              # 18 帧完整美味吃鱼
-        ("clean", "Clean1.swf", 18, 0.07),          # 18 帧完整香皂泡泡浴
+        ("work", "peaceful/play/P3.swf", 20, 0.07),    # 矿工搬砖敲击
+        ("work_1", "peaceful/play/P8.swf", 18, 0.07),  # 扫地清洁工
+        ("work_2", "peaceful/play/P12.swf", 18, 0.07), # 敲敲打打维修工
+        ("work_3", "peaceful/play/P20.swf", 18, 0.07), # 算盘会计打工
+        ("study", "peaceful/play/P2.swf", 20, 0.07),   # 翻厚书写字阅读
+        ("study_1", "peaceful/play/P6.swf", 18, 0.07), # 戴眼镜伏案苦读
+        ("study_2", "peaceful/play/P10.swf", 18, 0.07),# 黑板前粉笔演算
+        ("play", "happy/play/P1.swf", 16, 0.07),       # 拍皮球
+        ("play_1", "happy/play/P2.swf", 16, 0.07),     # 跳绳
+        ("play_2", "happy/play/P3.swf", 16, 0.07),     # 踩滑板
+        ("play_3", "happy/play/P5.swf", 16, 0.07),     # 吹气球
+        ("play_4", "happy/play/P6.swf", 16, 0.07),     # 举哑铃健身
+        ("play_5", "happy/play/P7.swf", 16, 0.07),     # 变魔术
+        ("play_6", "happy/play/P9.swf", 16, 0.07),     # 弹吉他
+        ("trip", "happy/play/P4.swf", 16, 0.07),       # 背包漫步
+        ("eat", "Eat1.swf", 18, 0.07),                 # 美味吃鱼
+        ("eat_1", "Eat2.swf", 18, 0.07),               # 满汉全席大餐
+        ("eat_2", "peaceful/play/P15.swf", 16, 0.07),  # 吃美味甜点蛋糕
+        ("clean", "Clean1.swf", 18, 0.07),             # 满天泡泡浴
+        ("sleep", "prostrate/play/P1.swf", 14, 0.08),  # 钻睡袋睡觉
+        ("sleep_1", "prostrate/play/P2.swf", 14, 0.08),# 趴着打呼噜
+        ("sleep_2", "prostrate/play/P5.swf", 14, 0.08),# 摇晃吊床安睡
         ("sick", "Sick1.swf", 12, 0.08),
         ("cure", "Cure1.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -63,12 +75,17 @@ ACTION_CONFIG = {
         ("stand", "Stand.swf", 12, 0.08),
         ("happy", "LevUp.swf", 14, 0.08),
         ("sad", "Dirty.swf", 12, 0.08),
-        ("play", "play/P1.swf", 16, 0.07),
         ("work", "play/P3.swf", 20, 0.07),
+        ("work_1", "play/P1.swf", 18, 0.07),
         ("study", "play/P2.swf", 20, 0.07),
+        ("study_1", "play/P4.swf", 18, 0.07),
+        ("play", "play/P1.swf", 16, 0.07),
+        ("play_1", "play/P2.swf", 16, 0.07),
+        ("play_2", "play/P3.swf", 16, 0.07),
         ("trip", "play/P4.swf", 16, 0.07),
         ("eat", "Eat1.swf", 18, 0.07),
         ("clean", "Clean.swf", 18, 0.07),
+        ("sleep", "Stand.swf", 12, 0.08),
         ("sick", "Sick.swf", 12, 0.08),
         ("cure", "Cure.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -80,12 +97,13 @@ ACTION_CONFIG = {
         ("stand", "Stand.swf", 12, 0.08),
         ("happy", "play/P1.swf", 14, 0.08),
         ("sad", "Sick.swf", 12, 0.08),
-        ("play", "play/P2.swf", 16, 0.07),
         ("work", "play/P3.swf", 18, 0.07),
         ("study", "play/P4.swf", 18, 0.07),
+        ("play", "play/P2.swf", 16, 0.07),
         ("trip", "play/P5.swf", 16, 0.07),
         ("eat", "Eat1.swf", 16, 0.07),
         ("clean", "Clean.swf", 16, 0.07),
+        ("sleep", "Stand.swf", 12, 0.08),
         ("sick", "Sick.swf", 12, 0.08),
         ("cure", "Cure.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -94,6 +112,7 @@ ACTION_CONFIG = {
         ("hide_right", "Hide_right1.swf", 12, 0.08),
     ]
 }
+
 
 def pack_png_frames_to_act(frame_png_bytes_list, out_act_path):
     """将多帧 PNG 字节流紧凑打包为单一 .act 容器文件"""

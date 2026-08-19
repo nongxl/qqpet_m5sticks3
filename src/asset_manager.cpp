@@ -81,29 +81,46 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             return "play"; // 玩耍拍球/转圈
         case ANIM_PLAY:
             outFps = 8;
-            // 逗玩玩耍动作库：仅在 Adult 成年期轮播 play ~ play_4，幼年期与破壳期使用专属 play
             if (stage == "Adult") {
-                int r = (millis() / 4000) % 5;
+                int r = (millis() / 5000) % 7;
                 if (r == 1) return "play_1";
                 if (r == 2) return "play_2";
                 if (r == 3) return "play_3";
                 if (r == 4) return "play_4";
+                if (r == 5) return "play_5";
+                if (r == 6) return "play_6";
             }
             return "play";
         case ANIM_WORK:
-            outFps = 9; // 20 帧打工搬砖 (戴发带 + 挥汗劳作)
+            outFps = 9;
+            if (stage == "Adult") {
+                int r = (millis() / 6000) % 4;
+                if (r == 1) return "work_1";
+                if (r == 2) return "work_2";
+                if (r == 3) return "work_3";
+            }
             return "work";
         case ANIM_STUDY:
-            outFps = 9; // 20 帧自习 (翻书 + 专心阅读写字)
+            outFps = 9;
+            if (stage == "Adult") {
+                int r = (millis() / 6000) % 3;
+                if (r == 1) return "study_1";
+                if (r == 2) return "study_2";
+            }
             return "study";
         case ANIM_TRIP:
             outFps = 8;
             return "trip";
         case ANIM_EAT:
-            outFps = 8; // 18 帧美味吃鱼
+            outFps = 8;
+            if (stage == "Adult") {
+                int r = (millis() / 5000) % 3;
+                if (r == 1) return "eat_1";
+                if (r == 2) return "eat_2";
+            }
             return "eat";
         case ANIM_CLEAN:
-            outFps = 8; // 18 帧泡泡香皂浴
+            outFps = 8;
             return "clean";
         case ANIM_SAD:
             outFps = 6;
@@ -120,7 +137,13 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             return "cure";
         case ANIM_SLEEP:
             outFps = 4;
+            if (stage == "Adult") {
+                int r = (millis() / 7000) % 3;
+                if (r == 1) return "sleep_1";
+                if (r == 2) return "sleep_2";
+            }
             return "sleep";
+
         case ANIM_LEVELUP:
             outFps = 8;
             return "levelup";
