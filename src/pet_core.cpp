@@ -2,8 +2,10 @@
 #include "sound_manager.h"
 #include "vfx_engine.h"
 #include "weather_manager.h"
+#include "storage_manager.h"
 #include <cstring>
 #include <algorithm>
+
 
 PetCore g_pet;
 
@@ -115,9 +117,16 @@ void PetCore::initDefault() {
 void PetCore::adopt(uint8_t gender) {
     state.gender = (gender == 1) ? 1 : 0;
     state.is_adopted = true;
+    g_storage.savePetState(state);
     transientAnim = ANIM_LEVELUP;
     transientAnimEndTime = millis() + 4000;
 }
+
+void PetCore::setGender(uint8_t gender) {
+    state.gender = (gender == 1) ? 1 : 0;
+    g_storage.savePetState(state);
+}
+
 
 void PetCore::resetAdoption() {
     initDefault();
@@ -697,8 +706,32 @@ void PetCore::switchRandomIdleAction() {
         return;
     }
 
+    int curLvl = getLevel();
     int r = random(0, 200);
-    // 丰富生动的官方原版日常动作大合集：
+
+    // 幼年期与雏鸟期：专属童年百宝箱与萌态动作
+    if (curLvl < 12) {
+        if (r < 40) {
+            currentIdleSubAction = ANIM_IDLE_STAND;
+        } else if (r < 70) {
+            currentIdleSubAction = ANIM_IDLE_LOOK;
+        } else if (r < 95) {
+            currentIdleSubAction = ANIM_IDLE_SCRATCH;
+        } else if (r < 120) {
+            currentIdleSubAction = ANIM_IDLE_STRETCH;
+        } else if (r < 145) {
+            currentIdleSubAction = ANIM_IDLE_BOUNCE;
+        } else if (r < 185) {
+            currentIdleSubAction = ANIM_PLAY; // 幼年期木马、风车、纸飞机、抓蝴蝶、拼积木、铲沙子
+        } else if (r < 192) {
+            currentIdleSubAction = ANIM_SNEEZE;
+        } else {
+            currentIdleSubAction = ANIM_YAWN;
+        }
+        return;
+    }
+
+    // 成年期：全量官方原版 11 款生活爱好大合集
     if (r < 25) {
         currentIdleSubAction = ANIM_IDLE_STAND;
     } else if (r < 40) {
@@ -737,6 +770,7 @@ void PetCore::switchRandomIdleAction() {
         currentIdleSubAction = ANIM_YAWN;
     }
 }
+
 
 
 void PetCore::updateAnimState() {

@@ -297,23 +297,21 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
 
     String genderStr = (gender == 1) ? "MM" : "GG";
 
-    // 1. 优先尝试加载 .act 二进制容器文件 (零文件碎片，极速单次 I/O)
+    // 1. 优先尝试加载本性别本阶段的 .act 二进制容器
     String actPath = "/assets/" + genderStr + "/" + stage + "/" + actionName + ".act";
     if (!LittleFS.exists(actPath)) {
-        actPath = "/assets/GG/" + stage + "/" + actionName + ".act";
+        // 先尝试回退到本性别的 Adult 动作 (严格保证 MM / GG 形象纯正统一)
+        actPath = "/assets/" + genderStr + "/Adult/" + actionName + ".act";
         if (!LittleFS.exists(actPath)) {
-            if (actionName == "study" || actionName == "work") {
-                actPath = "/assets/" + genderStr + "/" + stage + "/happy.act";
-                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/happy.act";
-            } else if (actionName.startsWith("play") || actionName == "trip") {
-                actPath = "/assets/" + genderStr + "/" + stage + "/play.act";
-                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/play.act";
-            } else {
-                actPath = "/assets/" + genderStr + "/" + stage + "/stand.act";
-                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/stand.act";
+            // 再尝试回退到本性别当前阶段的 stand.act
+            actPath = "/assets/" + genderStr + "/" + stage + "/stand.act";
+            if (!LittleFS.exists(actPath)) {
+                // 终极保底
+                actPath = "/assets/GG/" + stage + "/stand.act";
             }
         }
     }
+
 
     if (LittleFS.exists(actPath)) {
         File f = LittleFS.open(actPath, "r");

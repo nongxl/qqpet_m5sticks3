@@ -64,6 +64,7 @@ public:
     // 领养与重生系统
     bool isAdopted() const { return state.is_adopted; }
     void adopt(uint8_t gender);
+    void setGender(uint8_t gender);
     void resetAdoption();
 
     float getWalkOffsetX() const { return walkOffsetX; }

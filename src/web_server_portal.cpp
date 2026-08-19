@@ -163,10 +163,14 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
     <div class="card">
         <div class="card-title">🖼️ 企鹅领养身份与 16 款原版壁纸</div>
         <div class="form-group">
-            <label>当前领养性别 (专属陪伴终生绑定)</label>
-            <div id="disp-gender" style="font-size:14px; font-weight:bold; color:var(--primary); padding:8px 0;">👦 GG (帅哥男鹅)</div>
+            <label>当前领养性别</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#fff0f6; padding:8px 12px; border-radius:8px; margin-top:4px;">
+                <div id="disp-gender" style="font-size:14px; font-weight:bold; color:var(--primary);">👧 MM (甜美美眉)</div>
+                <button class="btn" style="padding:6px 12px; font-size:12px; background:#eb2f96;" onclick="toggleGender()">🔄 切换性别为 MM / GG</button>
+            </div>
         </div>
         <div class="form-group">
+
             <label>选择桌面壁纸 (1~16 款原版壁纸 / 0 为经典极简)</label>
             <select id="sel-bg" class="form-input" onchange="setBg(this.value)">
                 <option value="0">0 - 极简天蓝纯色</option>
@@ -460,9 +464,22 @@ function saveConfig() {
     });
 }
 
+function toggleGender() {
+    fetch('/api/status').then(r => r.json()).then(data => {
+        let targetGender = (data.gender == 1) ? 0 : 1;
+        fetch('/api/set_gender?gender=' + targetGender)
+            .then(r => r.json())
+            .then(res => {
+                alert(res.msg);
+                refresh();
+            });
+    });
+}
 
 refresh();
 setInterval(refresh, 3000);
+
+
 </script>
 </body>
 </html>
@@ -541,20 +558,20 @@ void WebServerPortal::begin() {
         server.send(200, "application/json", out);
     });
 
-    server.on("/api/weather/set", HTTP_GET, [this]() {
-        int wType = server.hasArg("type") ? server.arg("type").toInt() : 0;
-        int temp = server.hasArg("temp") ? server.arg("temp").toInt() : 26;
-        WeatherManager::getInstance().setWeatherManual(static_cast<WeatherType>(wType), temp);
+    // 性别切换 API (保留所有等级、元宝与成长数据，仅切换 MM/GG 形象与装扮)
+    server.on("/api/set_gender", HTTP_GET, [this]() {
+        int g = server.hasArg("gender") ? server.arg("gender").toInt() : 0;
+        g_pet.setGender(g);
         DynamicJsonDocument res(256);
         res["success"] = true;
-        res["msg"] = "天气已设定！";
+        res["msg"] = (g == 1) ? "已成功切换为 MM (甜美美眉) 形象！" : "已成功切换为 GG (帅气男宝) 形象！";
         String out;
         serializeJson(res, out);
         server.send(200, "application/json", out);
     });
 
-
     // 换装衣橱 API
+
     server.on("/api/costume/buy", HTTP_GET, [this]() {
         int id = server.hasArg("id") ? server.arg("id").toInt() : 0;
         String msg;
