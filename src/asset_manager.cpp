@@ -57,27 +57,27 @@ void AssetManager::drawBackground(M5Canvas& canvas, uint8_t bgId) {
 }
 
 String AssetManager::getActionNameByState(PetAnimState anim, const String& stage, uint8_t& outFps) {
-    outFps = 6;
+    outFps = 8;
     switch (anim) {
         case ANIM_IDLE_STAND:
-            outFps = 4; // 4 帧呼吸站立以 4 fps 播放，1秒1次完整轻柔呼吸
+            outFps = 6; // 12 帧完整呼吸站立以 6 fps 播放，2秒1次从容平稳呼吸
             return "stand";
         case ANIM_IDLE_LOOK:
-            outFps = 4;
+            outFps = 6;
             return "look"; // 左右歪头打量主人
         case ANIM_IDLE_SCRATCH:
-            outFps = 5;
+            outFps = 6;
             return "wobble"; // 憨态蹒跚左右摇晃
         case ANIM_IDLE_STRETCH:
-            outFps = 4;
+            outFps = 6;
             return "stretch"; // 伸个舒服小懒腰
         case ANIM_IDLE_BOUNCE:
         case ANIM_HAPPY:
-            outFps = 6;
+            outFps = 8;
             return "happy"; // 欢快蹦跳
         case ANIM_IDLE_DOZE:
         case ANIM_IDLE_PAT_BELLY:
-            outFps = 6;
+            outFps = 8;
             return "play"; // 玩耍拍球/转圈
         case ANIM_PLAY:
             outFps = 8;
@@ -91,19 +91,19 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             }
             return "play";
         case ANIM_WORK:
-            outFps = 8;
+            outFps = 9; // 20 帧打工搬砖 (戴发带 + 挥汗劳作)
             return "work";
         case ANIM_STUDY:
-            outFps = 8;
+            outFps = 9; // 20 帧自习 (翻书 + 专心阅读写字)
             return "study";
         case ANIM_TRIP:
             outFps = 8;
             return "trip";
         case ANIM_EAT:
-            outFps = 8;
+            outFps = 8; // 18 帧美味吃鱼
             return "eat";
         case ANIM_CLEAN:
-            outFps = 8;
+            outFps = 8; // 18 帧泡泡香皂浴
             return "clean";
         case ANIM_SAD:
             outFps = 6;
@@ -113,7 +113,7 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             return "sick";
         case ANIM_DEAD:
         case ANIM_DYING:
-            outFps = 4;
+            outFps = 6;
             return "dying";
         case ANIM_CURE:
             outFps = 8;
@@ -134,43 +134,44 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 6;
             return "walk_right";
         case ANIM_HIDE_LEFT:
-            outFps = 4;
+            outFps = 6;
             return "hide_left";
         case ANIM_HIDE_RIGHT:
-            outFps = 4;
+            outFps = 6;
             return "hide_right";
         case ANIM_SNEEZE:
-            outFps = 5;
+            outFps = 6;
             return "sneeze";
         case ANIM_YAWN:
-            outFps = 4;
+            outFps = 6;
             return "yawn";
         case ANIM_ANGRY:
-            outFps = 6;
+            outFps = 8;
             return "angry";
         case ANIM_SHY:
-            outFps = 4;
+            outFps = 6;
             return "shy";
         case ANIM_UMBRELLA:
-            outFps = 4;
+            outFps = 6;
             return "umbrella";
         case ANIM_COLD:
-            outFps = 5;
+            outFps = 6;
             return "cold";
         case ANIM_SUMMER:
-            outFps = 5;
+            outFps = 6;
             return "summer";
         case ANIM_TIWENJI:
-            outFps = 4;
+            outFps = 6;
             return "tiwenji";
         case ANIM_INJECTION:
-            outFps = 6;
+            outFps = 8;
             return "injection";
         default:
-            outFps = 4;
+            outFps = 6;
             return "stand";
     }
 }
+
 
 
 void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
