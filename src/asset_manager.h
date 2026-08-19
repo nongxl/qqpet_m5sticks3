@@ -8,8 +8,42 @@
 #include <map>
 
 struct InMemoryFrame {
-    std::vector<uint8_t> buffer;
+    uint8_t* buffer = nullptr;
+    size_t size = 0;
+
+    InMemoryFrame() = default;
+    InMemoryFrame(size_t sz) {
+        size = sz;
+        if (psramFound()) {
+            buffer = (uint8_t*)ps_malloc(sz);
+        }
+        if (!buffer) {
+            buffer = (uint8_t*)malloc(sz);
+        }
+    }
+    ~InMemoryFrame() {
+        if (buffer) free(buffer);
+    }
+    InMemoryFrame(InMemoryFrame&& other) noexcept {
+        buffer = other.buffer;
+        size = other.size;
+        other.buffer = nullptr;
+        other.size = 0;
+    }
+    InMemoryFrame& operator=(InMemoryFrame&& other) noexcept {
+        if (this != &other) {
+            if (buffer) free(buffer);
+            buffer = other.buffer;
+            size = other.size;
+            other.buffer = nullptr;
+            other.size = 0;
+        }
+        return *this;
+    }
+    InMemoryFrame(const InMemoryFrame&) = delete;
+    InMemoryFrame& operator=(const InMemoryFrame&) = delete;
 };
+
 
 class AssetManager {
 public:

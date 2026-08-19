@@ -118,10 +118,12 @@ private:
     // 绘制子函数
     void drawBackground();
     void drawTopBar();
+    void drawClockAndWeather();
     void drawPet(int centerX, int centerY, PetAnimState anim);
     void drawBubble();
     void drawRightBubbleMenu();
     void drawToast();
 };
+
 
 extern DisplayEngine g_display;

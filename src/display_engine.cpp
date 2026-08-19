@@ -144,20 +144,36 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
     // 2. 绘制顶部信息栏
     drawTopBar();
 
-    // 3. 计算企鹅位置 (圆圈菜单模式下企鹅端坐在圆心正中央，闲置时叠加自主踱步偏移)
-    int petX = (SCREEN_W / 2) + petOffsetX + (menuVisible ? 0 : (int)g_pet.getWalkOffsetX());
+    // 3. 绘制中央白色数字时钟与左侧实时天气胶囊
+    drawClockAndWeather();
+
+    // 4. 计算企鹅位置 (根据不同动作状态智能吸附边缘或居中踱步)
+    PetAnimState anim = g_pet.getCurrentAnimState();
+    int petX = (SCREEN_W / 2) + petOffsetX;
     int petY = 158 + petOffsetY;
 
-    PetAnimState anim = g_pet.getCurrentAnimState();
+    if (anim == ANIM_HIDE_LEFT) {
+        // 智能识别屏幕左边缘：将企鹅身体大半隐藏在屏幕左侧边框外，只探出半张脸和小手张望躲猫猫
+        petX = 20 + petOffsetX;
+    } else if (anim == ANIM_HIDE_RIGHT) {
+        // 智能识别屏幕右边缘：将企鹅身体隐藏在屏幕右侧边框外，从右侧边缘探头躲猫猫
+        petX = SCREEN_W - 20 + petOffsetX;
+    } else if (anim == ANIM_WALK_LEFT || anim == ANIM_WALK_RIGHT) {
+        petX = constrain((SCREEN_W / 2) + (int)g_pet.getWalkOffsetX() + petOffsetX, 24, SCREEN_W - 24);
+    } else {
+        petX += (menuVisible ? 0 : (int)g_pet.getWalkOffsetX());
+    }
+
     if (isDragging) {
         petY += (animFrame % 6 > 3) ? -3 : 3;
-        drawPet(petX, petY, (anim == ANIM_IDLE_STAND) ? ANIM_DRAG : anim);
+        drawPet(petX, petY, ANIM_DRAG);
     } else {
         if (anim == ANIM_PLAY || anim == ANIM_IDLE_BOUNCE || anim == ANIM_WORK || anim == ANIM_STUDY) {
             petY += (animFrame % 8 > 4) ? -3 : 0;
         }
         drawPet(petX, petY, anim);
     }
+
 
     // 绘制嘴叼体温计体温气泡
     if (anim == ANIM_TIWENJI) {
@@ -218,54 +234,12 @@ void DisplayEngine::drawTopBar() {
         canvas.setTextColor((st.current_task == TASK_WORK) ? canvas.color565(200, 90, 0) : canvas.color565(20, 100, 200));
         canvas.drawString(buf, 6, 5);
 
-        // 右侧电池图标
-        int batX = SCREEN_W - 22;
-        int batY = 6;
-        canvas.drawRoundRect(batX, batY, 16, 9, 2, canvas.color565(70, 90, 110));
-        canvas.fillRect(batX + 16, batY + 2, 2, 5, canvas.color565(70, 90, 110));
-        int fillW = map(constrain(cachedBattery, 0, 100), 0, 100, 0, 12);
-        uint16_t batCol = (cachedBattery <= 20) ? canvas.color565(230, 50, 50) : canvas.color565(40, 180, 70);
-        if (fillW > 0) canvas.fillRect(batX + 2, batY + 2, fillW, 5, batCol);
-        return;
-    }
-
-    // 1. 左侧：企鹅昵称与等级 (X=5, Y=5)
-    canvas.drawString(String(st.name) + " Lv." + String(g_pet.getLevel()), 5, 5);
-
-
-    // 2. 中间：天气微标 + 气温 (整体向右移至 X=62, 宽 30px, 完美居中于 135px 屏)
-    WeatherType wt = WeatherManager::getInstance().getCurrentWeather();
-    int temp = WeatherManager::getInstance().getCurrentTemp();
-
-    // 矢量绘制精致天气图标 (中心位置 X=62, Y=11)
-    int wx = 62;
-    int wy = 11;
-    if (wt == WEATHER_SUNNY) {
-        // 金黄小太阳
-        canvas.fillCircle(wx, wy, 3, canvas.color565(255, 180, 0));
-        canvas.drawCircle(wx, wy, 4, canvas.color565(255, 120, 0));
-    } else if (wt == WEATHER_RAINY) {
-        // 蓝灰小雨云 + 雨滴
-        canvas.fillCircle(wx - 2, wy - 1, 3, canvas.color565(120, 160, 200));
-        canvas.fillCircle(wx + 2, wy - 1, 3, canvas.color565(120, 160, 200));
-        canvas.drawLine(wx - 2, wy + 3, wx - 3, wy + 5, canvas.color565(40, 120, 240));
-        canvas.drawLine(wx + 2, wy + 3, wx + 1, wy + 5, canvas.color565(40, 120, 240));
-    } else if (wt == WEATHER_SNOWY) {
-        // 冰雪花
-        canvas.drawLine(wx - 3, wy, wx + 3, wy, canvas.color565(100, 180, 255));
-        canvas.drawLine(wx, wy - 3, wx, wy + 3, canvas.color565(100, 180, 255));
-        canvas.fillCircle(wx, wy, 1, TFT_WHITE);
     } else {
-        // 多云
-        canvas.fillCircle(wx - 2, wy, 3, canvas.color565(170, 190, 210));
-        canvas.fillCircle(wx + 2, wy - 1, 4, canvas.color565(190, 210, 230));
+        // 1. 左侧：企鹅昵称与等级 (X=5, Y=5)
+        canvas.drawString(String(st.name) + " Lv." + String(g_pet.getLevel()), 5, 5);
     }
 
-    // 气温数值 (紧随天气微标 X=70, Y=5)
-    canvas.setTextColor(canvas.color565(20, 90, 160));
-    canvas.drawString(String(temp) + "C", 70, 5);
-
-    // 3. 右侧信号图标 (向右对齐至 X=98, Y=7 ~ 17)
+    // 2. 右侧信号图标 (向右对齐至 X=98, Y=7 ~ 17)
     bool isWifiOk = g_net.isConnected();
     int sx = 98;
     if (isWifiOk) {
@@ -281,7 +255,7 @@ void DisplayEngine::drawTopBar() {
         canvas.drawLine(sx - 1, 7, sx + 8, 16, canvas.color565(230, 60, 60));
     }
 
-    // 4. 右侧电池胶囊图标 (X=114, Y=7, 宽 16px 高 9px)
+    // 3. 右侧电池胶囊图标 (X=114, Y=7, 宽 16px 高 9px)
     int batX = 114;
     int batY = 7;
     // 电池外壳
@@ -298,6 +272,85 @@ void DisplayEngine::drawTopBar() {
     // 顶部分隔线
     canvas.drawFastHLine(3, 22, SCREEN_W - 6, canvas.color565(190, 215, 240));
 }
+
+void DisplayEngine::drawClockAndWeather() {
+    // 1. 获取网络对时时间
+    struct tm timeinfo;
+    bool hasTime = getLocalTime(&timeinfo, 5);
+    char timeStr[16];
+    if (hasTime && timeinfo.tm_year > (2020 - 1900)) {
+        snprintf(timeStr, sizeof(timeStr), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+    } else {
+        uint32_t sec = millis() / 1000;
+        snprintf(timeStr, sizeof(timeStr), "%02d:%02d", (sec / 3600) % 24, (sec / 60) % 60);
+    }
+
+    bool showWeather = g_net.isConnected() && WeatherManager::getInstance().isSyncedWithNetwork();
+    WeatherType wt = WeatherManager::getInstance().getCurrentWeather();
+    int temp = WeatherManager::getInstance().getCurrentTemp();
+
+    // 2. 计算时钟与天气布局 (Font4 大号粗体时钟宽度约 60px)
+    int clockW = 60;
+    int weatherW = showWeather ? 38 : 0;
+    int totalW = showWeather ? (weatherW + 6 + clockW) : clockW;
+
+    int startX = (SCREEN_W - totalW) / 2;
+    int baseY = 25;
+
+    // 3. 仅绘制精致透明边框，绝对不填充任何背景底色 (完全透出底层精美壁纸)
+    canvas.drawRoundRect(startX - 5, baseY - 2, totalW + 10, 28, 5, canvas.color565(200, 225, 255));
+
+    int curX = startX;
+
+    // 4. 左侧：天气微标 + 气温 (仅在联网且同步成功时展示)
+    if (showWeather) {
+        int wx = curX + 6;
+        int wy = baseY + 12;
+        if (wt == WEATHER_SUNNY) {
+            canvas.fillCircle(wx, wy, 4, canvas.color565(255, 200, 0));
+            canvas.drawCircle(wx, wy, 5, canvas.color565(255, 140, 0));
+        } else if (wt == WEATHER_RAINY) {
+            canvas.fillCircle(wx - 2, wy - 1, 4, canvas.color565(120, 180, 230));
+            canvas.fillCircle(wx + 3, wy - 1, 4, canvas.color565(120, 180, 230));
+            canvas.drawLine(wx - 2, wy + 4, wx - 3, wy + 7, canvas.color565(80, 150, 255));
+            canvas.drawLine(wx + 3, wy + 4, wx + 2, wy + 7, canvas.color565(80, 150, 255));
+        } else if (wt == WEATHER_SNOWY) {
+            canvas.drawLine(wx - 4, wy, wx + 4, wy, canvas.color565(160, 220, 255));
+            canvas.drawLine(wx - 4, wy, wx + 4, wy, canvas.color565(160, 220, 255));
+            canvas.fillCircle(wx, wy, 2, TFT_WHITE);
+        } else {
+            canvas.fillCircle(wx - 2, wy, 4, canvas.color565(180, 200, 220));
+            canvas.fillCircle(wx + 3, wy - 1, 5, canvas.color565(200, 220, 240));
+        }
+
+        // 气温数值 (加粗描边立体纯白文字)
+        String tempStr = String(temp) + "C";
+        canvas.setFont(&fonts::Font2);
+        canvas.setTextColor(TFT_BLACK);
+        canvas.drawString(tempStr, curX + 14, baseY + 5);
+        canvas.drawString(tempStr, curX + 16, baseY + 5);
+        canvas.drawString(tempStr, curX + 15, baseY + 4);
+        canvas.drawString(tempStr, curX + 15, baseY + 6);
+        canvas.setTextColor(TFT_WHITE);
+        canvas.drawString(tempStr, curX + 15, baseY + 5);
+
+        curX += weatherW + 6;
+    }
+
+    // 5. 大号加粗白色数字时钟 (Font4 加 4 向黑色描边，立体醒目且绝不遮挡壁纸)
+    canvas.setFont(&fonts::Font4);
+    canvas.setTextColor(TFT_BLACK);
+    canvas.drawString(timeStr, curX - 1, baseY);
+    canvas.drawString(timeStr, curX + 1, baseY);
+    canvas.drawString(timeStr, curX, baseY - 1);
+    canvas.drawString(timeStr, curX, baseY + 1);
+    canvas.setTextColor(TFT_WHITE);
+    canvas.drawString(timeStr, curX, baseY);
+}
+
+#include "asset_manager.h"
+
+
 
 
 

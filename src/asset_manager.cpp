@@ -37,24 +37,27 @@ void AssetManager::drawBackground(M5Canvas& canvas, uint8_t bgId) {
 
     if (bgId > 16) bgId = 16;
 
-    if (currentLoadedBgId != bgId || currentBgFrame.buffer.empty()) {
+    if (currentLoadedBgId != bgId || currentBgFrame.buffer == nullptr) {
         char bgPath[64];
         snprintf(bgPath, sizeof(bgPath), "/assets/bg/bg_%02d.png", bgId);
         File f = LittleFS.open(bgPath, "r");
         if (f) {
-            currentBgFrame.buffer.resize(f.size());
-            f.read(currentBgFrame.buffer.data(), f.size());
+            currentBgFrame = InMemoryFrame(f.size());
+            if (currentBgFrame.buffer) {
+                f.read(currentBgFrame.buffer, f.size());
+                currentLoadedBgId = bgId;
+            }
             f.close();
-            currentLoadedBgId = bgId;
         }
     }
 
-    if (!currentBgFrame.buffer.empty()) {
-        canvas.drawPng(currentBgFrame.buffer.data(), currentBgFrame.buffer.size(), 0, 0);
+    if (currentBgFrame.buffer && currentBgFrame.size > 0) {
+        canvas.drawPng(currentBgFrame.buffer, currentBgFrame.size, 0, 0);
     } else {
         canvas.fillScreen(canvas.color565(225, 242, 255));
     }
 }
+
 
 String AssetManager::getActionNameByState(PetAnimState anim, const String& stage, uint8_t& outFps) {
     outFps = 8;
@@ -322,10 +325,11 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
                 std::vector<uint16_t> sizes(count);
                 f.read(reinterpret_cast<uint8_t*>(sizes.data()), count * sizeof(uint16_t));
                 for (uint8_t i = 0; i < count; ++i) {
-                    InMemoryFrame frame;
-                    frame.buffer.resize(sizes[i]);
-                    f.read(frame.buffer.data(), sizes[i]);
-                    currentClipFrames.push_back(std::move(frame));
+                    InMemoryFrame frame(sizes[i]);
+                    if (frame.buffer) {
+                        f.read(frame.buffer, sizes[i]);
+                        currentClipFrames.push_back(std::move(frame));
+                    }
                 }
                 f.close();
                 return;
@@ -333,6 +337,7 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
             f.close();
         }
     }
+
 
     // 2. 回退兼容老旧散装 PNG 目录
     String dirPath = "/assets/" + genderStr + "/" + stage + "/" + actionName;
@@ -350,12 +355,14 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
         File f = LittleFS.open(filename, "r");
         if (f) {
             size_t sz = f.size();
-            InMemoryFrame frame;
-            frame.buffer.resize(sz);
-            f.read(frame.buffer.data(), sz);
+            InMemoryFrame frame(sz);
+            if (frame.buffer) {
+                f.read(frame.buffer, sz);
+                currentClipFrames.push_back(std::move(frame));
+            }
             f.close();
-            currentClipFrames.push_back(std::move(frame));
         }
+
     }
 }
 
@@ -415,7 +422,9 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
     const InMemoryFrame& frame = currentClipFrames[frameIdx];
     
     // 1. 直接内存解压进行原生逐像素 32 位 Alpha 物理混合
-    canvas.drawPng(frame.buffer.data(), frame.buffer.size(), x, y);
+    if (frame.buffer && frame.size > 0) {
+        canvas.drawPng(frame.buffer, frame.size, x, y);
+    }
 
     // 2. 动态叠加当前佩戴的头/颈/手持饰品 (仅幼年期与成年期支持，雏鸟蛋壳期不叠加)
     if (level >= 5) {
@@ -473,10 +482,11 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
                 std::vector<uint16_t> sizes(count);
                 f.read(reinterpret_cast<uint8_t*>(sizes.data()), count * sizeof(uint16_t));
                 for (uint8_t i = 0; i < count; ++i) {
-                    InMemoryFrame fr;
-                    fr.buffer.resize(sizes[i]);
-                    f.read(fr.buffer.data(), sizes[i]);
-                    outFrames.push_back(std::move(fr));
+                    InMemoryFrame fr(sizes[i]);
+                    if (fr.buffer) {
+                        f.read(fr.buffer, sizes[i]);
+                        outFrames.push_back(std::move(fr));
+                    }
                 }
             }
             f.close();
@@ -486,8 +496,6 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
         loadAct("/assets/MM/Egg/stand.act", adoptMmFrames);
         adoptFramesLoaded = true;
     }
-
-
 
     const auto& frames = (gender == 1) ? adoptMmFrames : adoptGgFrames;
     if (frames.empty()) {
@@ -505,8 +513,11 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
         drawY += (fIdx % 4 > 2) ? -4 : 0;
     }
 
-    canvas.drawPng(frames[fIdx].buffer.data(), frames[fIdx].buffer.size(), x, drawY);
+    if (frames[fIdx].buffer && frames[fIdx].size > 0) {
+        canvas.drawPng(frames[fIdx].buffer, frames[fIdx].size, x, drawY);
+    }
 }
+
 
 void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex, bool active) {
     if (optionIndex < 0 || optionIndex >= 11) return;

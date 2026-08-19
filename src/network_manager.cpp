@@ -38,10 +38,11 @@ void NetworkManager::update() {
     // 刚连接上 WiFi 时触发一次全量初始化 (NTP 对时 + 真实天气拉取 + 屏幕提示)
     if (connected && !wasConnected) {
         wasConnected = true;
-        configTime(8 * 3600, 0, "pool.ntp.org", "ntp.aliyun.com");
+        configTzTime("CST-8", "ntp.aliyun.com", "pool.ntp.org", "time.asia.apple.com");
         WeatherManager::getInstance().fetchWeatherFromNetwork();
         g_display.showToast("📶 WiFi已连接! 天气已同步", 3500);
     } else if (!connected && wasConnected) {
+
         wasConnected = false;
     }
 
