@@ -57,33 +57,30 @@ void AssetManager::drawBackground(M5Canvas& canvas, uint8_t bgId) {
 }
 
 String AssetManager::getActionNameByState(PetAnimState anim, const String& stage, uint8_t& outFps) {
-    outFps = 10;
+    outFps = 6;
     switch (anim) {
         case ANIM_IDLE_STAND:
-            outFps = 8;
+            outFps = 4; // 4 帧呼吸站立以 4 fps 播放，1秒1次完整轻柔呼吸
             return "stand";
         case ANIM_IDLE_LOOK:
-            outFps = 8;
+            outFps = 4;
             return "look"; // 左右歪头打量主人
         case ANIM_IDLE_SCRATCH:
-            outFps = 8;
+            outFps = 5;
             return "wobble"; // 憨态蹒跚左右摇晃
         case ANIM_IDLE_STRETCH:
-            outFps = 8;
+            outFps = 4;
             return "stretch"; // 伸个舒服小懒腰
         case ANIM_IDLE_BOUNCE:
         case ANIM_HAPPY:
-            outFps = 10;
+            outFps = 6;
             return "happy"; // 欢快蹦跳
         case ANIM_IDLE_DOZE:
         case ANIM_IDLE_PAT_BELLY:
-            outFps = 8;
+            outFps = 6;
             return "play"; // 玩耍拍球/转圈
-
-
-
         case ANIM_PLAY:
-            outFps = 10;
+            outFps = 8;
             // 逗玩玩耍动作库：仅在 Adult 成年期轮播 play ~ play_4，幼年期与破壳期使用专属 play
             if (stage == "Adult") {
                 int r = (millis() / 4000) % 5;
@@ -94,49 +91,87 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             }
             return "play";
         case ANIM_WORK:
-            outFps = 10;
+            outFps = 8;
             return "work";
         case ANIM_STUDY:
-            outFps = 10;
+            outFps = 8;
             return "study";
         case ANIM_TRIP:
-            outFps = 10;
+            outFps = 8;
             return "trip";
-
-
         case ANIM_EAT:
-            outFps = 10;
+            outFps = 8;
             return "eat";
         case ANIM_CLEAN:
-            outFps = 10;
+            outFps = 8;
             return "clean";
         case ANIM_SAD:
-            outFps = 8;
+            outFps = 6;
             return "sad";
         case ANIM_SICK:
-            outFps = 8;
+            outFps = 6;
             return "sick";
         case ANIM_DEAD:
         case ANIM_DYING:
-            outFps = 6;
+            outFps = 4;
             return "dying";
-
         case ANIM_CURE:
-            outFps = 10;
+            outFps = 8;
             return "cure";
         case ANIM_SLEEP:
-            outFps = 6;
+            outFps = 4;
             return "sleep";
         case ANIM_LEVELUP:
-        case ANIM_DRAG:
-            outFps = 10;
-            return "levelup";
-        default:
             outFps = 8;
+            return "levelup";
+        case ANIM_DRAG:
+            outFps = 8;
+            return "drag";
+        case ANIM_WALK_LEFT:
+            outFps = 6;
+            return "walk_left";
+        case ANIM_WALK_RIGHT:
+            outFps = 6;
+            return "walk_right";
+        case ANIM_HIDE_LEFT:
+            outFps = 4;
+            return "hide_left";
+        case ANIM_HIDE_RIGHT:
+            outFps = 4;
+            return "hide_right";
+        case ANIM_SNEEZE:
+            outFps = 5;
+            return "sneeze";
+        case ANIM_YAWN:
+            outFps = 4;
+            return "yawn";
+        case ANIM_ANGRY:
+            outFps = 6;
+            return "angry";
+        case ANIM_SHY:
+            outFps = 4;
+            return "shy";
+        case ANIM_UMBRELLA:
+            outFps = 4;
+            return "umbrella";
+        case ANIM_COLD:
+            outFps = 5;
+            return "cold";
+        case ANIM_SUMMER:
+            outFps = 5;
+            return "summer";
+        case ANIM_TIWENJI:
+            outFps = 4;
+            return "tiwenji";
+        case ANIM_INJECTION:
+            outFps = 6;
+            return "injection";
+        default:
+            outFps = 4;
             return "stand";
     }
-
 }
+
 
 void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
 
@@ -263,7 +298,6 @@ void AssetManager::drawPetFrame(M5Canvas& canvas, int x, int y, PetAnimState ani
 
 }
 
-
 void AssetManager::loadMenuIcons() {
     if (!isFsMounted || iconsLoaded) return;
 
@@ -272,7 +306,6 @@ void AssetManager::loadMenuIcons() {
     };
 
     for (int i = 0; i < 11; ++i) {
-
         String normPath = String("/assets/icons/") + iconNames[i] + "_norm.png";
         String actPath = String("/assets/icons/") + iconNames[i] + "_act.png";
 
@@ -299,7 +332,6 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
         adoptGgFrames.clear();
         adoptMmFrames.clear();
 
-        // 1. 载入 GG 雏鸟动作 (stand)
         for (int i = 0; i < 20; ++i) {
             char fn[64];
             snprintf(fn, sizeof(fn), "/assets/GG/Egg/stand/f_%02d.png", i);
@@ -314,7 +346,6 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
             }
         }
 
-        // 2. 载入 MM 雏鸟动作 (stand)
         for (int i = 0; i < 20; ++i) {
             char fn[64];
             snprintf(fn, sizeof(fn), "/assets/MM/Egg/stand/f_%02d.png", i);
@@ -330,6 +361,7 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
         }
         adoptFramesLoaded = true;
     }
+
 
     const auto& frames = (gender == 1) ? adoptMmFrames : adoptGgFrames;
     if (frames.empty()) {
@@ -359,6 +391,8 @@ void AssetManager::drawMenuIcon(M5Canvas& canvas, int x, int y, int optionIndex,
         sprIconsNorm[optionIndex].pushSprite(&canvas, x, y, CHROMA_KEY);
     }
 }
+
+
 
 
 

@@ -49,7 +49,14 @@ bool StorageManager::loadPetState(PetState& state) {
             state.equipped_neck = 0;
             state.equipped_hand = 0;
         }
+
+        // 自动修复旧固件心情被截断至 <= 100 的历史数据
+        if (state.mood < 300) {
+            state.mood = 850;
+        }
+
         return true;
+
 
 
 

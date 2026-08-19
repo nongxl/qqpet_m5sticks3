@@ -16,7 +16,9 @@ public:
 
 private:
     bool apMode;
+    bool wasConnected;
     uint32_t lastConnectAttempt;
 };
+
 
 extern NetworkManager g_net;

@@ -4,9 +4,12 @@
 #include "game_catcher.h"
 #include "game_jumper.h"
 #include "game_miner.h"
+#include "game_guess.h"
+#include "game_ball.h"
+#include "game_floor.h"
+#include "game_rope.h"
 #include "display_engine.h"
 #include "haptics.h"
-
 
 extern DisplayEngine g_display;
 extern HapticsEngine g_haptics;
@@ -33,6 +36,14 @@ void MiniGameManager::selectGame(MiniGameType type) {
         currentGame = std::unique_ptr<MiniGameBase>(new GameJumper());
     } else if (type == GAME_MINER) {
         currentGame = std::unique_ptr<MiniGameBase>(new GameMiner());
+    } else if (type == GAME_GUESS) {
+        currentGame = std::unique_ptr<MiniGameBase>(new GameGuess());
+    } else if (type == GAME_BALL) {
+        currentGame = std::unique_ptr<MiniGameBase>(new GameBall());
+    } else if (type == GAME_FLOOR) {
+        currentGame = std::unique_ptr<MiniGameBase>(new GameFloor());
+    } else if (type == GAME_ROPE) {
+        currentGame = std::unique_ptr<MiniGameBase>(new GameRope());
     } else {
         currentGame = nullptr;
     }
@@ -64,26 +75,32 @@ void MiniGameManager::render(M5Canvas& canvas) {
         return;
     }
 
-    // 渲染游戏厅选择大厅 (135x240 竖屏卡片)
+    // 渲染游戏厅选择大厅 (135x240 竖屏 4 卡片视口滚动)
     int SCREEN_W = 135;
     int SCREEN_H = 240;
 
     canvas.fillScreen(canvas.color565(18, 24, 38));
 
-    // 顶部标题栏
-    canvas.fillRoundRect(3, 3, SCREEN_W - 6, 26, 4, canvas.color565(28, 42, 68));
+    // 1. 顶部标题栏
+    canvas.fillRoundRect(4, 4, SCREEN_W - 8, 22, 4, canvas.color565(28, 42, 68));
     canvas.setFont(&fonts::efontCN_12);
     canvas.setTextSize(1);
     canvas.setTextColor(canvas.color565(255, 215, 60));
-    canvas.drawCenterString("🎮 Q宠体感游戏厅", SCREEN_W / 2, 9);
+    canvas.drawString("Q宠互动游戏厅", 8, 7);
+    canvas.setTextColor(TFT_WHITE);
+    canvas.drawRightString(String(selectedMenuIndex + 1) + "/10", SCREEN_W - 8, 7);
 
     const char* gameTitles[] = {
-        "🎣 湖畔钓鱼",
-        "⛷️ 极速滑雪",
-        "🪙 摘果接宝",
-        "☁️ 步步高升",
-        "⛏️ 黄金矿工",
-        "🔙 退出大厅"
+        "湖畔钓鱼",
+        "极速滑雪",
+        "摘果接宝",
+        "步步高升",
+        "黄金矿工",
+        "企鹅猜拳",
+        "拍皮球乐",
+        "下100层",
+        "节奏跳绳",
+        "[ 退出大厅 ]"
     };
 
     const char* gameDescs[] = {
@@ -92,31 +109,66 @@ void MiniGameManager::render(M5Canvas& canvas) {
         "倾斜滑行接元宝 + 防炸弹",
         "倾斜微调落点 + 翅膀滑翔",
         "瞄准摆角 + 射爪抓大金块",
+        "经典剪刀石头布 赢取元宝",
+        "节奏抓准时机 向上颠皮球",
+        "重力感应倾斜踩云 躲避尖刺",
+        "绳子扫过脚底时 抓准起跳",
         "返回待机主界面"
     };
 
-    int cardY = 35;
-    int cardH = 30;
-
-    for (int i = 0; i < 6; ++i) {
-        bool isSel = (i == selectedMenuIndex);
-        uint16_t bgCol = isSel ? canvas.color565(255, 235, 120) : canvas.color565(28, 38, 56);
-        uint16_t borderCol = isSel ? canvas.color565(255, 180, 0) : canvas.color565(45, 60, 85);
-        uint16_t titleCol = isSel ? canvas.color565(30, 20, 0) : TFT_WHITE;
-        uint16_t descCol = isSel ? canvas.color565(120, 70, 0) : canvas.color565(140, 160, 180);
-
-        int curY = cardY + i * (cardH + 4);
-        canvas.fillRoundRect(6, curY, SCREEN_W - 12, cardH, 4, bgCol);
-        canvas.drawRoundRect(6, curY, SCREEN_W - 12, cardH, 4, borderCol);
-
-        canvas.setFont(&fonts::efontCN_12);
-        canvas.setTextColor(titleCol);
-        canvas.drawString(gameTitles[i], 12, curY + 4);
-
-        canvas.setFont(&fonts::efontCN_10);
-        canvas.setTextColor(descCol);
-        canvas.drawString(gameDescs[i], 12, curY + 18);
+    int totalGames = 10;
+    int cardH = 40;
+    int visibleCount = 4;
+    int startIdx = 0;
+    if (selectedMenuIndex >= visibleCount) {
+        startIdx = selectedMenuIndex - visibleCount + 1;
     }
+    if (startIdx + visibleCount > totalGames) {
+        startIdx = std::max(0, totalGames - visibleCount);
+    }
+
+    int startY = 30;
+    for (int i = 0; i < visibleCount && (startIdx + i) < totalGames; ++i) {
+        int idx = startIdx + i;
+        int curY = startY + i * (cardH + 3);
+        bool isSel = (idx == selectedMenuIndex);
+
+        int boxX = 4;
+        int boxW = SCREEN_W - 8;
+
+        if (isSel) {
+            canvas.fillRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(255, 250, 225));
+            canvas.drawRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(255, 170, 0));
+            canvas.drawRoundRect(boxX + 1, curY + 1, boxW - 2, cardH - 2, 4, canvas.color565(255, 215, 80));
+        } else {
+            canvas.fillRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(28, 38, 56));
+            canvas.drawRoundRect(boxX, curY, boxW, cardH, 5, canvas.color565(45, 60, 85));
+        }
+
+        if (idx == totalGames - 1) {
+            canvas.setTextColor(isSel ? canvas.color565(220, 40, 40) : canvas.color565(140, 160, 180));
+            canvas.drawCenterString(gameTitles[idx], SCREEN_W / 2, curY + 13);
+            continue;
+        }
+
+        // 第一行 (Y+4): 游戏名称 (左) + 序号 (右)
+        canvas.setTextColor(isSel ? canvas.color565(20, 40, 80) : TFT_WHITE);
+        canvas.drawString(gameTitles[idx], boxX + 6, curY + 4);
+
+        canvas.setTextColor(isSel ? canvas.color565(210, 120, 0) : canvas.color565(80, 180, 255));
+        canvas.drawRightString("No." + String(idx + 1), boxX + boxW - 6, curY + 4);
+
+        // 第二行 (Y+22): 玩法简述
+        canvas.setTextColor(isSel ? canvas.color565(180, 80, 0) : canvas.color565(140, 160, 180));
+        canvas.drawString(gameDescs[idx], boxX + 6, curY + 22);
+    }
+
+    // 底部操作指引
+    int botY = SCREEN_H - 24;
+    canvas.fillRoundRect(8, botY, SCREEN_W - 16, 20, 4, canvas.color565(14, 20, 32));
+    canvas.drawRoundRect(8, botY, SCREEN_W - 16, 20, 4, canvas.color565(60, 85, 125));
+    canvas.setTextColor(canvas.color565(255, 220, 80));
+    canvas.drawCenterString("B切换 | A进入游戏", SCREEN_W / 2, botY + 4);
 }
 
 void MiniGameManager::onBtnA() {
@@ -126,7 +178,7 @@ void MiniGameManager::onBtnA() {
     }
     // 在大厅按 BtnA 确认启动游戏
     g_haptics.trigger(HAPTIC_SUCCESS);
-    if (selectedMenuIndex >= 0 && selectedMenuIndex < 5) {
+    if (selectedMenuIndex >= 0 && selectedMenuIndex < 9) {
         selectGame(static_cast<MiniGameType>(selectedMenuIndex + 1));
     } else {
         // 退出大厅
@@ -145,9 +197,11 @@ void MiniGameManager::onBtnB() {
 }
 
 void MiniGameManager::nextMenuIndex() {
-    selectedMenuIndex = (selectedMenuIndex + 1) % 6;
+    selectedMenuIndex = (selectedMenuIndex + 1) % 10;
 }
 
 void MiniGameManager::prevMenuIndex() {
-    selectedMenuIndex = (selectedMenuIndex + 5) % 6;
+    selectedMenuIndex = (selectedMenuIndex + 9) % 10;
 }
+
+

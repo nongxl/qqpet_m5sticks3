@@ -51,10 +51,12 @@ private:
     uint8_t currentLoadedBgId;
     InMemoryFrame currentBgFrame;
 
-    // 预解码 11 款原生 Sprite (feed, bath, play, wardrobe, work, study, trip, cure, shop, status, web)
+    // 预加载 11 款官方原版图标原生 PNG 内存缓存与 Sprite 零拷贝直接渲染
     M5Canvas sprIconsNorm[11];
     M5Canvas sprIconsAct[11];
     bool iconsLoaded;
+
+
 
 
 

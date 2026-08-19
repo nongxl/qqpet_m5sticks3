@@ -93,6 +93,8 @@ struct PetState {
 
     
     uint32_t last_active_time; // 上次运行时间戳 (秒)
+    uint32_t last_signin_day;  // 上次每日签到日期戳 (天数)
 };
+
 
 

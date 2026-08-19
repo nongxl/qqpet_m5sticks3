@@ -12,9 +12,12 @@
 #include "sound_manager.h"
 #include "game_data.h"
 #include "mini_game_manager.h"
-
+#include "vfx_engine.h"
+#include "weather_manager.h"
 
 // 计时变量
+
+
 static uint32_t lastDecayTime = 0;
 static uint32_t lastSaveTime = 0;
 static uint32_t lastIdleQuoteTime = 0;
@@ -138,7 +141,11 @@ void setup() {
     // 初始化外设与模块
     g_haptics.begin();
     g_display.begin();
-    g_imu.begin();
+    g_sound.begin();
+    g_net.begin();
+    g_webPortal.begin();
+    g_ai.begin();
+    WeatherManager::getInstance().begin();
 
 
     // 加载持久化数据
@@ -149,24 +156,15 @@ void setup() {
         }
     }
 
-    // 初始化声音、网络与后台
-    g_sound.begin();
-    g_net.begin();
-    g_webPortal.begin();
-    g_ai.begin();
-
     lastDecayTime = millis();
     lastSaveTime = millis();
-    lastIdleQuoteTime = millis();
-    lastUserInteractTime = millis();
-
-    // 启动问候气泡 (仅在已领养状态下)
+    // 启动问候气泡与每日宝箱 (仅在已领养状态下)
     if (g_pet.isAdopted()) {
         g_sound.playSound(SOUND_HAPPY);
         g_haptics.trigger(HAPTIC_CLICK);
         g_display.showBubble("主人早上好！我是你的QQ小桌宠~", 4000);
+        VfxEngine::getInstance().showDailyChest();
     }
-
 }
 
 void loop() {
@@ -176,6 +174,9 @@ void loop() {
     g_haptics.update();
     g_net.update();
     g_webPortal.update();
+    WeatherManager::getInstance().update();
+    VfxEngine::getInstance().update();
+
 
     // 0. 如果尚未领养 (首次开机或重置)，进入双企鹅并排展示选性别领养仪式
     if (!g_pet.isAdopted()) {
@@ -204,8 +205,10 @@ void loop() {
     }
 
     uint32_t nowTime = millis();
+
     // 待机超过 180 秒 (3 分钟) 无交互才进入深度睡眠，平时保持活泼可爱的多套日常动作
     bool isSleeping = (nowTime - lastUserInteractTime > 180000) && !g_pet.isTaskActive() && 
+
                       !g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead();
 
 
@@ -224,7 +227,14 @@ void loop() {
     // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽 / 游戏主键)
     if (M5.BtnA.wasClicked()) {
         lastUserInteractTime = nowTime; // 唤醒与重置待机
+
+        if (VfxEngine::getInstance().isDailyChestActive()) {
+            VfxEngine::getInstance().openDailyChest();
+            return;
+        }
+
         if (g_display.isSubScreenOpen()) {
+
 
             SubScreenMode mode = g_display.getSubScreenMode();
             if (mode == SUB_SCREEN_GAMES) {
@@ -234,7 +244,7 @@ void loop() {
 
             int idx = g_display.getSubScreenIndex();
             int totalItems = (mode == SUB_SCREEN_FEED) ? (FOOD_COUNT + 1) : 
-                             ((mode == SUB_SCREEN_CURE) ? (MEDICINE_COUNT + 1) : 
+                             ((mode == SUB_SCREEN_CURE) ? (1 + MEDICINE_COUNT + 1) : 
                              ((mode == SUB_SCREEN_SHOP) ? (SHOP_PRODUCT_COUNT + 1) : 
                              ((mode == SUB_SCREEN_WARDROBE) ? (COSTUME_COUNT + 1) : (4 + 1))));
 
@@ -256,17 +266,33 @@ void loop() {
                     g_display.showToast(feedMsg, 5500);
                 }
             } else if (mode == SUB_SCREEN_CURE) {
-                String cureMsg;
-                if (g_pet.cureWithMed(idx, cureMsg)) {
-                    g_haptics.trigger(HAPTIC_SUCCESS);
-                    g_display.showToast(cureMsg, 5500);
-                    g_display.closeSubScreen();
-                    g_ai.requestDialog("idle");
+                if (idx == 0) {
+                    // 点击了第一项【🏥 社区医院打针看诊】
+                    String injMsg;
+                    if (g_pet.takeHospitalInjection(injMsg)) {
+                        g_haptics.trigger(HAPTIC_SUCCESS);
+                        g_display.showToast(injMsg, 5500);
+                        g_display.closeSubScreen();
+                        g_ai.requestDialog("idle");
+                    } else {
+                        g_haptics.trigger(HAPTIC_ALERT);
+                        g_display.showToast(injMsg, 5500);
+                    }
                 } else {
-                    g_haptics.trigger(HAPTIC_ALERT);
-                    g_display.showToast(cureMsg, 5500);
+                    int medIdx = idx - 1;
+                    String cureMsg;
+                    if (g_pet.cureWithMed(medIdx, cureMsg)) {
+                        g_haptics.trigger(HAPTIC_SUCCESS);
+                        g_display.showToast(cureMsg, 5500);
+                        g_display.closeSubScreen();
+                        g_ai.requestDialog("idle");
+                    } else {
+                        g_haptics.trigger(HAPTIC_ALERT);
+                        g_display.showToast(cureMsg, 5500);
+                    }
                 }
             } else if (mode == SUB_SCREEN_SHOP) {
+
                 if (idx == 0) {
                     // 点击了第一项【👗 企鹅衣橱】，无缝进入全屏衣橱
                     g_display.openSubScreen(SUB_SCREEN_WARDROBE);
@@ -342,10 +368,13 @@ void loop() {
             } else {
                 g_pet.play(50);
                 g_haptics.trigger(HAPTIC_CLICK);
+                VfxEngine::getInstance().spawnHearts(67, 120, 4);
+                VfxEngine::getInstance().spawnStars(67, 120, 3);
                 g_ai.requestDialog("happy");
             }
         }
     }
+
 
     // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾
     static bool dragStarted = false;

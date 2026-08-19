@@ -22,7 +22,7 @@ ICON_MAPPINGS = {
 }
 
 def convert_icons():
-    print("Converting official 26x26 / 40x40 icons to 20x20 norm & 28x28 act...")
+    print("Converting official 26x26 / 40x40 icons to pristine 20x20 norm & 28x28 act PNGs...")
     
     for name, src_path in ICON_MAPPINGS.items():
         if not src_path.exists():
@@ -43,7 +43,7 @@ def convert_icons():
         im_norm = im.resize((nw_norm, nh_norm), Image.Resampling.LANCZOS)
         
         canvas_norm = Image.new("RGBA", (20, 20), (0, 0, 0, 0))
-        canvas_norm.paste(im_norm, ((20 - nw_norm) // 2, (20 - nh_norm) // 2))
+        canvas_norm.paste(im_norm, ((20 - nw_norm) // 2, (20 - nh_norm) // 2), im_norm)
         
         out_norm = OUT_DIR / f"{name}_norm.png"
         canvas_norm.save(out_norm, optimize=True)
@@ -54,7 +54,7 @@ def convert_icons():
         im_act = im.resize((nw_act, nh_act), Image.Resampling.LANCZOS)
         
         canvas_act = Image.new("RGBA", (28, 28), (0, 0, 0, 0))
-        canvas_act.paste(im_act, ((28 - nw_act) // 2, (28 - nh_act) // 2))
+        canvas_act.paste(im_act, ((28 - nw_act) // 2, (28 - nh_act) // 2), im_act)
         
         out_act = OUT_DIR / f"{name}_act.png"
         canvas_act.save(out_act, optimize=True)

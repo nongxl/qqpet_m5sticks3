@@ -9,8 +9,14 @@ enum MiniGameType {
     GAME_CATCHER,   // 3. 摘果接元宝
     GAME_JUMPER,    // 4. 步步高升跳一跳
     GAME_MINER,     // 5. 黄金矿工
+    GAME_GUESS,     // 6. 企鹅猜拳对决
+    GAME_BALL,      // 7. 拍皮球颠球乐
+    GAME_FLOOR,     // 8. 企鹅下100层
+    GAME_ROPE,      // 9. 节奏跳绳挑战
     GAME_COUNT
 };
+
+
 
 class MiniGameBase {
 public:

@@ -1,10 +1,12 @@
 #include "network_manager.h"
 #include "pet_core.h"
+#include "weather_manager.h"
+#include "display_engine.h"
 #include <time.h>
 
 NetworkManager g_net;
 
-NetworkManager::NetworkManager() : apMode(true), lastConnectAttempt(0) {}
+NetworkManager::NetworkManager() : apMode(true), wasConnected(false), lastConnectAttempt(0) {}
 
 void NetworkManager::begin() {
     // 默认开启 AP_STA 双模，确保手机随时可以搜到热点进行配置
@@ -31,8 +33,20 @@ void NetworkManager::connectWiFi(const char* ssid, const char* pwd) {
 }
 
 void NetworkManager::update() {
+    bool connected = (WiFi.status() == WL_CONNECTED);
+
+    // 刚连接上 WiFi 时触发一次全量初始化 (NTP 对时 + 真实天气拉取 + 屏幕提示)
+    if (connected && !wasConnected) {
+        wasConnected = true;
+        configTime(8 * 3600, 0, "pool.ntp.org", "ntp.aliyun.com");
+        WeatherManager::getInstance().fetchWeatherFromNetwork();
+        g_display.showToast("📶 WiFi已连接! 天气已同步", 3500);
+    } else if (!connected && wasConnected) {
+        wasConnected = false;
+    }
+
     // 如果配置了 Wi-Fi 但未连接，后台尝试重连
-    if (WiFi.status() != WL_CONNECTED) {
+    if (!connected) {
         if (millis() - lastConnectAttempt > 15000) {
             lastConnectAttempt = millis();
             const PetState& st = g_pet.getState();
@@ -42,3 +56,4 @@ void NetworkManager::update() {
         }
     }
 }
+

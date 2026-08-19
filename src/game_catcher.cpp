@@ -99,16 +99,17 @@ void GameCatcher::update(float tiltX, float tiltY, float accelZ) {
                 score += 15;
                 coinsGained += 2;
                 PetState& st = const_cast<PetState&>(g_pet.getState());
-                st.hunger = std::min(100.0f, st.hunger + 1.5f);
+                st.hunger = std::min(2000, st.hunger + 30);
                 g_haptics.trigger(HAPTIC_CLICK);
             } else if (items[i].type == 2) {
                 // 幸运彩星
                 score += 25;
                 coinsGained += 8;
                 PetState& st = const_cast<PetState&>(g_pet.getState());
-                st.mood = std::min(100.0f, st.mood + 2.0f);
+                st.mood = std::min(1000, st.mood + 30);
                 g_haptics.trigger(HAPTIC_SUCCESS);
             } else {
+
                 // 炸弹！
                 if (!isShieldActive) {
                     lives--;

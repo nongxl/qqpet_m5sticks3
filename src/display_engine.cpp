@@ -2,8 +2,14 @@
 #include "config.h"
 #include "asset_manager.h"
 #include "mini_game_manager.h"
+#include "vfx_engine.h"
+#include "weather_manager.h"
+#include "network_manager.h"
 #include "haptics.h"
 #include <M5Unified.h>
+
+
+
 
 
 
@@ -84,8 +90,9 @@ void DisplayEngine::nextSubScreenItem() {
     if (subMode == SUB_SCREEN_NONE) return;
     int maxItems = 1;
     if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1; // 4种食物 + 1个退出项
-    else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1; // 13种药 + 1个退出项
+    else if (subMode == SUB_SCREEN_CURE) maxItems = 1 + MEDICINE_COUNT + 1; // 1个医院打针 + 13种药 + 1个退出项
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1; // 18种商品 + 1个退出项
+
     else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1; // 4个时长档位 + 1个退出项
     else if (subMode == SUB_SCREEN_WARDROBE) maxItems = COSTUME_COUNT + 1; // 8款饰品 + 1个退出项
     
@@ -96,8 +103,9 @@ void DisplayEngine::prevSubScreenItem() {
     if (subMode == SUB_SCREEN_NONE) return;
     int maxItems = 1;
     if (subMode == SUB_SCREEN_FEED) maxItems = FOOD_COUNT + 1;
-    else if (subMode == SUB_SCREEN_CURE) maxItems = MEDICINE_COUNT + 1;
+    else if (subMode == SUB_SCREEN_CURE) maxItems = 1 + MEDICINE_COUNT + 1;
     else if (subMode == SUB_SCREEN_SHOP) maxItems = SHOP_PRODUCT_COUNT + 1;
+
     else if (subMode == SUB_SCREEN_WORK || subMode == SUB_SCREEN_STUDY || subMode == SUB_SCREEN_TRIP) maxItems = 4 + 1;
     else if (subMode == SUB_SCREEN_WARDROBE) maxItems = COSTUME_COUNT + 1;
     
@@ -136,11 +144,10 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
     // 2. 绘制顶部信息栏
     drawTopBar();
 
-    // 3. 计算企鹅位置 (圆圈菜单模式下企鹅端坐在圆心正中央)
-    int petX = (SCREEN_W / 2) + petOffsetX;
+    // 3. 计算企鹅位置 (圆圈菜单模式下企鹅端坐在圆心正中央，闲置时叠加自主踱步偏移)
+    int petX = (SCREEN_W / 2) + petOffsetX + (menuVisible ? 0 : (int)g_pet.getWalkOffsetX());
     int petY = 158 + petOffsetY;
 
-    
     PetAnimState anim = g_pet.getCurrentAnimState();
     if (isDragging) {
         petY += (animFrame % 6 > 3) ? -3 : 3;
@@ -152,9 +159,16 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
         drawPet(petX, petY, anim);
     }
 
-
-
-
+    // 绘制嘴叼体温计体温气泡
+    if (anim == ANIM_TIWENJI) {
+        float t = g_pet.getTemperature();
+        char tBuf[24];
+        snprintf(tBuf, sizeof(tBuf), "体温: %.1fC", t);
+        canvas.fillRoundRect(petX - 38, petY - 56, 76, 16, 4, canvas.color565(255, 235, 235));
+        canvas.drawRoundRect(petX - 38, petY - 56, 76, 16, 4, canvas.color565(255, 70, 70));
+        canvas.setTextColor(canvas.color565(220, 20, 20));
+        canvas.drawCenterString(tBuf, petX, petY - 54);
+    }
 
     // 4. 绘制对话气泡
     drawBubble();
@@ -167,6 +181,9 @@ void DisplayEngine::update(int petOffsetX, int petOffsetY) {
     // 6. 绘制 Toast
     drawToast();
 
+    // 7. 渲染高光交互与粒子特效 (爱心、星星、金光法阵、每日宝箱)
+    VfxEngine::getInstance().render(canvas);
+
     // 推送画布
     canvas.pushSprite(0, 0);
 }
@@ -176,9 +193,13 @@ void DisplayEngine::drawBackground() {
     g_assets.drawBackground(canvas, st.bg_id);
 }
 
-
 void DisplayEngine::drawTopBar() {
     const PetState& st = g_pet.getState();
+    
+    // 0. 绘制顶部状态栏底座背景 (全宽圆角毛玻璃半透明底座 X=2, Y=2, 宽 131px, 高 19px)
+    canvas.fillRoundRect(2, 2, SCREEN_W - 4, 19, 4, canvas.color565(238, 246, 255));
+    canvas.drawRoundRect(2, 2, SCREEN_W - 4, 19, 4, canvas.color565(185, 215, 245));
+
     canvas.setFont(&fonts::efontCN_12);
     canvas.setTextColor(canvas.color565(30, 45, 60));
     
@@ -192,33 +213,95 @@ void DisplayEngine::drawTopBar() {
         snprintf(buf, sizeof(buf), "[%s %02d:%02d]", taskPrefix, remM, remS);
 
         // 浅橙/浅蓝倒计时胶囊底座
-        canvas.fillRoundRect(4, 3, 82, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 240, 210) : canvas.color565(225, 240, 255));
-        canvas.drawRoundRect(4, 3, 82, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 170, 50) : canvas.color565(80, 160, 240));
+        canvas.fillRoundRect(3, 3, 78, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 240, 210) : canvas.color565(225, 240, 255));
+        canvas.drawRoundRect(3, 3, 78, 17, 4, (st.current_task == TASK_WORK) ? canvas.color565(255, 170, 50) : canvas.color565(80, 160, 240));
         canvas.setTextColor((st.current_task == TASK_WORK) ? canvas.color565(200, 90, 0) : canvas.color565(20, 100, 200));
-        canvas.drawString(buf, 7, 5);
+        canvas.drawString(buf, 6, 5);
 
-        // 电池电量
-        canvas.setTextColor(canvas.color565(50, 75, 110));
-        canvas.drawRightString(String(cachedBattery) + "%", SCREEN_W - 6, 6);
-        canvas.drawFastHLine(4, 22, SCREEN_W - 8, canvas.color565(190, 215, 240));
+        // 右侧电池图标
+        int batX = SCREEN_W - 22;
+        int batY = 6;
+        canvas.drawRoundRect(batX, batY, 16, 9, 2, canvas.color565(70, 90, 110));
+        canvas.fillRect(batX + 16, batY + 2, 2, 5, canvas.color565(70, 90, 110));
+        int fillW = map(constrain(cachedBattery, 0, 100), 0, 100, 0, 12);
+        uint16_t batCol = (cachedBattery <= 20) ? canvas.color565(230, 50, 50) : canvas.color565(40, 180, 70);
+        if (fillW > 0) canvas.fillRect(batX + 2, batY + 2, fillW, 5, batCol);
         return;
     }
 
-    // 企鹅昵称与等级
-    canvas.drawString(String(st.name) + " Lv." + String(g_pet.getLevel()), 6, 6);
+    // 1. 左侧：企鹅昵称与等级 (X=5, Y=5)
+    canvas.drawString(String(st.name) + " Lv." + String(g_pet.getLevel()), 5, 5);
 
-    // 金币元宝展示
-    canvas.setTextColor(canvas.color565(210, 130, 0));
-    canvas.drawString("Y" + String(st.coins), 62, 6);
 
-    // 电池电量 (使用静态缓存，彻底切断 I2C 轮询以杜绝屏幕闪烁)
-    canvas.setTextColor(canvas.color565(50, 75, 110));
-    canvas.drawRightString(String(cachedBattery) + "%", SCREEN_W - 6, 6);
-    canvas.fillRoundRect(SCREEN_W - 36, 8, 4, 8, 1, canvas.color565(60, 190, 80));
+    // 2. 中间：天气微标 + 气温 (整体向右移至 X=62, 宽 30px, 完美居中于 135px 屏)
+    WeatherType wt = WeatherManager::getInstance().getCurrentWeather();
+    int temp = WeatherManager::getInstance().getCurrentTemp();
+
+    // 矢量绘制精致天气图标 (中心位置 X=62, Y=11)
+    int wx = 62;
+    int wy = 11;
+    if (wt == WEATHER_SUNNY) {
+        // 金黄小太阳
+        canvas.fillCircle(wx, wy, 3, canvas.color565(255, 180, 0));
+        canvas.drawCircle(wx, wy, 4, canvas.color565(255, 120, 0));
+    } else if (wt == WEATHER_RAINY) {
+        // 蓝灰小雨云 + 雨滴
+        canvas.fillCircle(wx - 2, wy - 1, 3, canvas.color565(120, 160, 200));
+        canvas.fillCircle(wx + 2, wy - 1, 3, canvas.color565(120, 160, 200));
+        canvas.drawLine(wx - 2, wy + 3, wx - 3, wy + 5, canvas.color565(40, 120, 240));
+        canvas.drawLine(wx + 2, wy + 3, wx + 1, wy + 5, canvas.color565(40, 120, 240));
+    } else if (wt == WEATHER_SNOWY) {
+        // 冰雪花
+        canvas.drawLine(wx - 3, wy, wx + 3, wy, canvas.color565(100, 180, 255));
+        canvas.drawLine(wx, wy - 3, wx, wy + 3, canvas.color565(100, 180, 255));
+        canvas.fillCircle(wx, wy, 1, TFT_WHITE);
+    } else {
+        // 多云
+        canvas.fillCircle(wx - 2, wy, 3, canvas.color565(170, 190, 210));
+        canvas.fillCircle(wx + 2, wy - 1, 4, canvas.color565(190, 210, 230));
+    }
+
+    // 气温数值 (紧随天气微标 X=70, Y=5)
+    canvas.setTextColor(canvas.color565(20, 90, 160));
+    canvas.drawString(String(temp) + "C", 70, 5);
+
+    // 3. 右侧信号图标 (向右对齐至 X=98, Y=7 ~ 17)
+    bool isWifiOk = g_net.isConnected();
+    int sx = 98;
+    if (isWifiOk) {
+        // 三阶绿色/水蓝饱满信号条
+        canvas.fillRect(sx,     13, 2, 3, canvas.color565(30, 180, 80));
+        canvas.fillRect(sx + 3, 10, 2, 6, canvas.color565(30, 180, 80));
+        canvas.fillRect(sx + 6, 7,  2, 9, canvas.color565(30, 180, 80));
+    } else {
+        // 灰色微弱信号条 + 红色斜杠
+        canvas.fillRect(sx,     13, 2, 3, canvas.color565(190, 195, 200));
+        canvas.fillRect(sx + 3, 10, 2, 6, canvas.color565(190, 195, 200));
+        canvas.fillRect(sx + 6, 7,  2, 9, canvas.color565(190, 195, 200));
+        canvas.drawLine(sx - 1, 7, sx + 8, 16, canvas.color565(230, 60, 60));
+    }
+
+    // 4. 右侧电池胶囊图标 (X=114, Y=7, 宽 16px 高 9px)
+    int batX = 114;
+    int batY = 7;
+    // 电池外壳
+    canvas.drawRoundRect(batX, batY, 15, 9, 2, canvas.color565(70, 90, 110));
+    canvas.fillRect(batX + 15, batY + 2, 2, 5, canvas.color565(70, 90, 110));
+    // 内部电量条
+    int fillW = map(constrain(cachedBattery, 0, 100), 0, 100, 0, 11);
+    uint16_t batCol = (cachedBattery <= 20) ? canvas.color565(230, 50, 50) : 
+                      ((cachedBattery <= 50) ? canvas.color565(240, 160, 20) : canvas.color565(40, 180, 70));
+    if (fillW > 0) {
+        canvas.fillRect(batX + 2, batY + 2, fillW, 5, batCol);
+    }
 
     // 顶部分隔线
-    canvas.drawFastHLine(4, 22, SCREEN_W - 8, canvas.color565(190, 215, 240));
+    canvas.drawFastHLine(3, 22, SCREEN_W - 6, canvas.color565(190, 215, 240));
 }
+
+
+
+
 
 
 
@@ -819,31 +902,45 @@ void DisplayEngine::renderSubScreen() {
             canvas.drawString(effectStr, textX, curY + 22);
 
         } else if (subMode == SUB_SCREEN_CURE) {
-            const auto& med = MEDICINE_LIST[idx];
-            int count = g_pet.getMedCount(idx);
-            bool isMatching = (g_pet.isSick() && strcmp(st.illness, med.target_illness) == 0) ||
-                              (g_pet.isDead() && strcmp(med.id, "60001") == 0);
+            if (idx == 0) {
+                // 第一项：🏥 社区医院打针看诊 (80元宝)
+                canvas.setTextColor(isSelected ? canvas.color565(210, 30, 30) : canvas.color565(190, 40, 40));
+                canvas.drawString("🏥 医院急诊打针", textX, curY + 4);
 
-            // 第一行 (Y+4): 药品名称 (左) + 拥有数量 (右)
-            canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
-            canvas.drawString(med.name, textX, curY + 4);
+                canvas.setTextColor(canvas.color565(210, 120, 0));
+                canvas.drawRightString("80Y", boxX + boxW - 6, curY + 4);
 
-            if (count > 0) {
-                canvas.setTextColor(canvas.color565(15, 140, 40));
-                canvas.drawRightString("余:" + String(count), boxX + boxW - 6, curY + 4);
+                canvas.setTextColor(isSelected ? canvas.color565(220, 80, 0) : canvas.color565(140, 120, 110));
+                canvas.drawString("大针筒扎针 瞬间治愈所有疾病", textX, curY + 22);
             } else {
-                canvas.setTextColor(canvas.color565(220, 50, 50));
-                canvas.drawRightString("无药", boxX + boxW - 6, curY + 4);
+                int medIdx = idx - 1;
+                const auto& med = MEDICINE_LIST[medIdx];
+                int count = g_pet.getMedCount(medIdx);
+                bool isMatching = (g_pet.isSick() && strcmp(st.illness, med.target_illness) == 0) ||
+                                  (g_pet.isDead() && strcmp(med.id, "60001") == 0);
+
+                // 第一行 (Y+4): 药品名称 (左) + 拥有数量 (右)
+                canvas.setTextColor(isSelected ? canvas.color565(20, 40, 80) : canvas.color565(50, 70, 95));
+                canvas.drawString(med.name, textX, curY + 4);
+
+                if (count > 0) {
+                    canvas.setTextColor(canvas.color565(15, 140, 40));
+                    canvas.drawRightString("余:" + String(count), boxX + boxW - 6, curY + 4);
+                } else {
+                    canvas.setTextColor(canvas.color565(220, 50, 50));
+                    canvas.drawRightString("无药", boxX + boxW - 6, curY + 4);
+                }
+
+                // 第二行 (Y+22): 主治病症
+                if (isMatching) {
+                    canvas.setTextColor(canvas.color565(0, 150, 40));
+                    canvas.drawString("[对症] 治" + String(med.target_illness), textX, curY + 22);
+                } else {
+                    canvas.setTextColor(isSelected ? canvas.color565(180, 80, 0) : canvas.color565(130, 140, 155));
+                    canvas.drawString("主治: " + String(med.target_illness), textX, curY + 22);
+                }
             }
 
-            // 第二行 (Y+22): 主治病症
-            if (isMatching) {
-                canvas.setTextColor(canvas.color565(0, 150, 40));
-                canvas.drawString("[对症] 治" + String(med.target_illness), textX, curY + 22);
-            } else {
-                canvas.setTextColor(isSelected ? canvas.color565(180, 80, 0) : canvas.color565(130, 140, 155));
-                canvas.drawString("主治: " + String(med.target_illness), textX, curY + 22);
-            }
 
         } else if (subMode == SUB_SCREEN_SHOP) {
             const auto& prod = SHOP_PRODUCTS[idx];

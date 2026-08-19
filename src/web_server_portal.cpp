@@ -2,8 +2,11 @@
 #include "pet_core.h"
 #include "storage_manager.h"
 #include "display_engine.h"
+#include "weather_manager.h"
+#include "network_manager.h"
 #include "haptics.h"
 #include <ArduinoJson.h>
+
 
 WebServerPortal g_webPortal;
 
@@ -197,12 +200,31 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
         <div class="card-title">👗 企鹅衣橱 & 换装商城</div>
         <div id="costume-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px;">
             <!-- 由 JS 动态渲染 8 款饰品 -->
+    <!-- 🌦️ 实时气象与天气控制 -->
+    <div class="card">
+        <div class="card-title">🌦️ 实时气象与天气联动</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f0f5ff; padding:10px 14px; border-radius:8px;">
+            <div>
+                <span style="font-size:16px; font-weight:bold;" id="weather-status-text">☀️ 晴朗 26℃</span>
+                <br><small id="weather-sync-mode" style="color:#595959">来源：未联网模拟</small>
+            </div>
+            <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="syncWeather()">🔄 立即联网同步</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+            <button class="btn" style="background:#faad14" onclick="setManualWeather(0, 28)">☀️ 晴天(28℃)</button>
+            <button class="btn" style="background:#1890ff" onclick="setManualWeather(1, 20)">🌧️ 雨天(20℃)</button>
+            <button class="btn" style="background:#5cdbd3" onclick="setManualWeather(2, -2)">❄️ 下雪(-2℃)</button>
+            <button class="btn" style="background:#8c8c8c" onclick="setManualWeather(3, 22)">☁️ 多云(22℃)</button>
         </div>
     </div>
 
     <!-- 系统配置 -->
     <div class="card">
         <div class="card-title">⚙️ 系统与 Wi-Fi 配网设置</div>
+        <div class="form-group">
+            <label>🐧 企鹅昵称 (最多3个汉字或4个字母)</label>
+            <input id="cfg-name" class="form-input" placeholder="输入企鹅名字" maxlength="8">
+        </div>
         <div class="form-group">
             <label>Wi-Fi SSID</label>
             <input id="cfg-ssid" class="form-input" placeholder="输入无线网络名称">
@@ -215,9 +237,11 @@ static const char INDEX_HTML[] PROGMEM = R"rawliteral(
             <label>DeepSeek API Key</label>
             <input id="cfg-key" type="password" class="form-input" placeholder="sk-...">
         </div>
-        <button class="btn" style="width:100%" onclick="saveConfig()">💾 保存配置并重启 Wi-Fi</button>
+        <button class="btn" style="width:100%" onclick="saveConfig()">💾 保存配置并永久生效</button>
     </div>
 </div>
+
+
 
 <script>
 const COSTUMES = [
@@ -314,10 +338,19 @@ function refresh() {
             taskBox.style.display = 'none';
         }
 
+        if (document.getElementById('cfg-name') && !document.getElementById('cfg-name').value && data.name) {
+            document.getElementById('cfg-name').value = data.name;
+        }
+
         renderCostumes(data.costume_mask, data.eq_head, data.eq_neck, data.eq_hand);
+
+        // 更新天气卡片状态
+        if (data.weather_name) {
+            document.getElementById('weather-status-text').innerText = (data.weather_icon || '☀️') + ' ' + data.weather_name + ' ' + data.temp + '℃';
+            document.getElementById('weather-sync-mode').innerText = '数据源: ' + (data.weather_synced ? '✅ 真实网络定位同步' : '模拟轮换/手动');
+        }
     });
 }
-
 
 function doAction(type) {
     fetch('/api/action?type=' + type).then(r => r.json()).then(res => {
@@ -370,6 +403,19 @@ function setBg(bgId) {
     });
 }
 
+function syncWeather() {
+    fetch('/api/weather/sync').then(r => r.json()).then(res => {
+        alert(res.msg);
+        refresh();
+    });
+}
+
+function setManualWeather(type, temp) {
+    fetch('/api/weather/set?type=' + type + '&temp=' + temp).then(r => r.json()).then(res => {
+        refresh();
+    });
+}
+
 function resetAdoption() {
     if (confirm("⚠️ 确定要重置当前宠物并重新开启领养仪式吗？")) {
         fetch('/api/reset_adoption')
@@ -385,7 +431,21 @@ function resetAdoption() {
 }
 
 function saveConfig() {
+    let nameVal = document.getElementById('cfg-name').value.trim();
+    if (nameVal) {
+        // 校验长度：汉字计2个字符，英文字母计1个字符，最大允许 3个汉字 (6) 或 4个英文字母 (4)
+        let totalLen = 0;
+        for (let i = 0; i < nameVal.length; i++) {
+            totalLen += (nameVal.charCodeAt(i) > 127) ? 2 : 1;
+        }
+        if (totalLen > 6) {
+            alert("⚠️ 企鹅昵称过长！最多支持3个汉字或4个英文字母。");
+            return;
+        }
+    }
+
     let payload = {
+        name: nameVal,
         ssid: document.getElementById('cfg-ssid').value,
         pwd: document.getElementById('cfg-pwd').value,
         key: document.getElementById('cfg-key').value
@@ -396,8 +456,10 @@ function saveConfig() {
         body: JSON.stringify(payload)
     }).then(r => r.json()).then(res => {
         alert(res.msg);
+        refresh();
     });
 }
+
 
 refresh();
 setInterval(refresh, 3000);
@@ -457,10 +519,40 @@ void WebServerPortal::begin() {
         doc["task_duration"] = st.task_duration;
         doc["task_progress"] = g_pet.getTaskProgress();
 
+        // 实时天气数据
+        doc["weather_name"] = WeatherManager::getInstance().getWeatherName();
+        doc["weather_icon"] = WeatherManager::getInstance().getWeatherIcon();
+        doc["temp"] = WeatherManager::getInstance().getCurrentTemp();
+        doc["weather_synced"] = WeatherManager::getInstance().isSyncedWithNetwork();
+
         String out;
         serializeJson(doc, out);
         server.send(200, "application/json", out);
     });
+
+    // 天气同步与手动设置 API
+    server.on("/api/weather/sync", HTTP_GET, [this]() {
+        WeatherManager::getInstance().fetchWeatherFromNetwork();
+        DynamicJsonDocument res(256);
+        res["success"] = true;
+        res["msg"] = String("已拉取天气：") + WeatherManager::getInstance().getWeatherName() + " " + String(WeatherManager::getInstance().getCurrentTemp()) + "℃";
+        String out;
+        serializeJson(res, out);
+        server.send(200, "application/json", out);
+    });
+
+    server.on("/api/weather/set", HTTP_GET, [this]() {
+        int wType = server.hasArg("type") ? server.arg("type").toInt() : 0;
+        int temp = server.hasArg("temp") ? server.arg("temp").toInt() : 26;
+        WeatherManager::getInstance().setWeatherManual(static_cast<WeatherType>(wType), temp);
+        DynamicJsonDocument res(256);
+        res["success"] = true;
+        res["msg"] = "天气已设定！";
+        String out;
+        serializeJson(res, out);
+        server.send(200, "application/json", out);
+    });
+
 
     // 换装衣橱 API
     server.on("/api/costume/buy", HTTP_GET, [this]() {
@@ -675,18 +767,29 @@ void WebServerPortal::begin() {
         deserializeJson(doc, body);
 
         PetState& st = g_pet.getState();
+        if (doc.containsKey("name") && strlen(doc["name"]) > 0) {
+            strncpy(st.name, doc["name"], sizeof(st.name) - 1);
+            g_display.showToast("已改名为：" + String(st.name), 3000);
+        }
         if (doc.containsKey("ssid")) strncpy(st.wifi_ssid, doc["ssid"], sizeof(st.wifi_ssid) - 1);
         if (doc.containsKey("pwd")) strncpy(st.wifi_pwd, doc["pwd"], sizeof(st.wifi_pwd) - 1);
         if (doc.containsKey("key")) strncpy(st.deepseek_key, doc["key"], sizeof(st.deepseek_key) - 1);
 
         g_storage.savePetState(st);
 
+        // 立即触发连接新 WiFi
+        if (strlen(st.wifi_ssid) > 0) {
+            g_net.connectWiFi(st.wifi_ssid, st.wifi_pwd);
+        }
+
         DynamicJsonDocument res(256);
         res["success"] = true;
-        res["msg"] = "配置已保存！";
+        res["msg"] = "配置与昵称已永久保存！";
         String out;
         serializeJson(res, out);
         server.send(200, "application/json", out);
+
+
     });
 
     server.begin();

@@ -1,10 +1,49 @@
 #include "pet_core.h"
 #include "sound_manager.h"
+#include "vfx_engine.h"
+#include "weather_manager.h"
 #include <cstring>
 #include <algorithm>
 
-
 PetCore g_pet;
+
+float PetCore::getTemperature() const {
+    if (state.health == 0) return 0.0f;
+    if (isSick()) {
+        return 38.6f + ((millis() / 5000) % 15) * 0.1f; // 38.6 ~ 40.0 ℃ 高烧
+    }
+    return 36.8f + ((millis() / 5000) % 5) * 0.1f;    // 36.8 ~ 37.2 ℃ 正常体温
+}
+
+bool PetCore::takeHospitalInjection(String& outMsg) {
+    if (isDead()) {
+        outMsg = "宠物已死亡，请使用还魂丹复活！";
+        return false;
+    }
+    if (!isSick() && state.health >= HEALTH_NORMAL) {
+        outMsg = "体魄健壮体温正常，无需去医院打针哦！";
+        return false;
+    }
+    int cost = 80;
+    if (state.coins < cost) {
+        outMsg = "元宝不足！社区医院打针需要 " + String(cost) + " 元宝。";
+        return false;
+    }
+
+    state.coins -= cost;
+    state.health = HEALTH_NORMAL;
+    state.illness[0] = '\0';
+    state.mood = std::min(1000, state.mood + 400);
+    addGrowth(30.0f);
+
+    triggerTransientAnim(ANIM_INJECTION, 4500);
+    VfxEngine::getInstance().spawnTears(48, 140, 15);
+    g_sound.playSound(SOUND_SICK);
+
+    outMsg = "嗷呜~ 扎了一大针！痛得飙泪，但病痛全消康复啦！";
+    return true;
+}
+
 
 PetCore::PetCore() {
     transientAnim = ANIM_IDLE_STAND;
@@ -349,10 +388,13 @@ bool PetCore::cureWithMed(int medIndex, String& outMsg) {
             return false;
         }
         revive();
+        VfxEngine::getInstance().triggerReliveAura(67, 120);
+        VfxEngine::getInstance().spawnStars(67, 120, 10);
         g_sound.playSound(SOUND_HAPPY);
-        outMsg = "使用还魂丹成功复活！";
+        outMsg = "神圣金光降临！使用还魂丹成功复活！";
         return true;
     }
+
 
     if (isDead()) {
         outMsg = "宠物已死亡，请使用还魂丹！";
@@ -436,8 +478,10 @@ bool PetCore::bath(int amount) {
     state.clean = std::min(state.clean + amount, maxC);
     addGrowth(10.0f);
     triggerTransientAnim(ANIM_CLEAN, 3500);
+    VfxEngine::getInstance().spawnBubbles(67, 140, 20);
     return true;
 }
+
 
 bool PetCore::play(int amount) {
 
@@ -609,32 +653,59 @@ void PetCore::triggerTransientAnim(PetAnimState anim, uint32_t durationMs) {
 }
 
 void PetCore::switchRandomIdleAction() {
-    // 根据宠物当前心情和状态自主抉择丰富的日常动作
+    // 0. 生病状态下：叼体温计测温或顶冰袋
+    if (isSick() || state.health < 5) {
+        currentIdleSubAction = (random(0, 2) == 0) ? ANIM_TIWENJI : ANIM_SICK;
+        return;
+    }
+
+    // 1. 如果处于饥饿或脏污状态：生气跺脚、抓痒或站立
     if (isHungry() || isDirty()) {
         int r = random(0, 100);
-        if (r < 50) currentIdleSubAction = ANIM_IDLE_STAND;
-        else if (r < 75) currentIdleSubAction = ANIM_IDLE_LOOK;
-        else currentIdleSubAction = ANIM_IDLE_SCRATCH;
+        if (r < 40) currentIdleSubAction = ANIM_ANGRY;   // 生气跺脚
+        else if (r < 70) currentIdleSubAction = ANIM_IDLE_SCRATCH;
+        else currentIdleSubAction = ANIM_IDLE_STAND;
+        return;
+    }
+
+    // 2. 天气联动专属动作优先感知
+    WeatherType wt = WeatherManager::getInstance().getCurrentWeather();
+    int temp = WeatherManager::getInstance().getCurrentTemp();
+    if (wt == WEATHER_RAINY && random(0, 100) < 35) {
+        currentIdleSubAction = ANIM_UMBRELLA; // 雨天撑花伞
+        return;
+    }
+    if ((wt == WEATHER_SNOWY || temp < 5) && random(0, 100) < 35) {
+        currentIdleSubAction = ANIM_COLD; // 冬雪搓手哈白气
+        return;
+    }
+    if ((wt == WEATHER_SUNNY && temp > 28) && random(0, 100) < 30) {
+        currentIdleSubAction = ANIM_SUMMER; // 夏日吹电风扇
         return;
     }
 
     int r = random(0, 100);
-    // 丰富生动的 5 重动作轮转体系：
-    // 1. 呼吸站立 (stand: 40%)
-    // 2. 好奇歪头张望 (look: 18%)
-    // 3. 憨态蹒跚摇晃 (wobble/scratch: 18%)
-    // 4. 伸伸小懒腰 (stretch: 12%)
-    // 5. 开心蹦跳跳跃 (happy/bounce: 12%)
-    if (r < 40) {
+    // 丰富生动的日常动作大合集：
+    if (r < 22) {
         currentIdleSubAction = ANIM_IDLE_STAND;
-    } else if (r < 58) {
+    } else if (r < 35) {
         currentIdleSubAction = ANIM_IDLE_LOOK;
-    } else if (r < 76) {
+    } else if (r < 46) {
         currentIdleSubAction = ANIM_IDLE_SCRATCH;
-    } else if (r < 88) {
+    } else if (r < 56) {
         currentIdleSubAction = ANIM_IDLE_STRETCH;
-    } else {
+    } else if (r < 66) {
         currentIdleSubAction = ANIM_IDLE_BOUNCE;
+    } else if (r < 74) {
+        currentIdleSubAction = ANIM_SNEEZE;
+    } else if (r < 82) {
+        currentIdleSubAction = ANIM_YAWN;
+    } else if (r < 88) {
+        currentIdleSubAction = ANIM_SHY;
+    } else if (r < 94) {
+        currentIdleSubAction = ANIM_HIDE_LEFT;
+    } else {
+        currentIdleSubAction = ANIM_HIDE_RIGHT;
     }
 }
 
@@ -644,12 +715,57 @@ void PetCore::updateAnimState() {
         transientAnim = ANIM_IDLE_STAND;
     }
 
-    // 自主日常动作轮换 (每 5~9 秒从容切换一次)
-    if (now - lastIdleSwitchTime > (5000 + random(0, 4000))) {
+    // 持续洗澡时生成漫天飞扬的肥皂泡泡
+    if (getCurrentAnimState() == ANIM_CLEAN && (now % 160 < 35)) {
+        VfxEngine::getInstance().spawnBubbles(67, 145, 2);
+    }
+
+    // 医院打针特写时持续飙泪
+    if (getCurrentAnimState() == ANIM_INJECTION && (now % 120 < 35)) {
+        VfxEngine::getInstance().spawnTears(48, 140, 3);
+    }
+
+    // 真实天气全屏粒子飘落
+    WeatherType wt = WeatherManager::getInstance().getCurrentWeather();
+    if (wt == WEATHER_RAINY && (now % 180 < 35)) {
+        VfxEngine::getInstance().spawnRain(2);
+    } else if (wt == WEATHER_SNOWY && (now % 250 < 35)) {
+        VfxEngine::getInstance().spawnSnow(2);
+    }
+
+
+    // 桌面自主踱步平滑插值位移
+    if (fabs(walkTargetX - walkOffsetX) > 0.5f) {
+        if (walkTargetX > walkOffsetX) {
+            walkOffsetX += 0.5f;
+            if (transientAnim == ANIM_IDLE_STAND && !isTaskActive() && !isSick() && state.health > 1) {
+                transientAnim = ANIM_WALK_RIGHT;
+                transientAnimEndTime = now + 350;
+            }
+        } else {
+            walkOffsetX -= 0.5f;
+            if (transientAnim == ANIM_IDLE_STAND && !isTaskActive() && !isSick() && state.health > 1) {
+                transientAnim = ANIM_WALK_LEFT;
+                transientAnimEndTime = now + 350;
+            }
+        }
+    } else {
+        walkOffsetX = walkTargetX;
+    }
+
+    // 自主日常动作与偶发踱步决策 (每 6~10 秒切换一次)
+    if (now - lastIdleSwitchTime > (6000 + random(0, 4000))) {
         lastIdleSwitchTime = now;
         switchRandomIdleAction();
+
+        // 35% 概率在桌面上自主走动一段小距离 (在 -18px ~ +18px 之间踱步)
+        if (!isTaskActive() && !isSick() && state.health > 1 && random(0, 100) < 35) {
+            walkTargetX = (float)random(-18, 19);
+        }
     }
 }
+
+
 
 
 

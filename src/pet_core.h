@@ -24,10 +24,21 @@ enum PetAnimState {
     ANIM_SLEEP,          // 💤 专属戴睡帽闭眼深睡打呼噜冒泡动画
     ANIM_DYING,          // 虚弱濒死
     ANIM_DEAD,           // 死亡
-    ANIM_DRAG            // 悬空扑腾挣扎
+    ANIM_DRAG,           // 悬空扑腾挣扎
+    ANIM_WALK_LEFT,      // 左右漫步巡逻
+    ANIM_WALK_RIGHT,
+    ANIM_HIDE_LEFT,      // 边缘探头躲猫猫 (左探头)
+    ANIM_HIDE_RIGHT,     // 边缘探头躲猫猫 (右探头)
+    ANIM_SNEEZE,         // 打喷嚏后仰
+    ANIM_YAWN,           // 揉眼打哈欠
+    ANIM_ANGRY,          // 生气跺脚
+    ANIM_SHY,            // 害羞脸红
+    ANIM_UMBRELLA,       // 雨天撑花伞
+    ANIM_COLD,           // 冬雪搓手哈白气
+    ANIM_SUMMER,         // 炎夏电风扇吹凉
+    ANIM_TIWENJI,        // 嘴叼体温计测温
+    ANIM_INJECTION       // 鸭子医生大针筒打针
 };
-
-
 
 class PetCore {
 public:
@@ -38,6 +49,12 @@ public:
     bool isAdopted() const { return state.is_adopted; }
     void adopt(uint8_t gender);
     void resetAdoption();
+
+    float getWalkOffsetX() const { return walkOffsetX; }
+    float getTemperature() const;
+    bool takeHospitalInjection(String& outMsg);
+
+
 
     // 基础操作与细分道具
     bool feed(int amount = 1000);
@@ -104,10 +121,13 @@ private:
     
     PetAnimState currentIdleSubAction;
     uint32_t lastIdleSwitchTime;
+    float walkOffsetX;
+    float walkTargetX;
 
     void checkLevelUp(int oldLevel);
     void randomIllnessTrigger();
     void switchRandomIdleAction();
 };
+
 
 extern PetCore g_pet;
