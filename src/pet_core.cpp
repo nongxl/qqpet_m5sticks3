@@ -50,10 +50,13 @@ PetCore::PetCore() {
     transientAnimEndTime = 0;
     currentIdleSubAction = ANIM_IDLE_STAND;
     lastIdleSwitchTime = 0;
+    sleepingState = false;
     initDefault();
 }
 
 void PetCore::initDefault() {
+    sleepingState = false;
+
     memset(&state, 0, sizeof(state));
     strncpy(state.name, "Q宝", sizeof(state.name) - 1);
     strncpy(state.host, "主人", sizeof(state.host) - 1);
@@ -684,30 +687,57 @@ void PetCore::switchRandomIdleAction() {
         return;
     }
 
-    int r = random(0, 100);
-    // 丰富生动的日常动作大合集：
-    if (r < 22) {
+    // 3. 心情低落/生气时的情绪表现
+    if (state.mood < 500) {
+        int sm = random(0, 100);
+        if (sm < 40) currentIdleSubAction = ANIM_SAD_CIRCLE;
+        else if (sm < 70) currentIdleSubAction = ANIM_SAD_SIGH;
+        else if (sm < 85) currentIdleSubAction = ANIM_UPSET_STOMP;
+        else currentIdleSubAction = ANIM_UPSET_CROSS;
+        return;
+    }
+
+    int r = random(0, 200);
+    // 丰富生动的官方原版日常动作大合集：
+    if (r < 25) {
         currentIdleSubAction = ANIM_IDLE_STAND;
-    } else if (r < 35) {
+    } else if (r < 40) {
         currentIdleSubAction = ANIM_IDLE_LOOK;
-    } else if (r < 46) {
+    } else if (r < 52) {
         currentIdleSubAction = ANIM_IDLE_SCRATCH;
-    } else if (r < 56) {
+    } else if (r < 64) {
         currentIdleSubAction = ANIM_IDLE_STRETCH;
-    } else if (r < 66) {
+    } else if (r < 75) {
         currentIdleSubAction = ANIM_IDLE_BOUNCE;
-    } else if (r < 74) {
+    } else if (r < 85) {
+        currentIdleSubAction = ANIM_HOBBY_WATER;  // 浇花
+    } else if (r < 95) {
+        currentIdleSubAction = ANIM_HOBBY_PAINT;  // 画板画画
+    } else if (r < 105) {
+        currentIdleSubAction = ANIM_HOBBY_MIRROR; // 照镜子打扮
+    } else if (r < 115) {
+        currentIdleSubAction = ANIM_HOBBY_CHESS;  // 专注下棋
+    } else if (r < 125) {
+        currentIdleSubAction = ANIM_HOBBY_TEA;    // 下午茶
+    } else if (r < 135) {
+        currentIdleSubAction = ANIM_HOBBY_LENS;   // 放大镜探险
+    } else if (r < 145) {
+        currentIdleSubAction = ANIM_HOBBY_PAPER;  // 剪纸手作
+    } else if (r < 155) {
+        currentIdleSubAction = ANIM_HOBBY_RADIO;  // 听收音机
+    } else if (r < 165) {
+        currentIdleSubAction = ANIM_HOBBY_TYPE;   // 打字机打字
+    } else if (r < 175) {
+        currentIdleSubAction = ANIM_HOBBY_SCOPE;  // 望远镜看星空
+    } else if (r < 185) {
+        currentIdleSubAction = ANIM_HOBBY_CLEAN;  // 擦拭桌椅
+    } else if (r < 192) {
         currentIdleSubAction = ANIM_SNEEZE;
-    } else if (r < 82) {
-        currentIdleSubAction = ANIM_YAWN;
-    } else if (r < 88) {
-        currentIdleSubAction = ANIM_SHY;
-    } else if (r < 94) {
-        currentIdleSubAction = ANIM_HIDE_LEFT;
     } else {
-        currentIdleSubAction = ANIM_HIDE_RIGHT;
+        currentIdleSubAction = ANIM_YAWN;
     }
 }
+
 
 void PetCore::updateAnimState() {
     uint32_t now = millis();
@@ -733,6 +763,12 @@ void PetCore::updateAnimState() {
         VfxEngine::getInstance().spawnSnow(2);
     }
 
+    // 如果处于深度睡眠状态，静止安睡，不执行踱步与白天的杂耍切换
+    if (sleepingState) {
+        walkOffsetX = 0.0f;
+        walkTargetX = 0.0f;
+        return;
+    }
 
     // 桌面自主踱步平滑插值位移
     if (fabs(walkTargetX - walkOffsetX) > 0.5f) {
@@ -765,11 +801,6 @@ void PetCore::updateAnimState() {
     }
 }
 
-
-
-
-
-
 PetAnimState PetCore::getCurrentAnimState() const {
     // 1. 死亡状态
     if (state.health == 0) return ANIM_DEAD;
@@ -792,12 +823,16 @@ PetAnimState PetCore::getCurrentAnimState() const {
     // 5. 生病状态 (health < 5 或 illness 有病症)
     if (isSick() || state.health < 5) return ANIM_SICK;
 
-    // 6. 心情低落 (mood < 500)
+    // 6. 深度睡眠状态 (优先级高于日常低落与普通杂耍)
+    if (sleepingState) return ANIM_SLEEP;
+
+    // 7. 心情低落 (mood < 500)
     if (state.mood < 500) return ANIM_SAD;
 
-    // 7. 正常健康态下的自主日常杂耍动作流转
+    // 8. 正常健康态下的自主日常杂耍动作流转
     return currentIdleSubAction;
 }
+
 
 
 bool PetCore::buyItem(const char* itemId, int count, String& outMsg) {

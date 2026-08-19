@@ -212,9 +212,8 @@ void loop() {
                       !g_display.isMenuOpen() && !g_display.isSubScreenOpen() && !g_pet.isDead();
 
 
+    g_pet.setSleeping(isSleeping);
     if (isSleeping) {
-        // 进入睡梦打呼噜状态
-        g_pet.triggerTransientAnim(ANIM_SLEEP, 3000);
         static uint32_t lastSnoreSoundTime = 0;
         if (nowTime - lastSnoreSoundTime > 9000) {
             lastSnoreSoundTime = nowTime;
@@ -223,6 +222,7 @@ void loop() {
     }
 
     g_pet.updateAnimState();
+
 
     // 1. 处理按键 BtnA (前面板按键: 确认 / 抚摸 / 按住拖拽 / 游戏主键)
     if (M5.BtnA.wasClicked()) {

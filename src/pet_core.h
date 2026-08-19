@@ -37,8 +37,24 @@ enum PetAnimState {
     ANIM_COLD,           // 冬雪搓手哈白气
     ANIM_SUMMER,         // 炎夏电风扇吹凉
     ANIM_TIWENJI,        // 嘴叼体温计测温
-    ANIM_INJECTION       // 鸭子医生大针筒打针
+    ANIM_INJECTION,      // 鸭子医生大针筒打针
+    ANIM_HOBBY_WATER,    // 🌸 园艺浇花
+    ANIM_HOBBY_PAINT,    // 🎨 画板涂鸦画画
+    ANIM_HOBBY_MIRROR,   // 🪞 照小镜子梳理打扮
+    ANIM_HOBBY_CHESS,    // ♟️ 专注下棋思考
+    ANIM_HOBBY_TEA,      // ☕ 优雅喝下午茶
+    ANIM_HOBBY_LENS,     // 🔍 手持放大镜探险
+    ANIM_HOBBY_PAPER,    // ✂️ 剪纸手作
+    ANIM_HOBBY_RADIO,    // 📻 听小收音机音乐
+    ANIM_HOBBY_TYPE,     // ⌨️ 打字机打字
+    ANIM_HOBBY_SCOPE,    // 🔭 天文望远镜看星空
+    ANIM_HOBBY_CLEAN,    // 🧽 认真擦拭桌椅
+    ANIM_SAD_CIRCLE,     // 🌀 蹲在角落画圈圈
+    ANIM_SAD_SIGH,       // 🧎 抱膝叹气发呆
+    ANIM_UPSET_STOMP,    // 😤 跺脚抓狂发脾气
+    ANIM_UPSET_CROSS     // 🙅 背过身双手抱胸生闷气
 };
+
 
 class PetCore {
 public:
@@ -108,6 +124,8 @@ public:
     PetAnimState getCurrentAnimState() const;
     void triggerTransientAnim(PetAnimState anim, uint32_t durationMs = 3500);
     void updateAnimState();
+    void setSleeping(bool sleeping) { sleepingState = sleeping; }
+    bool isSleeping() const { return sleepingState; }
 
     PetState& getState() { return state; }
     const PetState& getState() const { return state; }
@@ -118,8 +136,10 @@ private:
     PetState state;
     PetAnimState transientAnim;
     uint32_t transientAnimEndTime;
+    bool sleepingState;
     
     PetAnimState currentIdleSubAction;
+
     uint32_t lastIdleSwitchTime;
     float walkOffsetX;
     float walkTargetX;

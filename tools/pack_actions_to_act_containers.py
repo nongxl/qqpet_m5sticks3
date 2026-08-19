@@ -42,28 +42,50 @@ ACTION_CONFIG = {
         ("stand", "peaceful/Stand.swf", 12, 0.08),
         ("happy", "happy/Stand.swf", 14, 0.08),
         ("sad", "sad/Stand.swf", 12, 0.08),
-        ("work", "peaceful/play/P3.swf", 20, 0.07),    # 矿工搬砖敲击
-        ("work_1", "peaceful/play/P8.swf", 18, 0.07),  # 扫地清洁工
-        ("work_2", "peaceful/play/P12.swf", 18, 0.07), # 敲敲打打维修工
-        ("work_3", "peaceful/play/P20.swf", 18, 0.07), # 算盘会计打工
-        ("study", "peaceful/play/P2.swf", 20, 0.07),   # 翻厚书写字阅读
-        ("study_1", "peaceful/play/P6.swf", 18, 0.07), # 戴眼镜伏案苦读
-        ("study_2", "peaceful/play/P10.swf", 18, 0.07),# 黑板前粉笔演算
-        ("play", "happy/play/P1.swf", 16, 0.07),       # 拍皮球
-        ("play_1", "happy/play/P2.swf", 16, 0.07),     # 跳绳
-        ("play_2", "happy/play/P3.swf", 16, 0.07),     # 踩滑板
-        ("play_3", "happy/play/P5.swf", 16, 0.07),     # 吹气球
-        ("play_4", "happy/play/P6.swf", 16, 0.07),     # 举哑铃健身
-        ("play_5", "happy/play/P7.swf", 16, 0.07),     # 变魔术
-        ("play_6", "happy/play/P9.swf", 16, 0.07),     # 弹吉他
-        ("trip", "happy/play/P4.swf", 16, 0.07),       # 背包漫步
-        ("eat", "Eat1.swf", 18, 0.07),                 # 美味吃鱼
-        ("eat_1", "Eat2.swf", 18, 0.07),               # 满汉全席大餐
-        ("eat_2", "peaceful/play/P15.swf", 16, 0.07),  # 吃美味甜点蛋糕
-        ("clean", "Clean1.swf", 18, 0.07),             # 满天泡泡浴
-        ("sleep", "prostrate/play/P1.swf", 14, 0.08),  # 钻睡袋睡觉
-        ("sleep_1", "prostrate/play/P2.swf", 14, 0.08),# 趴着打呼噜
-        ("sleep_2", "prostrate/play/P5.swf", 14, 0.08),# 摇晃吊床安睡
+        ("work", "peaceful/play/P8.swf", 18, 0.07),      # 扫地清洁工打工 (原版纯正劳作)
+        ("work_1", "peaceful/play/P12.swf", 18, 0.07),   # 敲敲打打维修工打工
+        ("work_2", "peaceful/play/P20.swf", 18, 0.07),   # 算盘会计记账打工
+        ("study", "peaceful/play/P2.swf", 20, 0.07),     # 翻厚书写字阅读
+        ("study_1", "peaceful/play/P6.swf", 18, 0.07),   # 戴眼镜伏案苦读
+        ("study_2", "peaceful/play/P10.swf", 18, 0.07),  # 黑板前粉笔演算
+        ("play", "happy/play/P1.swf", 16, 0.07),         # 拍皮球
+        ("play_1", "happy/play/P2.swf", 16, 0.07),       # 跳绳
+        ("play_2", "happy/play/P3.swf", 16, 0.07),       # 踩滑板
+        ("play_3", "peaceful/play/P3.swf", 18, 0.07),    # 戴运动发带打羽毛球/网球
+        ("play_4", "happy/play/P5.swf", 16, 0.07),       # 吹气球
+        ("play_5", "happy/play/P6.swf", 16, 0.07),       # 举哑铃健身
+        ("play_6", "happy/play/P7.swf", 16, 0.07),       # 变魔术
+        ("play_7", "happy/play/P9.swf", 16, 0.07),       # 弹吉他
+        ("play_8", "happy/play/P10.swf", 16, 0.07),      # 打保龄球
+        ("play_9", "happy/play/P11.swf", 16, 0.07),      # 悠悠球
+        ("play_10", "happy/play/P12.swf", 16, 0.07),     # 呼啦圈
+        ("play_11", "happy/play/P13.swf", 16, 0.07),     # 放风筝
+        ("play_12", "happy/play/P14.swf", 16, 0.07),     # 拳击手套
+        ("play_13", "happy/play/P15.swf", 16, 0.07),     # 吹五彩大泡泡
+        ("hobby_water", "peaceful/play/P4.swf", 16, 0.07),# 园艺浇花
+        ("hobby_paint", "peaceful/play/P7.swf", 16, 0.07),# 画板画画
+        ("hobby_mirror", "peaceful/play/P9.swf", 16, 0.07),# 照小镜子
+        ("hobby_chess", "peaceful/play/P14.swf", 16, 0.07),# 专注下棋
+        ("hobby_tea", "peaceful/play/P16.swf", 16, 0.07), # 喝下午茶
+        ("hobby_lens", "peaceful/play/P17.swf", 16, 0.07),# 放大镜探险
+        ("hobby_paper", "peaceful/play/P18.swf", 16, 0.07),# 剪纸手作
+        ("hobby_radio", "peaceful/play/P19.swf", 16, 0.07),# 听收音机
+        ("hobby_type", "peaceful/play/P21.swf", 16, 0.07),# 打字机
+        ("hobby_scope", "peaceful/play/P22.swf", 16, 0.07),# 望远镜看星空
+        ("hobby_clean", "peaceful/play/P23.swf", 16, 0.07),# 擦拭桌椅
+        ("sad_circle", "sad/play/P2.swf", 16, 0.07),     # 蹲在角落画圈圈
+        ("sad_sigh", "sad/play/P3.swf", 16, 0.07),       # 抱膝叹气发呆
+        ("upset_stomp", "upset/play/P1.swf", 16, 0.07),  # 跺脚抓狂发脾气
+        ("upset_cross", "upset/play/P3.swf", 16, 0.07),  # 背过身双手抱胸生闷气
+        ("trip", "happy/play/P4.swf", 16, 0.07),         # 背包漫步
+        ("eat", "Eat1.swf", 18, 0.07),                   # 美味吃鱼
+        ("eat_1", "Eat2.swf", 18, 0.07),                 # 满汉全席大餐
+        ("eat_2", "peaceful/play/P15.swf", 16, 0.07),    # 吃美味甜点蛋糕
+        ("clean", "Clean1.swf", 18, 0.07),               # 满天泡泡浴
+        ("sleep", "prostrate/Stand.swf", 14, 0.08),      # 官方原版趴卧呼吸
+        ("sleep_1", "prostrate/play/P1.swf", 14, 0.08),  # 官方原版条纹睡袋
+        ("sleep_2", "prostrate/play/P2.swf", 14, 0.08),  # 官方原版打呼噜
+        ("sleep_3", "prostrate/play/P5.swf", 14, 0.08),  # 官方原版吊床
         ("sick", "Sick1.swf", 12, 0.08),
         ("cure", "Cure1.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -75,17 +97,26 @@ ACTION_CONFIG = {
         ("stand", "Stand.swf", 12, 0.08),
         ("happy", "LevUp.swf", 14, 0.08),
         ("sad", "Dirty.swf", 12, 0.08),
-        ("work", "play/P3.swf", 20, 0.07),
-        ("work_1", "play/P1.swf", 18, 0.07),
-        ("study", "play/P2.swf", 20, 0.07),
-        ("study_1", "play/P4.swf", 18, 0.07),
-        ("play", "play/P1.swf", 16, 0.07),
-        ("play_1", "play/P2.swf", 16, 0.07),
-        ("play_2", "play/P3.swf", 16, 0.07),
+        ("work", "play/P6.swf", 18, 0.07),               # 扫地清洁工
+        ("work_1", "play/P7.swf", 18, 0.07),             # 敲敲打打手工
+        ("work_2", "play/P8.swf", 18, 0.07),             # 算盘小账
+        ("study", "play/P2.swf", 20, 0.07),              # 翻大书自习
+        ("study_1", "play/P10.swf", 18, 0.07),           # 伏案写作业
+        ("play", "play/P1.swf", 16, 0.07),               # 玩耍
+        ("play_1", "play/P3.swf", 18, 0.07),             # 羽毛球拍
+        ("play_2", "play/P4.swf", 16, 0.07),             # 漫步爬行
+        ("play_horse", "play/P5.swf", 16, 0.07),         # 摇摇木马
+        ("play_mill", "play/P9.swf", 16, 0.07),          # 彩色小风车
+        ("play_plane", "play/P11.swf", 16, 0.07),        # 折纸飞机
+        ("play_fly", "play/P13.swf", 16, 0.07),          # 抓蝴蝶
+        ("play_block", "play/P15.swf", 16, 0.07),        # 拼积木
+        ("play_sand", "play/P16.swf", 16, 0.07),         # 铲沙子
         ("trip", "play/P4.swf", 16, 0.07),
         ("eat", "Eat1.swf", 18, 0.07),
         ("clean", "Clean.swf", 18, 0.07),
-        ("sleep", "Stand.swf", 12, 0.08),
+        ("sleep", "prostrate/Stand.swf", 14, 0.08),      # 官方原版闭眼趴卧
+        ("sleep_1", "prostrate/play/P1.swf", 14, 0.08),  # 官方原版睡袋
+        ("sleep_2", "prostrate/play/P2.swf", 14, 0.08),  # 官方原版呼噜
         ("sick", "Sick.swf", 12, 0.08),
         ("cure", "Cure.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -97,13 +128,18 @@ ACTION_CONFIG = {
         ("stand", "Stand.swf", 12, 0.08),
         ("happy", "play/P1.swf", 14, 0.08),
         ("sad", "Sick.swf", 12, 0.08),
-        ("work", "play/P3.swf", 18, 0.07),
-        ("study", "play/P4.swf", 18, 0.07),
-        ("play", "play/P2.swf", 16, 0.07),
+        ("work", "play/P1.swf", 18, 0.07),               # 破壳期努力摇摆打工
+        ("study", "play/P4.swf", 18, 0.07),              # 破壳期读书
+        ("play", "play/P2.swf", 16, 0.07),               # 破壳期玩耍
+        ("play_1", "play/P3.swf", 18, 0.07),             # 羽毛球拍
+        ("play_roll", "play/P3.swf", 16, 0.07),          # 地上打滚
+        ("play_hug", "play/P5.swf", 16, 0.07),           # 扑腾求抱抱
         ("trip", "play/P5.swf", 16, 0.07),
         ("eat", "Eat1.swf", 16, 0.07),
         ("clean", "Clean.swf", 16, 0.07),
-        ("sleep", "Stand.swf", 12, 0.08),
+        ("sleep", "prostrate/Stand.swf", 14, 0.08),      # 官方原版闭眼趴卧
+        ("sleep_1", "prostrate/play/P1.swf", 14, 0.08),  # 官方原版睡袋
+        ("sleep_2", "prostrate/play/P2.swf", 14, 0.08),  # 官方原版呼噜
         ("sick", "Sick.swf", 12, 0.08),
         ("cure", "Cure.swf", 16, 0.07),
         ("dying", "Dying.swf", 12, 0.08),
@@ -112,7 +148,6 @@ ACTION_CONFIG = {
         ("hide_right", "Hide_right1.swf", 12, 0.08),
     ]
 }
-
 
 def pack_png_frames_to_act(frame_png_bytes_list, out_act_path):
     """将多帧 PNG 字节流紧凑打包为单一 .act 容器文件"""
@@ -129,9 +164,14 @@ def pack_png_frames_to_act(frame_png_bytes_list, out_act_path):
 
 def extract_and_pack_swf(page, gender, stage, act_name, swf_rel, num_frames, frame_delay):
     swf_file = ACTION_ROOT / gender / stage / swf_rel
+    rel_url = f"/doc/qqpet_automation/qq-pet-macos/src/assets/Action/{gender}/{stage}/{swf_rel}".replace("\\", "/")
     if not swf_file.exists():
-        print(f"  [MISSING] {swf_file}")
-        return False
+        swf_file = ACTION_ROOT / gender / "Adult" / swf_rel
+        rel_url = f"/doc/qqpet_automation/qq-pet-macos/src/assets/Action/{gender}/Adult/{swf_rel}".replace("\\", "/")
+        if not swf_file.exists():
+            print(f"  [MISSING] {swf_file}")
+            return False
+
 
     out_stage_dir = DATA_DIR / gender / stage
     out_stage_dir.mkdir(parents=True, exist_ok=True)
@@ -412,6 +452,9 @@ def generate_and_pack_micro_actions(gender):
                 draw.ellipse([58, 44, 62, 50], fill=(80, 180, 255, 230))
             return new_im
         make_act("injection", gen_injection, 12)
+
+
+
 
 def clean_old_png_folders():
     print("\n--- Cleaning old loose png subdirectories in GG/ and MM/ ---")

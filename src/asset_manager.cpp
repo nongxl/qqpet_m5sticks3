@@ -82,22 +82,47 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
         case ANIM_PLAY:
             outFps = 8;
             if (stage == "Adult") {
-                int r = (millis() / 5000) % 7;
+                int r = (millis() / 5000) % 14;
                 if (r == 1) return "play_1";
                 if (r == 2) return "play_2";
                 if (r == 3) return "play_3";
                 if (r == 4) return "play_4";
                 if (r == 5) return "play_5";
                 if (r == 6) return "play_6";
+                if (r == 7) return "play_7";
+                if (r == 8) return "play_8";
+                if (r == 9) return "play_9";
+                if (r == 10) return "play_10";
+                if (r == 11) return "play_11";
+                if (r == 12) return "play_12";
+                if (r == 13) return "play_13";
+            } else if (stage == "Kid") {
+                int r = (millis() / 5000) % 9;
+                if (r == 1) return "play_1";
+                if (r == 2) return "play_2";
+                if (r == 3) return "play_horse";
+                if (r == 4) return "play_mill";
+                if (r == 5) return "play_plane";
+                if (r == 6) return "play_fly";
+                if (r == 7) return "play_block";
+                if (r == 8) return "play_sand";
+            } else if (stage == "Egg") {
+                int r = (millis() / 5000) % 4;
+                if (r == 1) return "play_1";
+                if (r == 2) return "play_roll";
+                if (r == 3) return "play_hug";
             }
             return "play";
         case ANIM_WORK:
             outFps = 9;
             if (stage == "Adult") {
-                int r = (millis() / 6000) % 4;
+                int r = (millis() / 6000) % 3;
                 if (r == 1) return "work_1";
                 if (r == 2) return "work_2";
-                if (r == 3) return "work_3";
+            } else if (stage == "Kid") {
+                int r = (millis() / 6000) % 3;
+                if (r == 1) return "work_1";
+                if (r == 2) return "work_2";
             }
             return "work";
         case ANIM_STUDY:
@@ -106,8 +131,12 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
                 int r = (millis() / 6000) % 3;
                 if (r == 1) return "study_1";
                 if (r == 2) return "study_2";
+            } else if (stage == "Kid") {
+                int r = (millis() / 6000) % 2;
+                if (r == 1) return "study_1";
             }
             return "study";
+
         case ANIM_TRIP:
             outFps = 8;
             return "trip";
@@ -124,6 +153,11 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             return "clean";
         case ANIM_SAD:
             outFps = 6;
+            if (stage == "Adult") {
+                int r = (millis() / 6000) % 3;
+                if (r == 1) return "sad_circle";
+                if (r == 2) return "sad_sigh";
+            }
             return "sad";
         case ANIM_SICK:
             outFps = 6;
@@ -136,8 +170,13 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 8;
             return "cure";
         case ANIM_SLEEP:
-            outFps = 4;
+            outFps = 6;
             if (stage == "Adult") {
+                int r = (millis() / 7000) % 4;
+                if (r == 1) return "sleep_1";
+                if (r == 2) return "sleep_2";
+                if (r == 3) return "sleep_3";
+            } else {
                 int r = (millis() / 7000) % 3;
                 if (r == 1) return "sleep_1";
                 if (r == 2) return "sleep_2";
@@ -189,11 +228,57 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
         case ANIM_INJECTION:
             outFps = 8;
             return "injection";
+        case ANIM_HOBBY_WATER:
+            outFps = 7;
+            return "hobby_water";
+        case ANIM_HOBBY_PAINT:
+            outFps = 7;
+            return "hobby_paint";
+        case ANIM_HOBBY_MIRROR:
+            outFps = 7;
+            return "hobby_mirror";
+        case ANIM_HOBBY_CHESS:
+            outFps = 7;
+            return "hobby_chess";
+        case ANIM_HOBBY_TEA:
+            outFps = 7;
+            return "hobby_tea";
+        case ANIM_HOBBY_LENS:
+            outFps = 7;
+            return "hobby_lens";
+        case ANIM_HOBBY_PAPER:
+            outFps = 7;
+            return "hobby_paper";
+        case ANIM_HOBBY_RADIO:
+            outFps = 7;
+            return "hobby_radio";
+        case ANIM_HOBBY_TYPE:
+            outFps = 7;
+            return "hobby_type";
+        case ANIM_HOBBY_SCOPE:
+            outFps = 7;
+            return "hobby_scope";
+        case ANIM_HOBBY_CLEAN:
+            outFps = 7;
+            return "hobby_clean";
+        case ANIM_SAD_CIRCLE:
+            outFps = 6;
+            return "sad_circle";
+        case ANIM_SAD_SIGH:
+            outFps = 6;
+            return "sad_sigh";
+        case ANIM_UPSET_STOMP:
+            outFps = 7;
+            return "upset_stomp";
+        case ANIM_UPSET_CROSS:
+            outFps = 6;
+            return "upset_cross";
         default:
             outFps = 6;
             return "stand";
     }
 }
+
 
 
 
