@@ -14,6 +14,7 @@ public:
     void stopGame();
     bool isGameRunning() const { return currentGame != nullptr; }
     MiniGameType getCurrentGameType() const { return currentType; }
+    bool isGameEnabled(MiniGameType type) const;
 
     void update(float tiltX, float tiltY, float accelZ);
     void render(M5Canvas& canvas);

@@ -24,30 +24,27 @@ void MiniGameManager::init() {
     selectedMenuIndex = 0;
 }
 
+bool MiniGameManager::isGameEnabled(MiniGameType type) const {
+    return (type == GAME_FISHING || type == GAME_MINER);
+}
+
 void MiniGameManager::selectGame(MiniGameType type) {
+    if (!isGameEnabled(type)) {
+        g_display.showToast("该游戏正在开发中~");
+        g_haptics.trigger(HAPTIC_ALERT);
+        return;
+    }
+
     currentType = type;
     if (type == GAME_FISHING) {
         currentGame = std::unique_ptr<MiniGameBase>(new GameFishing());
-    } else if (type == GAME_SKIING) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameSkiing());
-    } else if (type == GAME_CATCHER) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameCatcher());
-    } else if (type == GAME_JUMPER) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameJumper());
     } else if (type == GAME_MINER) {
         currentGame = std::unique_ptr<MiniGameBase>(new GameMiner());
-    } else if (type == GAME_GUESS) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameGuess());
-    } else if (type == GAME_BALL) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameBall());
-    } else if (type == GAME_FLOOR) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameFloor());
-    } else if (type == GAME_ROPE) {
-        currentGame = std::unique_ptr<MiniGameBase>(new GameRope());
     } else {
         currentGame = nullptr;
     }
 }
+
 
 void MiniGameManager::stopGame() {
     if (currentGame) {
@@ -151,17 +148,32 @@ void MiniGameManager::render(M5Canvas& canvas) {
             continue;
         }
 
-        // 第一行 (Y+4): 游戏名称 (左) + 序号 (右)
-        canvas.setTextColor(isSel ? canvas.color565(20, 40, 80) : TFT_WHITE);
-        canvas.drawString(gameTitles[idx], boxX + 6, curY + 4);
+        bool enabled = isGameEnabled(static_cast<MiniGameType>(idx + 1));
 
-        canvas.setTextColor(isSel ? canvas.color565(210, 120, 0) : canvas.color565(80, 180, 255));
-        canvas.drawRightString("No." + String(idx + 1), boxX + boxW - 6, curY + 4);
+        // 第一行 (Y+4): 游戏名称 (左) + 状态 (右)
+        if (enabled) {
+            canvas.setTextColor(isSel ? canvas.color565(20, 40, 80) : TFT_WHITE);
+            canvas.drawString(gameTitles[idx], boxX + 6, curY + 4);
+
+            canvas.setTextColor(isSel ? canvas.color565(210, 120, 0) : canvas.color565(80, 180, 255));
+            canvas.drawRightString("开放中", boxX + boxW - 6, curY + 4);
+        } else {
+            canvas.setTextColor(isSel ? canvas.color565(120, 120, 120) : canvas.color565(90, 100, 115));
+            canvas.drawString(gameTitles[idx], boxX + 6, curY + 4);
+
+            canvas.setTextColor(isSel ? canvas.color565(160, 160, 160) : canvas.color565(80, 90, 105));
+            canvas.drawRightString("暂未开放", boxX + boxW - 6, curY + 4);
+        }
 
         // 第二行 (Y+22): 玩法简述
-        canvas.setTextColor(isSel ? canvas.color565(180, 80, 0) : canvas.color565(140, 160, 180));
+        if (enabled) {
+            canvas.setTextColor(isSel ? canvas.color565(180, 80, 0) : canvas.color565(140, 160, 180));
+        } else {
+            canvas.setTextColor(isSel ? canvas.color565(150, 150, 150) : canvas.color565(75, 85, 100));
+        }
         canvas.drawString(gameDescs[idx], boxX + 6, curY + 22);
     }
+
 
     // 底部操作指引
     int botY = SCREEN_H - 24;

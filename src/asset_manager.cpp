@@ -175,7 +175,6 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
 
 
 void AssetManager::loadActionClip(const String& actionName, uint8_t gender, const String& stage, uint8_t fps) {
-
     if (!isFsMounted) return;
     if (currentLoadedAction == actionName && currentLoadedGender == gender && currentLoadedStage == stage && !currentClipFrames.empty()) {
         return; // 命中当前动作内存缓存，零延迟
@@ -189,30 +188,54 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
     currentClipFps = fps;
 
     String genderStr = (gender == 1) ? "MM" : "GG";
-    String dirPath = "/assets/" + genderStr + "/" + stage + "/" + actionName;
 
-    // 如果目标动作不存在，智能回退
-    char testFile[64];
-    snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
-    if (!LittleFS.exists(testFile)) {
-        dirPath = String("/assets/GG/") + stage + "/" + actionName;
-        snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
-        if (!LittleFS.exists(testFile)) {
+    // 1. 优先尝试加载 .act 二进制容器文件 (零文件碎片，极速单次 I/O)
+    String actPath = "/assets/" + genderStr + "/" + stage + "/" + actionName + ".act";
+    if (!LittleFS.exists(actPath)) {
+        actPath = "/assets/GG/" + stage + "/" + actionName + ".act";
+        if (!LittleFS.exists(actPath)) {
             if (actionName == "study" || actionName == "work") {
-                dirPath = "/assets/" + genderStr + "/" + stage + "/happy";
-                snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
-                if (!LittleFS.exists(testFile)) dirPath = String("/assets/GG/") + stage + "/happy";
+                actPath = "/assets/" + genderStr + "/" + stage + "/happy.act";
+                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/happy.act";
             } else if (actionName.startsWith("play") || actionName == "trip") {
-                dirPath = "/assets/" + genderStr + "/" + stage + "/play";
-                snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
-                if (!LittleFS.exists(testFile)) dirPath = String("/assets/GG/") + stage + "/play";
+                actPath = "/assets/" + genderStr + "/" + stage + "/play.act";
+                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/play.act";
             } else {
-                dirPath = "/assets/" + genderStr + "/" + stage + "/stand";
+                actPath = "/assets/" + genderStr + "/" + stage + "/stand.act";
+                if (!LittleFS.exists(actPath)) actPath = "/assets/GG/" + stage + "/stand.act";
             }
         }
     }
 
-    // 将序列帧 PNG 一次性载入内存 (仅 ~20KB，零 Flash I/O 阻塞)
+    if (LittleFS.exists(actPath)) {
+        File f = LittleFS.open(actPath, "r");
+        if (f) {
+            uint8_t header[4];
+            if (f.read(header, 4) == 4 && header[0] == 0xAA) {
+                uint8_t count = header[2];
+                std::vector<uint16_t> sizes(count);
+                f.read(reinterpret_cast<uint8_t*>(sizes.data()), count * sizeof(uint16_t));
+                for (uint8_t i = 0; i < count; ++i) {
+                    InMemoryFrame frame;
+                    frame.buffer.resize(sizes[i]);
+                    f.read(frame.buffer.data(), sizes[i]);
+                    currentClipFrames.push_back(std::move(frame));
+                }
+                f.close();
+                return;
+            }
+            f.close();
+        }
+    }
+
+    // 2. 回退兼容老旧散装 PNG 目录
+    String dirPath = "/assets/" + genderStr + "/" + stage + "/" + actionName;
+    char testFile[64];
+    snprintf(testFile, sizeof(testFile), "%s/f_00.png", dirPath.c_str());
+    if (!LittleFS.exists(testFile)) {
+        dirPath = String("/assets/GG/") + stage + "/" + actionName;
+    }
+
     for (int i = 0; i < 30; ++i) {
         char filename[64];
         snprintf(filename, sizeof(filename), "%s/f_%02d.png", dirPath.c_str(), i);
@@ -229,6 +252,7 @@ void AssetManager::loadActionClip(const String& actionName, uint8_t gender, cons
         }
     }
 }
+
 
 void AssetManager::drawCostume(M5Canvas& canvas, int costumeId, int petCenterX, int petCenterY, int level, uint32_t currentMillis) {
     if (costumeId < 1 || costumeId > COSTUME_COUNT || !isFsMounted) return;
@@ -333,35 +357,30 @@ void AssetManager::drawAdoptionPet(M5Canvas& canvas, int x, int y, uint8_t gende
         adoptGgFrames.clear();
         adoptMmFrames.clear();
 
-        for (int i = 0; i < 20; ++i) {
-            char fn[64];
-            snprintf(fn, sizeof(fn), "/assets/GG/Egg/stand/f_%02d.png", i);
-            if (!LittleFS.exists(fn)) break;
-            File f = LittleFS.open(fn, "r");
-            if (f) {
-                InMemoryFrame fr;
-                fr.buffer.resize(f.size());
-                f.read(fr.buffer.data(), f.size());
-                f.close();
-                adoptGgFrames.push_back(std::move(fr));
+        auto loadAct = [](const char* path, std::vector<InMemoryFrame>& outFrames) {
+            if (!LittleFS.exists(path)) return;
+            File f = LittleFS.open(path, "r");
+            if (!f) return;
+            uint8_t header[4];
+            if (f.read(header, 4) == 4 && header[0] == 0xAA) {
+                uint8_t count = header[2];
+                std::vector<uint16_t> sizes(count);
+                f.read(reinterpret_cast<uint8_t*>(sizes.data()), count * sizeof(uint16_t));
+                for (uint8_t i = 0; i < count; ++i) {
+                    InMemoryFrame fr;
+                    fr.buffer.resize(sizes[i]);
+                    f.read(fr.buffer.data(), sizes[i]);
+                    outFrames.push_back(std::move(fr));
+                }
             }
-        }
+            f.close();
+        };
 
-        for (int i = 0; i < 20; ++i) {
-            char fn[64];
-            snprintf(fn, sizeof(fn), "/assets/MM/Egg/stand/f_%02d.png", i);
-            if (!LittleFS.exists(fn)) break;
-            File f = LittleFS.open(fn, "r");
-            if (f) {
-                InMemoryFrame fr;
-                fr.buffer.resize(f.size());
-                f.read(fr.buffer.data(), f.size());
-                f.close();
-                adoptMmFrames.push_back(std::move(fr));
-            }
-        }
+        loadAct("/assets/GG/Egg/stand.act", adoptGgFrames);
+        loadAct("/assets/MM/Egg/stand.act", adoptMmFrames);
         adoptFramesLoaded = true;
     }
+
 
 
     const auto& frames = (gender == 1) ? adoptMmFrames : adoptGgFrames;
