@@ -30,7 +30,16 @@ static int dragOffsetX = 0;
 static int dragOffsetY = 0;
 
 void executeMenuAction(MenuOption opt) {
+
+    if (g_pet.isDead()) {
+        if (opt != MENU_CURE && opt != MENU_STATUS && opt != MENU_WEB_CONFIG && opt != MENU_SHOP) {
+            g_haptics.trigger(HAPTIC_ALERT);
+            g_display.showToast("企鹅已死亡，请呼出【就医/还魂丹】救治！", 4000);
+            return;
+        }
+    }
     String msg;
+
     switch (opt) {
         case MENU_FEED:
             // 进入全屏食物选择背包
@@ -359,8 +368,11 @@ void loop() {
             g_haptics.trigger(HAPTIC_CLICK);
             g_display.showBubble("唔... 主人把我叫醒啦~ 伸个懒腰！", 4000);
         } else {
-            // 待机模式下: 如果正在作业，按 A 键召回结算；否则摸摸互动
-            if (g_pet.isTaskActive()) {
+            // 待机模式下: 死亡状态提示
+            if (g_pet.isDead()) {
+                g_haptics.trigger(HAPTIC_ALERT);
+                g_display.showToast("企鹅已死亡倒下，请按侧键呼出【就医/还魂丹】救治！", 4000);
+            } else if (g_pet.isTaskActive()) {
                 String stopMsg;
                 g_pet.stopTask(stopMsg, false);
                 g_haptics.trigger(HAPTIC_SUCCESS);
@@ -376,14 +388,15 @@ void loop() {
     }
 
 
-    // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾
+    // 按住拖拽：按住 BtnA 时将企鹅悬空提起，并跟随手腕倾斜实时空中扑腾 (死亡状态禁止提起)
     static bool dragStarted = false;
     static float baseTiltX = 0;
     static float baseTiltY = 0;
     static float smoothOffsetX = 0;
     static float smoothOffsetY = 0;
 
-    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen() && !g_display.isSubScreenOpen() && !isSleeping) {
+    if (M5.BtnA.isHolding() && !g_display.isMenuOpen() && !g_display.isStatusCardOpen() && !g_display.isSubScreenOpen() && !isSleeping && !g_pet.isDead()) {
+
         if (!dragStarted) {
             dragStarted = true;
             baseTiltX = g_imu.getTiltX();

@@ -6,7 +6,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂出窍进入棺材墓碑",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Clean1.swf": {
     "gender": "MM",
@@ -51,16 +51,16 @@
     "category": "die",
     "action_id": "die",
     "label": "肚皮朝天躺着不动",
-    "enabled": false
+    "enabled": true
   },
   "MM/Adult/Dying.swf": {
     "gender": "MM",
     "stage": "Adult",
     "rel_path": "Dying.swf",
-    "category": "die",
-    "action_id": "die",
+    "category": "dying",
+    "action_id": "dying",
     "label": "头顶冰袋挣扎之后肚皮朝天",
-    "enabled": false
+    "enabled": true
   },
   "MM/Adult/Eat1.swf": {
     "gender": "MM",
@@ -3831,7 +3831,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Clean.swf": {
     "gender": "MM",
@@ -3858,7 +3858,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": false
+    "enabled": true
   },
   "MM/Kid/Dirty.swf": {
     "gender": "MM",
@@ -5334,7 +5334,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/Clean.swf": {
     "gender": "MM",
@@ -5361,7 +5361,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": false
+    "enabled": true
   },
   "MM/Egg/Dying.swf": {
     "gender": "MM",
@@ -6036,7 +6036,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/Clean1.swf": {
     "gender": "GG",
@@ -6081,7 +6081,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": false
+    "enabled": true
   },
   "GG/Adult/Dying.swf": {
     "gender": "GG",
@@ -9861,7 +9861,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/Clean.swf": {
     "gender": "GG",
@@ -9888,7 +9888,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": false
+    "enabled": true
   },
   "GG/Kid/Dirty.swf": {
     "gender": "GG",
@@ -11364,7 +11364,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/Clean.swf": {
     "gender": "GG",
@@ -11391,7 +11391,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": false
+    "enabled": true
   },
   "GG/Egg/Dying.swf": {
     "gender": "GG",

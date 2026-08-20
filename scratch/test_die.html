@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script></head>
+<body style="margin:0; background:transparent;">
+  <div id="pet" style="width:200px; height:200px;"></div>
+  <script>
+    window.load = function(u) {
+      const r = window.RufflePlayer.newest();
+      const p = r.createPlayer();
+      p.style.width = '100%'; p.style.height = '100%';
+      p.config = { autoplay: 'on', letterbox: 'off', wmode: 'transparent' };
+      const el = document.getElementById('pet');
+      el.innerHTML = ''; el.appendChild(p);
+      return p.load(u);
+    };
+  </script>
+</body>
+</html>

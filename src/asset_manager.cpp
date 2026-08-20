@@ -166,9 +166,12 @@ String AssetManager::getActionNameByState(PetAnimState anim, const String& stage
             outFps = 6;
             return "sick";
         case ANIM_DEAD:
+            outFps = 6;
+            return "die";
         case ANIM_DYING:
             outFps = 6;
             return "dying";
+
         case ANIM_CURE:
             outFps = 8;
             return "cure";

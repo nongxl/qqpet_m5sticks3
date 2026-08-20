@@ -480,40 +480,62 @@ void DisplayEngine::drawRightBubbleMenu() {
     for (int i = 0; i < MENU_COUNT; ++i) {
         if (i == currentOption) continue; // 选中项稍后在顶层突出绘制
 
+        bool isDisabled = (st.health == 0) && (i == MENU_FEED || i == MENU_BATH || i == MENU_PLAY || i == MENU_WARDROBE || i == MENU_WORK || i == MENU_STUDY || i == MENU_TRIP);
+
         float itemRad = - (3.14159265f / 2.0f) + (static_cast<float>(i) * sector);
         int bx = cx + static_cast<int>(radius * std::cos(itemRad));
         int by = cy + static_cast<int>(radius * std::sin(itemRad));
 
-        // 半透明白蓝圆形底座 (22x22)
-        canvas.fillCircle(bx, by, 11, canvas.color565(240, 248, 255));
-        canvas.drawCircle(bx, by, 11, canvas.color565(140, 190, 240));
+        if (isDisabled) {
+            // 死亡禁用项：深灰色磨砂圆环底座
+            canvas.fillCircle(bx, by, 11, canvas.color565(80, 85, 95));
+            canvas.drawCircle(bx, by, 11, canvas.color565(55, 60, 70));
+        } else {
+            // 正常项：半透明白蓝圆形底座 (22x22)
+            canvas.fillCircle(bx, by, 11, canvas.color565(240, 248, 255));
+            canvas.drawCircle(bx, by, 11, canvas.color565(140, 190, 240));
+        }
 
-        // 渲染 20x20 精致图标
+        // 渲染 20x20 图标
         g_assets.drawMenuIcon(canvas, bx - 10, by - 10, i, false);
     }
 
-    // 3. 顶层突出绘制当前【重力感应高亮选中项】(放大到 34x34，金色双层发光外环)
+    // 3. 顶层突出绘制当前【选中项】
     int selIdx = currentOption;
+    bool isSelDisabled = (st.health == 0) && (selIdx == MENU_FEED || selIdx == MENU_BATH || selIdx == MENU_PLAY || selIdx == MENU_WARDROBE || selIdx == MENU_WORK || selIdx == MENU_STUDY || selIdx == MENU_TRIP);
+
     float selRad = - (3.14159265f / 2.0f) + (static_cast<float>(selIdx) * sector);
     int selX = cx + static_cast<int>(radius * std::cos(selRad));
     int selY = cy + static_cast<int>(radius * std::sin(selRad));
 
-    canvas.fillCircle(selX, selY, 17, canvas.color565(255, 215, 40));
-    canvas.drawCircle(selX, selY, 17, canvas.color565(255, 250, 180));
-    canvas.drawCircle(selX, selY, 18, canvas.color565(255, 160, 0));
+    if (isSelDisabled) {
+        // 禁用选中项：暗灰色警示圆环
+        canvas.fillCircle(selX, selY, 17, canvas.color565(100, 105, 115));
+        canvas.drawCircle(selX, selY, 17, canvas.color565(130, 135, 145));
+        canvas.drawCircle(selX, selY, 18, canvas.color565(60, 65, 75));
+    } else {
+        // 正常选中项：金色双层发光外环
+        canvas.fillCircle(selX, selY, 17, canvas.color565(255, 215, 40));
+        canvas.drawCircle(selX, selY, 17, canvas.color565(255, 250, 180));
+        canvas.drawCircle(selX, selY, 18, canvas.color565(255, 160, 0));
+    }
 
-    // 渲染 28x28 放大高光图标
+    // 渲染 28x28 放大图标
     g_assets.drawMenuIcon(canvas, selX - 14, selY - 14, selIdx, true);
 
     // 4. 底部中央悬浮展示当前选中的功能胶囊气泡 + 提示
     String label = MENU_NAMES[selIdx];
-    if (selIdx == MENU_FEED) label += "(" + String(st.food_count) + ")";
-    else if (selIdx == MENU_BATH) label += "(" + String(st.soap_count) + ")";
-    else if (selIdx == MENU_WARDROBE) label += "(换装)";
-    else if (selIdx == MENU_WORK) label += "(+150Y)";
-    else if (selIdx == MENU_STUDY) label += "(+智力)";
-    else if (selIdx == MENU_TRIP) label += "(旅行)";
-    else if (selIdx == MENU_CURE && strlen(st.illness) > 0) label += "·" + String(st.illness);
+    if (isSelDisabled) {
+        label += "(已死亡不可用)";
+    } else {
+        if (selIdx == MENU_FEED) label += "(" + String(st.food_count) + ")";
+        else if (selIdx == MENU_BATH) label += "(" + String(st.soap_count) + ")";
+        else if (selIdx == MENU_WARDROBE) label += "(换装)";
+        else if (selIdx == MENU_WORK) label += "(+150Y)";
+        else if (selIdx == MENU_STUDY) label += "(+智力)";
+        else if (selIdx == MENU_TRIP) label += "(旅行)";
+        else if (selIdx == MENU_CURE && strlen(st.illness) > 0) label += "·" + String(st.illness);
+    }
 
     canvas.setFont(&fonts::efontCN_12);
     int tagW = canvas.textWidth(label) + 16;
@@ -521,11 +543,17 @@ void DisplayEngine::drawRightBubbleMenu() {
     int tagX = (SCREEN_W - tagW) / 2;
     int tagY = SCREEN_H - 32;
 
-
-    canvas.fillRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(30, 45, 65));
-    canvas.drawRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(255, 215, 80));
-    canvas.setTextColor(canvas.color565(255, 240, 120));
+    if (isSelDisabled) {
+        canvas.fillRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(45, 50, 60));
+        canvas.drawRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(120, 125, 135));
+        canvas.setTextColor(canvas.color565(180, 185, 195));
+    } else {
+        canvas.fillRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(30, 45, 65));
+        canvas.drawRoundRect(tagX, tagY, tagW, tagH, 6, canvas.color565(255, 215, 80));
+        canvas.setTextColor(canvas.color565(255, 240, 120));
+    }
     canvas.drawCenterString(label, SCREEN_W / 2, tagY + 4);
+
 }
 
 
