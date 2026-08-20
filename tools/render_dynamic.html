@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
+  <style>
+    body { margin: 0; background: transparent; overflow: hidden; }
+    #pet { width: 260px; height: 260px; }
+  </style>
+</head>
+<body>
+  <div id="pet"></div>
+  <script>
+    window.loadSwf = function(url) {
+      const r = window.RufflePlayer.newest();
+      const p = r.createPlayer();
+      p.style.width = '100%';
+      p.style.height = '100%';
+      p.config = {
+        autoplay: 'on',
+        unmuteOverlay: 'hidden',
+        letterbox: 'off',
+        backgroundColor: '#000000',
+        wmode: 'transparent'
+      };
+      const pet = document.getElementById('pet');
+      pet.innerHTML = '';
+      pet.appendChild(p);
+      return p.load(url);
+    };
+  </script>
+</body>
+</html>

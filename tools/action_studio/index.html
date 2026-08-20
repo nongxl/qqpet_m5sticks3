@@ -266,7 +266,50 @@
       outline: none;
       border-color: var(--accent);
     }
+    
+    /* 固件空间预估仪表盘 */
+    .fw-meter-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .fw-meter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .fw-meter-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .fw-meter-val {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .fw-meter-track {
+      width: 140px;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .fw-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      border-radius: 4px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
     .toast {
+
       position: fixed;
       bottom: 24px;
       right: 24px;
@@ -478,10 +521,36 @@
 </header>
 
 <main>
-  <div class="stats-bar">
-    <div>显示 <span id="visibleCount" style="color: var(--accent); font-weight: bold;">0</span> / <span id="totalCount">0</span> 个动作动画</div>
-    <div style="font-size: 0.8rem; color: var(--text-muted);">💡 点击卡片中的预览画面可直接播放 Flash 动画</div>
+  <div class="stats-bar" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div>显示 <span id="visibleCount" style="color: var(--accent); font-weight: bold;">0</span> / <span id="totalCount">0</span> 个动作动画</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">💡 企鹅动作自动循环播放中，可按需勾选是否编译进固件</div>
+    </div>
+
+    <!-- 固件空间预估仪表盘 -->
+    <div class="fw-meter-box" id="fwMeterBox">
+      <div class="fw-meter-item">
+        <span class="fw-meter-label">📦 已选固件动作</span>
+        <span class="fw-meter-val"><span id="fwActionCount" style="color: var(--accent);">0</span> 个</span>
+      </div>
+
+      <div class="fw-meter-item">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="fw-meter-label">💾 预估体积 / 分区上限 (6.06MB)</span>
+          <span id="fwUsagePct" style="font-size: 0.75rem; font-weight: bold; color: var(--accent);">0%</span>
+        </div>
+        <div class="fw-meter-track" style="margin-top: 4px;">
+          <div class="fw-meter-fill" id="fwMeterFill"></div>
+        </div>
+      </div>
+
+      <div class="fw-meter-item">
+        <span class="fw-meter-label">💽 预估占用 / 剩余可用</span>
+        <span class="fw-meter-val"><span id="fwUsedMb" style="color: #38bdf8;">0.00 MB</span> <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(余 <span id="fwRemainMb" style="color: #4ade80;">6.06 MB</span>)</span></span>
+      </div>
+    </div>
   </div>
+
 
   <div class="grid" id="actionGrid">
     <!-- 动态卡片列表 -->
@@ -521,10 +590,12 @@ async function loadData() {
     allActions = data.actions;
     categories = data.categories;
     renderGrid();
+    updateFirmwareEstimate();
   } catch (e) {
     showToast("加载动作列表失败：" + e);
   }
 }
+
 
 function renderGrid() {
   actionGrid.innerHTML = "";
@@ -742,15 +813,77 @@ function playFlash(key, swfUrl, isManualReplay = false) {
 
 
 
+function updateFirmwareEstimate() {
+  const TOTAL_CAPACITY_BYTES = 6 * 1024 * 1024 + 60 * 1024; // 6.06 MB 分区
+  const BASE_METADATA_OVERHEAD = 128 * 1024; // LittleFS 基础元数据
+
+  let enabledCount = 0;
+  let totalEstimatedBytes = BASE_METADATA_OVERHEAD;
+
+  allActions.forEach(act => {
+    if (act.enabled && act.action_id) {
+      enabledCount++;
+      const numFrames = parseInt(act.num_frames) || 28;
+      // 28 帧实测平均大小约为 45KB ~ 48KB
+      const actEstBytes = 4 + (numFrames * 2) + (numFrames * 1620);
+      totalEstimatedBytes += actEstBytes;
+    }
+  });
+
+  const usedMb = (totalEstimatedBytes / (1024 * 1024)).toFixed(2);
+  const remainMb = Math.max(0, (TOTAL_CAPACITY_BYTES - totalEstimatedBytes) / (1024 * 1024)).toFixed(2);
+  const pct = (totalEstimatedBytes * 100 / TOTAL_CAPACITY_BYTES).toFixed(1);
+
+  const actionCountEl = document.getElementById("fwActionCount");
+  const usedMbEl = document.getElementById("fwUsedMb");
+  const usagePctEl = document.getElementById("fwUsagePct");
+  const remainMbEl = document.getElementById("fwRemainMb");
+  const fillEl = document.getElementById("fwMeterFill");
+
+  if (actionCountEl) actionCountEl.textContent = enabledCount;
+  if (usedMbEl) usedMbEl.textContent = `${usedMb} MB`;
+  if (usagePctEl) usagePctEl.textContent = `${pct}%`;
+  
+  if (totalEstimatedBytes > TOTAL_CAPACITY_BYTES) {
+    const overMb = ((totalEstimatedBytes - TOTAL_CAPACITY_BYTES) / (1024 * 1024)).toFixed(2);
+    if (remainMbEl) remainMbEl.innerHTML = `<span style="color: var(--danger); font-weight: bold;">⚠️ 超出 ${overMb} MB</span>`;
+  } else {
+    if (remainMbEl) remainMbEl.textContent = `${remainMb} MB`;
+  }
+
+
+  if (fillEl) {
+    fillEl.style.width = `${Math.min(100, pct)}%`;
+    if (pct > 100) {
+      fillEl.style.background = "var(--danger)";
+      if (usagePctEl) usagePctEl.style.color = "var(--danger)";
+    } else if (pct > 80) {
+      fillEl.style.background = "var(--warning)";
+      if (usagePctEl) usagePctEl.style.color = "var(--warning)";
+    } else {
+      fillEl.style.background = "linear-gradient(90deg, #38bdf8, #22c55e)";
+      if (usagePctEl) usagePctEl.style.color = "var(--accent)";
+    }
+  }
+
+}
+
 function updateEnabled(key, checked) {
   const act = allActions.find(a => a.key === key);
-  if (act) act.enabled = checked;
+  if (act) {
+    act.enabled = checked;
+    updateFirmwareEstimate();
+  }
 }
 
 function updateNumFrames(key, val) {
   const act = allActions.find(a => a.key === key);
-  if (act) act.num_frames = parseInt(val) || 28;
+  if (act) {
+    act.num_frames = parseInt(val) || 28;
+    updateFirmwareEstimate();
+  }
 }
+
 
 function updateFps(key, val) {
   const act = allActions.find(a => a.key === key);
@@ -884,8 +1017,11 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
   <div class="modal-box">
     <div class="modal-header">
       <h3>⚡ 固件生成与设备烧录控制台</h3>
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
         <span class="modal-badge running" id="modalStatusBadge">⏳ 正在提取动画与烧录...</span>
+        <button class="btn" id="abortTaskBtn" onclick="abortBuildTask()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+          ⛔ 中止任务
+        </button>
         <button class="modal-close-btn" onclick="closeBuildModal()" title="关闭窗口">✕</button>
       </div>
     </div>
@@ -908,30 +1044,60 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 </div>
 
 <script>
-
 let buildEventSource = null;
+let isBuildingRunning = false;
 
 function openBuildModal() {
+  isBuildingRunning = true;
   document.getElementById("buildModal").classList.add("active");
   document.getElementById("progressBarFill").style.width = "0%";
   document.getElementById("progressPercentText").textContent = "0%";
   document.getElementById("progressStepText").textContent = "正在准备提取 Flash 动画...";
+  document.getElementById("abortTaskBtn").style.display = "inline-block";
   
   const badge = document.getElementById("modalStatusBadge");
   badge.className = "modal-badge running";
   badge.textContent = "⏳ 正在提取动画与烧录...";
 
   const term = document.getElementById("terminalWindow");
-  term.innerHTML = '<div class="terminal-line progress">> [任务启动] 正在读取动作映射表并启动渲染引擎...</div>';
+  term.innerHTML = '<div class="terminal-line progress">> [任务启动] 正在读取动作映射表并启动 6 并发渲染引擎...</div>';
 }
 
-function closeBuildModal() {
+async function abortBuildTask() {
+  if (!confirm("确定要中止当前的固件生成与设备烧录任务吗？")) return;
+  try {
+    await fetch("/api/abort_build", { method: "POST" });
+    appendTerminalLog("> [用户操作] 已发送中止指令，后台任务已强制终止！", null, "error");
+    const badge = document.getElementById("modalStatusBadge");
+    badge.className = "modal-badge error";
+    badge.textContent = "⛔ 任务已由用户中止";
+    document.getElementById("abortTaskBtn").style.display = "none";
+    isBuildingRunning = false;
+    if (buildEventSource) {
+      buildEventSource.close();
+      buildEventSource = null;
+    }
+  } catch (e) {
+    appendTerminalLog("> [中止异常] " + e, null, "error");
+  }
+}
+
+async function closeBuildModal() {
+  if (isBuildingRunning) {
+    if (confirm("当前任务正在运行中，关闭窗口将同时中止后台提取与烧录任务，是否继续？")) {
+      await fetch("/api/abort_build", { method: "POST" });
+      isBuildingRunning = false;
+    } else {
+      return;
+    }
+  }
   document.getElementById("buildModal").classList.remove("active");
   if (buildEventSource) {
     buildEventSource.close();
     buildEventSource = null;
   }
 }
+
 
 function appendTerminalLog(text, pct, status) {
   const term = document.getElementById("terminalWindow");

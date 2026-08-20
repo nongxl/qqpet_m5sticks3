@@ -24,7 +24,7 @@
     "category": "clean",
     "action_id": "clean",
     "label": "MM洗澡，帷幕半透明",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Cure1.swf": {
     "gender": "MM",
@@ -51,7 +51,7 @@
     "category": "die",
     "action_id": "die",
     "label": "肚皮朝天躺着不动",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Dying.swf": {
     "gender": "MM",
@@ -60,7 +60,7 @@
     "category": "die",
     "action_id": "die",
     "label": "头顶冰袋挣扎之后肚皮朝天",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Eat1.swf": {
     "gender": "MM",
@@ -78,7 +78,7 @@
     "category": "eat",
     "action_id": "eat",
     "label": "吃爆米花",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Enter1.swf": {
     "gender": "MM",
@@ -87,7 +87,7 @@
     "category": "play",
     "action_id": "play",
     "label": "滑草",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Enter2.swf": {
     "gender": "MM",
@@ -96,7 +96,7 @@
     "category": "play",
     "action_id": "play",
     "label": "在云上跳跃然后落下",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Enter3.swf": {
     "gender": "MM",
@@ -105,7 +105,7 @@
     "category": "play",
     "action_id": "play",
     "label": "玩滑翔伞",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Exit1.swf": {
     "gender": "MM",
@@ -114,7 +114,7 @@
     "category": "play",
     "action_id": "play",
     "label": "自拍照片",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Exit2.swf": {
     "gender": "MM",
@@ -123,7 +123,7 @@
     "category": "play",
     "action_id": "play",
     "label": "蒲公英飘过，抓着飞走",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Exit3.swf": {
     "gender": "MM",
@@ -132,7 +132,7 @@
     "category": "play",
     "action_id": "play",
     "label": "乘着气球篮子飞走",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Exit4.swf": {
     "gender": "MM",
@@ -141,7 +141,7 @@
     "category": "play",
     "action_id": "play",
     "label": "打喷嚏变出一朵筋斗云",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/First.swf": {
     "gender": "MM",
@@ -195,7 +195,7 @@
     "category": "sick",
     "action_id": "sick",
     "label": "头顶冰袋发烧生病不适",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/Sick2.swf": {
     "gender": "MM",
@@ -204,7 +204,7 @@
     "category": "sick",
     "action_id": "sick",
     "label": "头顶冰袋发烧生病不适",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/Appear.swf": {
     "gender": "MM",
@@ -420,7 +420,7 @@
     "category": "upset",
     "action_id": "upset",
     "label": "生气噘嘴待机",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/upset/Stand1.swf": {
     "gender": "MM",
@@ -672,7 +672,7 @@
     "category": "upset",
     "action_id": "upset_sigh",
     "label": "生闷气别过头不理人",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/upset/play/P20.swf": {
     "gender": "MM",
@@ -717,7 +717,7 @@
     "category": "upset",
     "action_id": "upset_cross",
     "label": "抱臂背身气鼓鼓生闷气",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/upset/play/P4.swf": {
     "gender": "MM",
@@ -978,7 +978,7 @@
     "category": "sad",
     "action_id": "sad_cry",
     "label": "委屈揉眼睛流眼泪",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/sad/play/P10.swf": {
     "gender": "MM",
@@ -1113,7 +1113,7 @@
     "category": "sad",
     "action_id": "sad_sigh",
     "label": "抱膝坐在地上叹气沮丧",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/sad/play/P4.swf": {
     "gender": "MM",
@@ -1176,7 +1176,7 @@
     "category": "sad",
     "action_id": "sad",
     "label": "伤心低落待机",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/sad/stand/Stand1.swf": {
     "gender": "MM",
@@ -1401,7 +1401,7 @@
     "category": "play",
     "action_id": "play_boat",
     "label": "折彩色小纸船玩水",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P11.swf": {
     "gender": "MM",
@@ -1410,7 +1410,7 @@
     "category": "play",
     "action_id": "play_duck",
     "label": "磁铁小钓竿钓塑料小鸭",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P12.swf": {
     "gender": "MM",
@@ -1419,7 +1419,7 @@
     "category": "hobby",
     "action_id": "hobby_xylophone",
     "label": "敲击彩色八音木琴演奏",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P13.swf": {
     "gender": "MM",
@@ -1428,7 +1428,7 @@
     "category": "hobby",
     "action_id": "hobby_harmonica",
     "label": "吹奏银色小口琴乐曲",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P14.swf": {
     "gender": "MM",
@@ -1437,7 +1437,7 @@
     "category": "play",
     "action_id": "play_car",
     "label": "摆弄发条玩具小汽车",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P15.swf": {
     "gender": "MM",
@@ -1446,7 +1446,7 @@
     "category": "play",
     "action_id": "play_block",
     "label": "搭木制小积木城堡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P16.swf": {
     "gender": "MM",
@@ -1455,7 +1455,7 @@
     "category": "hobby",
     "action_id": "hobby_book",
     "label": "趴在地上翻阅精美故事绘本",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P17.swf": {
     "gender": "MM",
@@ -1464,7 +1464,7 @@
     "category": "play",
     "action_id": "play_penguin",
     "label": "玩发条摇摆小企鹅玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P18.swf": {
     "gender": "MM",
@@ -1473,7 +1473,7 @@
     "category": "play",
     "action_id": "play_piano",
     "label": "按彩色电子琴玩具琴键",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P19.swf": {
     "gender": "MM",
@@ -1482,7 +1482,7 @@
     "category": "play",
     "action_id": "play_tumbler",
     "label": "推按塑料不倒翁玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P2.swf": {
     "gender": "MM",
@@ -1500,7 +1500,7 @@
     "category": "play",
     "action_id": "play_gun",
     "label": "手持泡泡水枪打泡泡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P21.swf": {
     "gender": "MM",
@@ -1509,7 +1509,7 @@
     "category": "hobby",
     "action_id": "hobby_crayon",
     "label": "拿油画棒在画纸上涂鸦",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P22.swf": {
     "gender": "MM",
@@ -1518,7 +1518,7 @@
     "category": "play",
     "action_id": "play_count",
     "label": "拨弄算盘彩色圆珠计数",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P23.swf": {
     "gender": "MM",
@@ -1527,7 +1527,7 @@
     "category": "play",
     "action_id": "play_kaleido",
     "label": "转动彩色万花筒视界",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P24.swf": {
     "gender": "MM",
@@ -1536,7 +1536,7 @@
     "category": "play",
     "action_id": "play_ring",
     "label": "玩套圈圈塑料圆环玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P25.swf": {
     "gender": "MM",
@@ -1545,7 +1545,7 @@
     "category": "play",
     "action_id": "play_duckcar",
     "label": "推木头小鸭子滚轮车",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P26.swf": {
     "gender": "MM",
@@ -1554,7 +1554,7 @@
     "category": "play",
     "action_id": "play_magnet",
     "label": "玩磁铁吸吸乐拼图",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P27.swf": {
     "gender": "MM",
@@ -1563,7 +1563,7 @@
     "category": "play",
     "action_id": "play_musicbox",
     "label": "摇动手摇机械八音盒",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P28.swf": {
     "gender": "MM",
@@ -1572,7 +1572,7 @@
     "category": "hobby",
     "action_id": "hobby_draw_house",
     "label": "用彩色蜡笔在地上画小房子和楼梯",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P29.swf": {
     "gender": "MM",
@@ -1581,7 +1581,7 @@
     "category": "play",
     "action_id": "play_robot_dog",
     "label": "逗弄智能发条机器小狗玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P3.swf": {
     "gender": "MM",
@@ -1590,7 +1590,7 @@
     "category": "sleep",
     "action_id": "sleep_nap",
     "label": "打瞌睡脑袋一点一点",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P30.swf": {
     "gender": "MM",
@@ -1599,7 +1599,7 @@
     "category": "play",
     "action_id": "play_mole",
     "label": "拿小木槌敲打打地鼠玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P31.swf": {
     "gender": "MM",
@@ -1608,7 +1608,7 @@
     "category": "play",
     "action_id": "play_tank",
     "label": "玩回力发条玩具小坦克",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P32.swf": {
     "gender": "MM",
@@ -1617,7 +1617,7 @@
     "category": "play",
     "action_id": "play_top",
     "label": "抽打陀螺旋转玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P33.swf": {
     "gender": "MM",
@@ -1626,7 +1626,7 @@
     "category": "play",
     "action_id": "play_horn",
     "label": "手持玩具小喇叭吹奏",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P34.swf": {
     "gender": "MM",
@@ -1635,7 +1635,7 @@
     "category": "play",
     "action_id": "play_popup",
     "label": "翻看立体弹出玩具书",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P35.swf": {
     "gender": "MM",
@@ -1644,7 +1644,7 @@
     "category": "play",
     "action_id": "play_chalk",
     "label": "在小黑板上用粉笔画小花",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P36.swf": {
     "gender": "MM",
@@ -1653,7 +1653,7 @@
     "category": "play",
     "action_id": "play_domino",
     "label": "摆弄多米诺骨牌推倒",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P37.swf": {
     "gender": "MM",
@@ -1662,7 +1662,7 @@
     "category": "play",
     "action_id": "play_drum",
     "label": "拍打彩色双音小手鼓",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P38.swf": {
     "gender": "MM",
@@ -1671,7 +1671,7 @@
     "category": "play",
     "action_id": "play_maracas",
     "label": "摇动彩色小沙锤合奏",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P39.swf": {
     "gender": "MM",
@@ -1680,7 +1680,7 @@
     "category": "play",
     "action_id": "play_jack",
     "label": "玩小丑弹簧盒子搞怪玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P4.swf": {
     "gender": "MM",
@@ -1689,7 +1689,7 @@
     "category": "sleep",
     "action_id": "sleep_pillow",
     "label": "抱小枕头甜蜜入梦",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P40.swf": {
     "gender": "MM",
@@ -1698,7 +1698,7 @@
     "category": "play",
     "action_id": "play_bead",
     "label": "玩彩色木珠串珠子玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P41.swf": {
     "gender": "MM",
@@ -1707,7 +1707,7 @@
     "category": "play",
     "action_id": "play_doctor",
     "label": "玩手提玩具小医生工具箱",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P42.swf": {
     "gender": "MM",
@@ -1716,7 +1716,7 @@
     "category": "play",
     "action_id": "play_frog",
     "label": "玩发条机械跳跳蛙玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P43.swf": {
     "gender": "MM",
@@ -1725,7 +1725,7 @@
     "category": "hobby",
     "action_id": "hobby_shell",
     "label": "用塑料放大镜仔细观察小贝壳",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P44.swf": {
     "gender": "MM",
@@ -1734,7 +1734,7 @@
     "category": "play",
     "action_id": "play_scope",
     "label": "转动双筒玩具望远镜",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P45.swf": {
     "gender": "MM",
@@ -1743,7 +1743,7 @@
     "category": "play",
     "action_id": "play_puppet",
     "label": "套上可爱小玩偶手偶表演",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P46.swf": {
     "gender": "MM",
@@ -1752,7 +1752,7 @@
     "category": "play",
     "action_id": "play_squirrel",
     "label": "玩发条摇尾巴小松鼠玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P5.swf": {
     "gender": "MM",
@@ -1761,7 +1761,7 @@
     "category": "sleep",
     "action_id": "sleep_bed",
     "label": "在小被窝里香甜熟睡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P6.swf": {
     "gender": "MM",
@@ -1770,7 +1770,7 @@
     "category": "play",
     "action_id": "play_marble",
     "label": "趴在地上玩彩色弹珠玻璃球",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P7.swf": {
     "gender": "MM",
@@ -1779,7 +1779,7 @@
     "category": "hobby",
     "action_id": "hobby_ant",
     "label": "拿放大镜看小蚂蚁搬家",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P8.swf": {
     "gender": "MM",
@@ -1788,7 +1788,7 @@
     "category": "play",
     "action_id": "play_cube",
     "label": "转动彩色魔方益智玩具",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/prostrate/play/P9.swf": {
     "gender": "MM",
@@ -1797,7 +1797,7 @@
     "category": "hobby",
     "action_id": "hobby_puzzle",
     "label": "拼七彩拼图益智小游戏",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/interact/BE1.swf": {
     "gender": "MM",
@@ -2202,7 +2202,7 @@
     "category": "play",
     "action_id": "play_walk",
     "label": "闲庭漫步踢石子",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P10.swf": {
     "gender": "MM",
@@ -2211,7 +2211,7 @@
     "category": "study",
     "action_id": "study_board",
     "label": "在小黑板前演算数学题",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P100.swf": {
     "gender": "MM",
@@ -2247,7 +2247,7 @@
     "category": "play",
     "action_id": "play_kite",
     "label": "奔跑迎风放风筝",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P14.swf": {
     "gender": "MM",
@@ -2265,7 +2265,7 @@
     "category": "play",
     "action_id": "play_magic",
     "label": "礼帽变出小飞鸽魔术",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P16.swf": {
     "gender": "MM",
@@ -2283,7 +2283,7 @@
     "category": "hobby",
     "action_id": "hobby_lens",
     "label": "手持放大镜观察小甲虫",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P18.swf": {
     "gender": "MM",
@@ -2292,7 +2292,7 @@
     "category": "hobby",
     "action_id": "hobby_paper",
     "label": "拿大剪刀剪纸红双喜",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P19.swf": {
     "gender": "MM",
@@ -2319,7 +2319,7 @@
     "category": "work",
     "action_id": "work_abacus",
     "label": "飞速拨动木算盘记账打工",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P21.swf": {
     "gender": "MM",
@@ -2328,7 +2328,7 @@
     "category": "hobby",
     "action_id": "hobby_type",
     "label": "老式机械打字机写作",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P22.swf": {
     "gender": "MM",
@@ -2337,7 +2337,7 @@
     "category": "hobby",
     "action_id": "hobby_scope",
     "label": "天文望远镜仰望星空",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P23.swf": {
     "gender": "MM",
@@ -2346,7 +2346,7 @@
     "category": "hobby",
     "action_id": "hobby_clean",
     "label": "拿着抹布仔细擦桌椅",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P24.swf": {
     "gender": "MM",
@@ -2409,7 +2409,7 @@
     "category": "play",
     "action_id": "play_badminton",
     "label": "挥拍打羽毛球",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P30.swf": {
     "gender": "MM",
@@ -2607,7 +2607,7 @@
     "category": "play",
     "action_id": "play_swing",
     "label": "荡秋千摇晃",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P50.swf": {
     "gender": "MM",
@@ -3003,7 +3003,7 @@
     "category": "hobby",
     "action_id": "hobby_mirror",
     "label": "照梳妆镜整理发型",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/peaceful/play/P90.swf": {
     "gender": "MM",
@@ -3381,7 +3381,7 @@
     "category": "play",
     "action_id": "play_ball",
     "label": "欢快拍篮球蹦跳",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P10.swf": {
     "gender": "MM",
@@ -3390,7 +3390,7 @@
     "category": "play",
     "action_id": "play_bowling",
     "label": "用力掷出保龄球全中",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P11.swf": {
     "gender": "MM",
@@ -3399,7 +3399,7 @@
     "category": "play",
     "action_id": "play_yoyo",
     "label": "花样玩悠悠球",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P12.swf": {
     "gender": "MM",
@@ -3408,7 +3408,7 @@
     "category": "play",
     "action_id": "play_hoop",
     "label": "腰部旋转彩色呼啦圈",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P13.swf": {
     "gender": "MM",
@@ -3417,7 +3417,7 @@
     "category": "play",
     "action_id": "play_kite",
     "label": "春游迎风放蝴蝶风筝",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P14.swf": {
     "gender": "MM",
@@ -3426,7 +3426,7 @@
     "category": "play",
     "action_id": "play_boxing",
     "label": "戴红拳套打沙袋拳击",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P15.swf": {
     "gender": "MM",
@@ -3435,7 +3435,7 @@
     "category": "play",
     "action_id": "play_bubble",
     "label": "拿起泡泡棒吹出七彩泡泡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P16.swf": {
     "gender": "MM",
@@ -3678,7 +3678,7 @@
     "category": "play",
     "action_id": "play_walk",
     "label": "开开心心散步漫步",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P40.swf": {
     "gender": "MM",
@@ -3759,7 +3759,7 @@
     "category": "play",
     "action_id": "play_balloon",
     "label": "鼓起腮帮吹大彩色气球",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P6.swf": {
     "gender": "MM",
@@ -3768,7 +3768,7 @@
     "category": "play",
     "action_id": "play_dumbbell",
     "label": "双手举重哑铃健身",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P7.swf": {
     "gender": "MM",
@@ -3777,7 +3777,7 @@
     "category": "play",
     "action_id": "play_card",
     "label": "扑克牌切牌魔术秀",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P8.swf": {
     "gender": "MM",
@@ -3786,7 +3786,7 @@
     "category": "play",
     "action_id": "play_trampoline",
     "label": "蹦床上高高弹跳",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/play/P9.swf": {
     "gender": "MM",
@@ -3804,7 +3804,7 @@
     "category": "happy",
     "action_id": "happy",
     "label": "欢快好心情待机摆动",
-    "enabled": true
+    "enabled": false
   },
   "MM/Adult/happy/stand/Stand1.swf": {
     "gender": "MM",
@@ -3840,7 +3840,7 @@
     "category": "clean",
     "action_id": "clean_",
     "label": "泡泡浴缸搓澡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Cure.swf": {
     "gender": "MM",
@@ -3858,7 +3858,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Dirty.swf": {
     "gender": "MM",
@@ -3867,7 +3867,7 @@
     "category": "sad",
     "action_id": "dirty",
     "label": "浑身脏兮兮/饥肠辘辘",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Dying.swf": {
     "gender": "MM",
@@ -3975,7 +3975,7 @@
     "category": "hide_left",
     "action_id": "hide_left",
     "label": "贴靠屏幕左侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Hide_right1.swf": {
     "gender": "MM",
@@ -3993,7 +3993,7 @@
     "category": "hide_right",
     "action_id": "hide_right",
     "label": "贴靠屏幕右侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/Hungry.swf": {
     "gender": "MM",
@@ -4002,7 +4002,7 @@
     "category": "sad",
     "action_id": "hungry",
     "label": "浑身脏兮兮/饥肠辘辘",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/LevUp.swf": {
     "gender": "MM",
@@ -4461,7 +4461,7 @@
     "category": "play",
     "action_id": "play_car",
     "label": "推玩具小汽车赛车",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P13.swf": {
     "gender": "MM",
@@ -4470,7 +4470,7 @@
     "category": "play",
     "action_id": "play_fly",
     "label": "挥小捕蝶网在草地抓蝴蝶",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P14.swf": {
     "gender": "MM",
@@ -4479,7 +4479,7 @@
     "category": "play",
     "action_id": "play_drum",
     "label": "拿起鼓槌敲打小军鼓",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P15.swf": {
     "gender": "MM",
@@ -4488,7 +4488,7 @@
     "category": "play",
     "action_id": "play_block",
     "label": "在地上堆彩色积木城堡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P16.swf": {
     "gender": "MM",
@@ -4497,7 +4497,7 @@
     "category": "play",
     "action_id": "play_sand",
     "label": "拿小铁铲铲沙堆城堡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P17.swf": {
     "gender": "MM",
@@ -4632,7 +4632,7 @@
     "category": "play",
     "action_id": "play_badminton",
     "label": "挥小球拍打羽毛球",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P30.swf": {
     "gender": "MM",
@@ -4830,7 +4830,7 @@
     "category": "play",
     "action_id": "play_horse",
     "label": "骑着摇摇木马前后晃荡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P50.swf": {
     "gender": "MM",
@@ -5028,7 +5028,7 @@
     "category": "work",
     "action_id": "work_craft",
     "label": "做手工折纸小飞机",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P70.swf": {
     "gender": "MM",
@@ -5127,7 +5127,7 @@
     "category": "work",
     "action_id": "work_abacus",
     "label": "拨小算盘学算术",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P80.swf": {
     "gender": "MM",
@@ -5226,7 +5226,7 @@
     "category": "play",
     "action_id": "play_mill",
     "label": "手举七彩小风车迎风跑",
-    "enabled": true
+    "enabled": false
   },
   "MM/Kid/play/P90.swf": {
     "gender": "MM",
@@ -5343,7 +5343,7 @@
     "category": "clean",
     "action_id": "clean_",
     "label": "泡泡浴缸搓澡",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/Cure.swf": {
     "gender": "MM",
@@ -5361,7 +5361,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/Dying.swf": {
     "gender": "MM",
@@ -5388,7 +5388,7 @@
     "category": "eat",
     "action_id": "eat_2",
     "label": "享用满汉全席大餐",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/Enter1.swf": {
     "gender": "MM",
@@ -5469,7 +5469,7 @@
     "category": "hide_left",
     "action_id": "hide_left",
     "label": "贴靠屏幕左侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/Hide_right1.swf": {
     "gender": "MM",
@@ -5487,7 +5487,7 @@
     "category": "hide_right",
     "action_id": "hide_right",
     "label": "贴靠屏幕右侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "MM/Egg/LevUp.swf": {
     "gender": "MM",
@@ -6054,7 +6054,7 @@
     "category": "clean",
     "action_id": "clean_2",
     "label": "泡泡浴缸搓澡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/Cure1.swf": {
     "gender": "GG",
@@ -6072,7 +6072,7 @@
     "category": "cure",
     "action_id": "cure",
     "label": "乖乖吃药就医治疗",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/Die.swf": {
     "gender": "GG",
@@ -6081,7 +6081,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/Dying.swf": {
     "gender": "GG",
@@ -6108,7 +6108,7 @@
     "category": "eat",
     "action_id": "eat_2",
     "label": "享用满汉全席大餐",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/Enter1.swf": {
     "gender": "GG",
@@ -6252,7 +6252,7 @@
     "category": "sick",
     "action_id": "sick",
     "label": "头顶冰袋发烧生病不适",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/game/Game1.swf": {
     "gender": "GG",
@@ -6477,7 +6477,7 @@
     "category": "upset",
     "action_id": "upset",
     "label": "生气噘嘴待机",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/upset/Stand1.swf": {
     "gender": "GG",
@@ -6738,7 +6738,7 @@
     "category": "upset",
     "action_id": "upset_sigh",
     "label": "生闷气别过头不理人",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/upset/play/P20.swf": {
     "gender": "GG",
@@ -6783,7 +6783,7 @@
     "category": "upset",
     "action_id": "upset_cross",
     "label": "抱臂背身气鼓鼓生闷气",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/upset/play/P4.swf": {
     "gender": "GG",
@@ -7044,7 +7044,7 @@
     "category": "sad",
     "action_id": "sad_cry",
     "label": "委屈揉眼睛流眼泪",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/sad/play/P10.swf": {
     "gender": "GG",
@@ -7179,7 +7179,7 @@
     "category": "sad",
     "action_id": "sad_sigh",
     "label": "抱膝坐在地上叹气沮丧",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/sad/play/P4.swf": {
     "gender": "GG",
@@ -7449,7 +7449,7 @@
     "category": "play",
     "action_id": "play_boat",
     "label": "折彩色小纸船玩水",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P11.swf": {
     "gender": "GG",
@@ -7458,7 +7458,7 @@
     "category": "play",
     "action_id": "play_duck",
     "label": "磁铁小钓竿钓塑料小鸭",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P12.swf": {
     "gender": "GG",
@@ -7467,7 +7467,7 @@
     "category": "hobby",
     "action_id": "hobby_xylophone",
     "label": "敲击彩色八音木琴演奏",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P13.swf": {
     "gender": "GG",
@@ -7476,7 +7476,7 @@
     "category": "hobby",
     "action_id": "hobby_harmonica",
     "label": "吹奏银色小口琴乐曲",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P14.swf": {
     "gender": "GG",
@@ -7485,7 +7485,7 @@
     "category": "play",
     "action_id": "play_car",
     "label": "摆弄发条玩具小汽车",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P15.swf": {
     "gender": "GG",
@@ -7494,7 +7494,7 @@
     "category": "play",
     "action_id": "play_block",
     "label": "搭木制小积木城堡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P16.swf": {
     "gender": "GG",
@@ -7503,7 +7503,7 @@
     "category": "hobby",
     "action_id": "hobby_book",
     "label": "趴在地上翻阅精美故事绘本",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P17.swf": {
     "gender": "GG",
@@ -7512,7 +7512,7 @@
     "category": "play",
     "action_id": "play_penguin",
     "label": "玩发条摇摆小企鹅玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P18.swf": {
     "gender": "GG",
@@ -7521,7 +7521,7 @@
     "category": "play",
     "action_id": "play_piano",
     "label": "按彩色电子琴玩具琴键",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P19.swf": {
     "gender": "GG",
@@ -7530,7 +7530,7 @@
     "category": "play",
     "action_id": "play_tumbler",
     "label": "推按塑料不倒翁玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P2.swf": {
     "gender": "GG",
@@ -7548,7 +7548,7 @@
     "category": "play",
     "action_id": "play_gun",
     "label": "手持泡泡水枪打泡泡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P21.swf": {
     "gender": "GG",
@@ -7557,7 +7557,7 @@
     "category": "hobby",
     "action_id": "hobby_crayon",
     "label": "拿油画棒在画纸上涂鸦",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P22.swf": {
     "gender": "GG",
@@ -7566,7 +7566,7 @@
     "category": "play",
     "action_id": "play_count",
     "label": "拨弄算盘彩色圆珠计数",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P23.swf": {
     "gender": "GG",
@@ -7575,7 +7575,7 @@
     "category": "play",
     "action_id": "play_kaleido",
     "label": "转动彩色万花筒视界",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P24.swf": {
     "gender": "GG",
@@ -7584,7 +7584,7 @@
     "category": "play",
     "action_id": "play_ring",
     "label": "玩套圈圈塑料圆环玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P25.swf": {
     "gender": "GG",
@@ -7593,7 +7593,7 @@
     "category": "play",
     "action_id": "play_duckcar",
     "label": "推木头小鸭子滚轮车",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P26.swf": {
     "gender": "GG",
@@ -7602,7 +7602,7 @@
     "category": "play",
     "action_id": "play_magnet",
     "label": "玩磁铁吸吸乐拼图",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P27.swf": {
     "gender": "GG",
@@ -7611,7 +7611,7 @@
     "category": "play",
     "action_id": "play_musicbox",
     "label": "摇动手摇机械八音盒",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P28.swf": {
     "gender": "GG",
@@ -7620,7 +7620,7 @@
     "category": "hobby",
     "action_id": "hobby_draw_house",
     "label": "用彩色蜡笔在地上画小房子和楼梯",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P29.swf": {
     "gender": "GG",
@@ -7629,7 +7629,7 @@
     "category": "play",
     "action_id": "play_robot_dog",
     "label": "逗弄智能发条机器小狗玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P3.swf": {
     "gender": "GG",
@@ -7638,7 +7638,7 @@
     "category": "sleep",
     "action_id": "sleep_nap",
     "label": "打瞌睡脑袋一点一点",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P30.swf": {
     "gender": "GG",
@@ -7647,7 +7647,7 @@
     "category": "play",
     "action_id": "play_mole",
     "label": "拿小木槌敲打打地鼠玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P31.swf": {
     "gender": "GG",
@@ -7656,7 +7656,7 @@
     "category": "play",
     "action_id": "play_tank",
     "label": "玩回力发条玩具小坦克",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P32.swf": {
     "gender": "GG",
@@ -7665,7 +7665,7 @@
     "category": "play",
     "action_id": "play_top",
     "label": "抽打陀螺旋转玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P33.swf": {
     "gender": "GG",
@@ -7674,7 +7674,7 @@
     "category": "play",
     "action_id": "play_horn",
     "label": "手持玩具小喇叭吹奏",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P34.swf": {
     "gender": "GG",
@@ -7683,7 +7683,7 @@
     "category": "play",
     "action_id": "play_popup",
     "label": "翻看立体弹出玩具书",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P35.swf": {
     "gender": "GG",
@@ -7692,7 +7692,7 @@
     "category": "play",
     "action_id": "play_chalk",
     "label": "在小黑板上用粉笔画小花",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P36.swf": {
     "gender": "GG",
@@ -7701,7 +7701,7 @@
     "category": "play",
     "action_id": "play_domino",
     "label": "摆弄多米诺骨牌推倒",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P37.swf": {
     "gender": "GG",
@@ -7710,7 +7710,7 @@
     "category": "play",
     "action_id": "play_drum",
     "label": "拍打彩色双音小手鼓",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P38.swf": {
     "gender": "GG",
@@ -7719,7 +7719,7 @@
     "category": "play",
     "action_id": "play_maracas",
     "label": "摇动彩色小沙锤合奏",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P39.swf": {
     "gender": "GG",
@@ -7728,7 +7728,7 @@
     "category": "play",
     "action_id": "play_jack",
     "label": "玩小丑弹簧盒子搞怪玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P4.swf": {
     "gender": "GG",
@@ -7737,7 +7737,7 @@
     "category": "sleep",
     "action_id": "sleep_pillow",
     "label": "抱小枕头甜蜜入梦",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P40.swf": {
     "gender": "GG",
@@ -7746,7 +7746,7 @@
     "category": "play",
     "action_id": "play_bead",
     "label": "玩彩色木珠串珠子玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P41.swf": {
     "gender": "GG",
@@ -7755,7 +7755,7 @@
     "category": "play",
     "action_id": "play_doctor",
     "label": "玩手提玩具小医生工具箱",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P42.swf": {
     "gender": "GG",
@@ -7764,7 +7764,7 @@
     "category": "play",
     "action_id": "play_frog",
     "label": "玩发条机械跳跳蛙玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P43.swf": {
     "gender": "GG",
@@ -7773,7 +7773,7 @@
     "category": "hobby",
     "action_id": "hobby_shell",
     "label": "用塑料放大镜仔细观察小贝壳",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P44.swf": {
     "gender": "GG",
@@ -7782,7 +7782,7 @@
     "category": "play",
     "action_id": "play_scope",
     "label": "转动双筒玩具望远镜",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P45.swf": {
     "gender": "GG",
@@ -7791,7 +7791,7 @@
     "category": "play",
     "action_id": "play_puppet",
     "label": "套上可爱小玩偶手偶表演",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P46.swf": {
     "gender": "GG",
@@ -7800,7 +7800,7 @@
     "category": "play",
     "action_id": "play_squirrel",
     "label": "玩发条摇尾巴小松鼠玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P5.swf": {
     "gender": "GG",
@@ -7809,7 +7809,7 @@
     "category": "sleep",
     "action_id": "sleep_bed",
     "label": "在小被窝里香甜熟睡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P6.swf": {
     "gender": "GG",
@@ -7818,7 +7818,7 @@
     "category": "play",
     "action_id": "play_marble",
     "label": "趴在地上玩彩色弹珠玻璃球",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P7.swf": {
     "gender": "GG",
@@ -7827,7 +7827,7 @@
     "category": "hobby",
     "action_id": "hobby_ant",
     "label": "拿放大镜看小蚂蚁搬家",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P8.swf": {
     "gender": "GG",
@@ -7836,7 +7836,7 @@
     "category": "play",
     "action_id": "play_cube",
     "label": "转动彩色魔方益智玩具",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/prostrate/play/P9.swf": {
     "gender": "GG",
@@ -7845,7 +7845,7 @@
     "category": "hobby",
     "action_id": "hobby_puzzle",
     "label": "拼七彩拼图益智小游戏",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/interact/BE1.swf": {
     "gender": "GG",
@@ -8250,7 +8250,7 @@
     "category": "play",
     "action_id": "play_walk",
     "label": "闲庭漫步踢石子",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P10.swf": {
     "gender": "GG",
@@ -8259,7 +8259,7 @@
     "category": "study",
     "action_id": "study_board",
     "label": "在小黑板前演算数学题",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P100.swf": {
     "gender": "GG",
@@ -8295,7 +8295,7 @@
     "category": "play",
     "action_id": "play_kite",
     "label": "奔跑迎风放风筝",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P14.swf": {
     "gender": "GG",
@@ -8313,7 +8313,7 @@
     "category": "play",
     "action_id": "play_magic",
     "label": "礼帽变出小飞鸽魔术",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P16.swf": {
     "gender": "GG",
@@ -8331,7 +8331,7 @@
     "category": "hobby",
     "action_id": "hobby_lens",
     "label": "手持放大镜观察小甲虫",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P18.swf": {
     "gender": "GG",
@@ -8340,7 +8340,7 @@
     "category": "hobby",
     "action_id": "hobby_paper",
     "label": "拿大剪刀剪纸红双喜",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P19.swf": {
     "gender": "GG",
@@ -8367,7 +8367,7 @@
     "category": "work",
     "action_id": "work_abacus",
     "label": "飞速拨动木算盘记账打工",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P21.swf": {
     "gender": "GG",
@@ -8376,7 +8376,7 @@
     "category": "hobby",
     "action_id": "hobby_type",
     "label": "老式机械打字机写作",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P22.swf": {
     "gender": "GG",
@@ -8385,7 +8385,7 @@
     "category": "hobby",
     "action_id": "hobby_scope",
     "label": "天文望远镜仰望星空",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P23.swf": {
     "gender": "GG",
@@ -8394,7 +8394,7 @@
     "category": "hobby",
     "action_id": "hobby_clean",
     "label": "拿着抹布仔细擦桌椅",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P24.swf": {
     "gender": "GG",
@@ -8457,7 +8457,7 @@
     "category": "play",
     "action_id": "play_badminton",
     "label": "挥拍打羽毛球",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P30.swf": {
     "gender": "GG",
@@ -8655,7 +8655,7 @@
     "category": "play",
     "action_id": "play_swing",
     "label": "荡秋千摇晃",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P50.swf": {
     "gender": "GG",
@@ -9051,7 +9051,7 @@
     "category": "hobby",
     "action_id": "hobby_mirror",
     "label": "照梳妆镜整理发型",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/peaceful/play/P90.swf": {
     "gender": "GG",
@@ -9429,7 +9429,7 @@
     "category": "play",
     "action_id": "play_ball",
     "label": "欢快拍篮球蹦跳",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P10.swf": {
     "gender": "GG",
@@ -9438,7 +9438,7 @@
     "category": "play",
     "action_id": "play_bowling",
     "label": "用力掷出保龄球全中",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P11.swf": {
     "gender": "GG",
@@ -9447,7 +9447,7 @@
     "category": "play",
     "action_id": "play_yoyo",
     "label": "花样玩悠悠球",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P12.swf": {
     "gender": "GG",
@@ -9456,7 +9456,7 @@
     "category": "play",
     "action_id": "play_hoop",
     "label": "腰部旋转彩色呼啦圈",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P13.swf": {
     "gender": "GG",
@@ -9465,7 +9465,7 @@
     "category": "play",
     "action_id": "play_kite",
     "label": "春游迎风放蝴蝶风筝",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P14.swf": {
     "gender": "GG",
@@ -9474,7 +9474,7 @@
     "category": "play",
     "action_id": "play_boxing",
     "label": "戴红拳套打沙袋拳击",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P15.swf": {
     "gender": "GG",
@@ -9483,7 +9483,7 @@
     "category": "play",
     "action_id": "play_bubble",
     "label": "拿起泡泡棒吹出七彩泡泡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P16.swf": {
     "gender": "GG",
@@ -9726,7 +9726,7 @@
     "category": "play",
     "action_id": "play_walk",
     "label": "开开心心散步漫步",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P40.swf": {
     "gender": "GG",
@@ -9807,7 +9807,7 @@
     "category": "play",
     "action_id": "play_balloon",
     "label": "鼓起腮帮吹大彩色气球",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P6.swf": {
     "gender": "GG",
@@ -9816,7 +9816,7 @@
     "category": "play",
     "action_id": "play_dumbbell",
     "label": "双手举重哑铃健身",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P7.swf": {
     "gender": "GG",
@@ -9825,7 +9825,7 @@
     "category": "play",
     "action_id": "play_card",
     "label": "扑克牌切牌魔术秀",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P8.swf": {
     "gender": "GG",
@@ -9834,7 +9834,7 @@
     "category": "play",
     "action_id": "play_trampoline",
     "label": "蹦床上高高弹跳",
-    "enabled": true
+    "enabled": false
   },
   "GG/Adult/happy/play/P9.swf": {
     "gender": "GG",
@@ -9870,7 +9870,7 @@
     "category": "clean",
     "action_id": "clean_",
     "label": "泡泡浴缸搓澡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/Cure.swf": {
     "gender": "GG",
@@ -9888,7 +9888,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/Dirty.swf": {
     "gender": "GG",
@@ -9897,7 +9897,7 @@
     "category": "sad",
     "action_id": "dirty",
     "label": "浑身脏兮兮/饥肠辘辘",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/Dying.swf": {
     "gender": "GG",
@@ -10005,7 +10005,7 @@
     "category": "hide_left",
     "action_id": "hide_left",
     "label": "贴靠屏幕左侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/Hide_right1.swf": {
     "gender": "GG",
@@ -10023,7 +10023,7 @@
     "category": "hide_right",
     "action_id": "hide_right",
     "label": "贴靠屏幕右侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/LevUp.swf": {
     "gender": "GG",
@@ -10491,7 +10491,7 @@
     "category": "play",
     "action_id": "play_car",
     "label": "推玩具小汽车赛车",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P13.swf": {
     "gender": "GG",
@@ -10500,7 +10500,7 @@
     "category": "play",
     "action_id": "play_fly",
     "label": "挥小捕蝶网在草地抓蝴蝶",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P14.swf": {
     "gender": "GG",
@@ -10509,7 +10509,7 @@
     "category": "play",
     "action_id": "play_drum",
     "label": "拿起鼓槌敲打小军鼓",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P15.swf": {
     "gender": "GG",
@@ -10518,7 +10518,7 @@
     "category": "play",
     "action_id": "play_block",
     "label": "在地上堆彩色积木城堡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P16.swf": {
     "gender": "GG",
@@ -10527,7 +10527,7 @@
     "category": "play",
     "action_id": "play_sand",
     "label": "拿小铁铲铲沙堆城堡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P17.swf": {
     "gender": "GG",
@@ -10662,7 +10662,7 @@
     "category": "play",
     "action_id": "play_badminton",
     "label": "挥小球拍打羽毛球",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P30.swf": {
     "gender": "GG",
@@ -10860,7 +10860,7 @@
     "category": "play",
     "action_id": "play_horse",
     "label": "骑着摇摇木马前后晃荡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P50.swf": {
     "gender": "GG",
@@ -11058,7 +11058,7 @@
     "category": "work",
     "action_id": "work_craft",
     "label": "做手工折纸小飞机",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P70.swf": {
     "gender": "GG",
@@ -11157,7 +11157,7 @@
     "category": "work",
     "action_id": "work_abacus",
     "label": "拨小算盘学算术",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P80.swf": {
     "gender": "GG",
@@ -11256,7 +11256,7 @@
     "category": "play",
     "action_id": "play_mill",
     "label": "手举七彩小风车迎风跑",
-    "enabled": true
+    "enabled": false
   },
   "GG/Kid/play/P90.swf": {
     "gender": "GG",
@@ -11373,7 +11373,7 @@
     "category": "clean",
     "action_id": "clean_",
     "label": "泡泡浴缸搓澡",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/Cure.swf": {
     "gender": "GG",
@@ -11391,7 +11391,7 @@
     "category": "die",
     "action_id": "die",
     "label": "灵魂升天/进入墓碑棺木",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/Dying.swf": {
     "gender": "GG",
@@ -11418,7 +11418,7 @@
     "category": "eat",
     "action_id": "eat_2",
     "label": "享用满汉全席大餐",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/Enter1.swf": {
     "gender": "GG",
@@ -11499,7 +11499,7 @@
     "category": "hide_left",
     "action_id": "hide_left",
     "label": "贴靠屏幕左侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/Hide_right1.swf": {
     "gender": "GG",
@@ -11517,7 +11517,7 @@
     "category": "hide_right",
     "action_id": "hide_right",
     "label": "贴靠屏幕右侧边缘探头张望",
-    "enabled": true
+    "enabled": false
   },
   "GG/Egg/LevUp.swf": {
     "gender": "GG",

@@ -16,7 +16,6 @@ import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
-
 WORKSPACE = Path(__file__).resolve().parent.parent.parent
 ACTION_ROOT = WORKSPACE / "doc/qqpet_automation/qq-pet-macos/src/assets/Action"
 RUFFLE_PATH = WORKSPACE / "doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle"
@@ -103,12 +102,53 @@ SAD_ACTIONS = {
     "P3": ("sad", "sad_sigh", "抱膝坐在地上叹气沮丧"),
 }
 
-SLEEP_ACTIONS = {
+PROSTRATE_ACTIONS = {
     "P1": ("sleep", "sleep_bag", "钻进暖洋洋的绿色睡袋大睡"),
     "P2": ("sleep", "sleep_snore", "趴在地上呼呼大睡冒大泡泡"),
     "P3": ("sleep", "sleep_nap", "打瞌睡脑袋一点一点"),
     "P4": ("sleep", "sleep_pillow", "抱小枕头甜蜜入梦"),
     "P5": ("sleep", "sleep_bed", "在小被窝里香甜熟睡"),
+    "P6": ("play", "play_marble", "趴在地上玩彩色弹珠玻璃球"),
+    "P7": ("hobby", "hobby_ant", "拿放大镜看小蚂蚁搬家"),
+    "P8": ("play", "play_cube", "转动彩色魔方益智玩具"),
+    "P9": ("hobby", "hobby_puzzle", "拼七彩拼图益智小游戏"),
+    "P10": ("play", "play_boat", "折彩色小纸船玩水"),
+    "P11": ("play", "play_duck", "磁铁小钓竿钓塑料小鸭"),
+    "P12": ("hobby", "hobby_xylophone", "敲击彩色八音木琴演奏"),
+    "P13": ("hobby", "hobby_harmonica", "吹奏银色小口琴乐曲"),
+    "P14": ("play", "play_car", "摆弄发条玩具小汽车"),
+    "P15": ("play", "play_block", "搭木制小积木城堡"),
+    "P16": ("hobby", "hobby_book", "趴在地上翻阅精美故事绘本"),
+    "P17": ("play", "play_penguin", "玩发条摇摆小企鹅玩具"),
+    "P18": ("play", "play_piano", "按彩色电子琴玩具琴键"),
+    "P19": ("play", "play_tumbler", "推按塑料不倒翁玩具"),
+    "P20": ("play", "play_gun", "手持泡泡水枪打泡泡"),
+    "P21": ("hobby", "hobby_crayon", "拿油画棒在画纸上涂鸦"),
+    "P22": ("play", "play_count", "拨弄算盘彩色圆珠计数"),
+    "P23": ("play", "play_kaleido", "转动彩色万花筒视界"),
+    "P24": ("play", "play_ring", "玩套圈圈塑料圆环玩具"),
+    "P25": ("play", "play_duckcar", "推木头小鸭子滚轮车"),
+    "P26": ("play", "play_magnet", "玩磁铁吸吸乐拼图"),
+    "P27": ("play", "play_musicbox", "摇动手摇机械八音盒"),
+    "P28": ("hobby", "hobby_draw_house", "用彩色蜡笔在地上画小房子和楼梯"),
+    "P29": ("play", "play_robot_dog", "逗弄智能发条机器小狗玩具"),
+    "P30": ("play", "play_mole", "拿小木槌敲打打地鼠玩具"),
+    "P31": ("play", "play_tank", "玩回力发条玩具小坦克"),
+    "P32": ("play", "play_top", "抽打陀螺旋转玩具"),
+    "P33": ("play", "play_horn", "手持玩具小喇叭吹奏"),
+    "P34": ("play", "play_popup", "翻看立体弹出玩具书"),
+    "P35": ("play", "play_chalk", "在小黑板上用粉笔画小花"),
+    "P36": ("play", "play_domino", "摆弄多米诺骨牌推倒"),
+    "P37": ("play", "play_drum", "拍打彩色双音小手鼓"),
+    "P38": ("play", "play_maracas", "摇动彩色小沙锤合奏"),
+    "P39": ("play", "play_jack", "玩小丑弹簧盒子搞怪玩具"),
+    "P40": ("play", "play_bead", "玩彩色木珠串珠子玩具"),
+    "P41": ("play", "play_doctor", "玩手提玩具小医生工具箱"),
+    "P42": ("play", "play_frog", "玩发条机械跳跳蛙玩具"),
+    "P43": ("hobby", "hobby_shell", "用塑料放大镜仔细观察小贝壳"),
+    "P44": ("play", "play_scope", "转动双筒玩具望远镜"),
+    "P45": ("play", "play_puppet", "套上可爱小玩偶手偶表演"),
+    "P46": ("play", "play_squirrel", "玩发条摇尾巴小松鼠玩具"),
 }
 
 KID_PLAY_ACTIONS = {
@@ -193,7 +233,64 @@ def classify_swf_fallback(gender, stage, rel_path):
         if stem == "Stand":
             return ("upset", "upset", "生气噘嘴待机", True)
         if len(parts) >= 2 and parts[1] == "play":
-            if stem in UPSET_ACTIONCURRENT_BUILD_PROC = None
+            if stem in UPSET_ACTIONS:
+                cat, act_id, lbl = UPSET_ACTIONS[stem]
+                return (cat, act_id, lbl, True)
+            return ("upset", f"upset_{stem.lower()}", f"发脾气动作 {stem}", False)
+
+    elif folder == "sad":
+        if stem == "Stand":
+            return ("sad", "sad", "伤心低落待机", True)
+        if len(parts) >= 2 and parts[1] == "play":
+            if stem in SAD_ACTIONS:
+                cat, act_id, lbl = SAD_ACTIONS[stem]
+                return (cat, act_id, lbl, True)
+            return ("sad", f"sad_{stem.lower()}", f"伤心沮丧动作 {stem}", False)
+
+    elif folder == "prostrate":
+        if stem == "Stand":
+            return ("sleep", "sleep", "趴在地上睡眼惺忪", True)
+        if len(parts) >= 2 and parts[1] == "play":
+            if stem in PROSTRATE_ACTIONS:
+                cat, act_id, lbl = PROSTRATE_ACTIONS[stem]
+                return (cat, act_id, lbl, True)
+            return ("play", f"pros_{stem.lower()}", f"趴卧玩耍动作 {stem}", False)
+
+    elif stage == "Kid" and folder == "play":
+        if stem in KID_PLAY_ACTIONS:
+            cat, act_id, lbl = KID_PLAY_ACTIONS[stem]
+            return (cat, act_id, lbl, True)
+        return ("play", f"kid_{stem.lower()}", f"少儿游戏动作 {stem}", False)
+
+    elif stage == "Egg" and folder == "play":
+        if stem == "P1":
+            return ("play", "play_hug", "蛋壳摇晃求抱抱", True)
+        elif stem == "P2":
+            return ("play", "play_roll", "蛋壳左右打滚摇摆", True)
+        elif stem == "P3":
+            return ("play", "play_jump", "顶着小蛋壳欢快小跳", True)
+        elif stem == "P4":
+            return ("study", "study", "破壳雏鸟好奇看小画书", True)
+        elif stem == "P5":
+            return ("play", "play_trip", "顶着蛋壳蹒跚漫步", True)
+        return ("play", f"egg_{stem.lower()}", f"雏鸟动作 {stem}", False)
+
+    return ("other", stem.lower(), f"备选动作 {rel_path}", False)
+
+def load_mappings():
+    if MAPPING_FILE.exists():
+        try:
+            with open(MAPPING_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def save_mappings(data):
+    with open(MAPPING_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+CURRENT_BUILD_PROC = None
 
 class ActionStudioHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -353,68 +450,6 @@ class ActionStudioHandler(SimpleHTTPRequestHandler):
             return
 
         elif parsed.path == "/api/save_mappings":
-ron.copy()
-            custom_env["PYTHONIOENCODING"] = "utf-8"
-            custom_env["PYTHONUTF8"] = "1"
-
-
-            proc = subprocess.Popen(
-                [sys.executable, "-u", str(WORKSPACE / "tools/apply_custom_action_mappings.py")],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1,
-                cwd=str(WORKSPACE),
-                env=custom_env
-            )
-
-            
-            try:
-                for line in iter(proc.stdout.readline, ''):
-                    line_str = line.rstrip()
-                    if not line_str: continue
-                    pct = None
-                    if "PROGRESS:" in line_str:
-                        parts = line_str.split("|")
-                        for p in parts:
-                            if "%" in p:
-                                try:
-                                    pct = int(p.replace("%", "").strip())
-                                except:
-                                    pass
-                    evt = json.dumps({"line": line_str, "pct": pct, "status": "running"}, ensure_ascii=False)
-                    self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
-                    self.wfile.flush()
-                    
-                proc.stdout.close()
-                rc = proc.wait()
-                final_status = "success" if rc == 0 else "error"
-                evt = json.dumps({
-                    "line": "=== 编译与烧录完成 ===" if rc == 0 else "=== 烧录遇到错误 ===",
-                    "pct": 100 if rc == 0 else None,
-                    "status": final_status,
-                    "code": rc
-                }, ensure_ascii=False)
-                self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
-                self.wfile.flush()
-            except Exception as e:
-                evt = json.dumps({"line": f"通信异常: {e}", "status": "error"}, ensure_ascii=False)
-                try:
-                    self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
-                    self.wfile.flush()
-                except:
-                    pass
-            return
-
-        return super().do_GET()
-
-
-
-    def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/save_mappings":
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length).decode('utf-8')
             try:
@@ -429,22 +464,6 @@ ron.copy()
                 self.end_headers()
                 self.wfile.write(str(e).encode('utf-8'))
             return
-            
-        elif parsed.path == "/api/apply_and_build":
-            try:
-                # 运行生成脚本
-                res = subprocess.run([sys.executable, str(WORKSPACE / "tools/apply_custom_action_mappings.py")], capture_output=True, text=True)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "ok" if res.returncode == 0 else "error", "output": res.stdout + res.stderr}, ensure_ascii=False).encode('utf-8'))
-            except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False).encode('utf-8'))
-            return
-
 
         return super().do_POST()
 

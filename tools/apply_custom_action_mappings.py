@@ -94,13 +94,10 @@ def pack_png_frames_to_act(png_bytes_list, out_file):
 
 def process_frame_image(screenshot_bytes, stage):
     img = Image.open(io.BytesIO(screenshot_bytes)).convert("RGBA")
-    arr_test = np.array(img)
-    red_err = (arr_test[:, :, 0] > 170) & (arr_test[:, :, 1] < 70) & (arr_test[:, :, 2] < 70)
-    if np.sum(red_err) > 300:
-        return None
-
+    
     target_size = 72 if stage == "Egg" else (82 if stage == "Kid" else 90)
     bbox = img.getbbox()
+
     if bbox:
         cropped = img.crop(bbox)
         w, h = cropped.size
@@ -281,22 +278,48 @@ async def run_async_build():
 
         server.shutdown()
 
-        with open(CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(build_cache, f, ensure_ascii=False, indent=2)
-    else:
-        print("PROGRESS: 80% | 所有动作均处于最新状态，无需重新渲染！", flush=True)
+    # 清理已禁用/未勾选的残留旧动作文件，确保只打包当前选中的动作
+    valid_act_paths = set()
+    for item in enabled_items:
+        gender = item.get("gender")
+        stage = item.get("stage")
+        act_id = item.get("action_id")
+        if gender and stage and act_id:
+            valid_act_paths.add((DATA_DIR / gender / stage / f"{act_id}.act").resolve())
+
+    cleaned_count = 0
+    for act_file in DATA_DIR.rglob("*.act"):
+        if act_file.resolve() not in valid_act_paths:
+            try:
+                act_file.unlink()
+                cleaned_count += 1
+            except Exception:
+                pass
+    if cleaned_count > 0:
+        print(f"  [CLEAN] 已自动清理 {cleaned_count} 个未勾选的旧动作文件以释放存储空间", flush=True)
+
+    # 统计实际待打包体积
+    actual_data_size = sum(f.stat().st_size for f in (WORKSPACE / "data").rglob("*") if f.is_file())
+    actual_mb = actual_data_size / (1024 * 1024)
+    print(f"  [STORAGE] 当前 data/ 目录实际总大小: {actual_mb:.2f} MB / 6.06 MB 分区上限", flush=True)
+
+    if actual_data_size > 6.0 * 1024 * 1024:
+        print(f"PROGRESS: ERROR | 动作总容量 ({actual_mb:.2f} MB) 超出 LittleFS 分区 6.06MB 上限！请在 Web 页面取消勾选部分次要动作后重新烧录！", flush=True)
+        return False
 
     # 打包 LittleFS 镜像
     mklittlefs_exe = Path(os.environ['USERPROFILE']) / '.platformio/packages/tool-mklittlefs/mklittlefs.exe'
     out_bin = WORKSPACE / ".pio/build/m5stack-sticks3/littlefs.bin"
     out_bin.parent.mkdir(parents=True, exist_ok=True)
     
-    print("\nPROGRESS: 85% | 正在打包 6.06MB LittleFS 文件系统镜像 (mklittlefs)...", flush=True)
+    print("\nPROGRESS: 85% | 正在打包 LittleFS 文件系统镜像 (mklittlefs)...", flush=True)
     cmd = [str(mklittlefs_exe), '-c', 'data', '-s', '0x610000', '-b', '4096', '-p', '256', str(out_bin)]
     res_pack = subprocess.run(cmd, capture_output=True, text=True, cwd=str(WORKSPACE))
-    if res_pack.stderr:
-        print(res_pack.stderr, flush=True)
+    if res_pack.returncode != 0:
+        print(f"PROGRESS: ERROR | mklittlefs 打包失败: {res_pack.stderr}", flush=True)
+        return False
     print(f"  [OK] LittleFS 镜像生成完成: {out_bin.stat().st_size / (1024*1024):.2f} MB", flush=True)
+
     
     # 烧录到 ESP32
     print("\nPROGRESS: 90% | 正在连接串口 COM6 烧录 LittleFS 分区 (0x1E0000)...", flush=True)
