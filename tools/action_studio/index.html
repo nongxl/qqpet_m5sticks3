@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐧 QQ 宠物动画全景预览与动作归类管理器</title>
+  <script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-group {
+      display: flex;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .btn-group button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-group button.active {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .search-box {
+      position: relative;
+    }
+    .search-box input {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 7px 12px 7px 32px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      width: 200px;
+    }
+    .search-box::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+    }
+    .actions-bar {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .btn-primary:hover { background: var(--accent-hover); color: white; }
+    .btn-success {
+      background: var(--success);
+      color: #0f172a;
+    }
+    .btn-success:hover { background: #16a34a; color: white; }
+    main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .stats-bar {
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    .card.classified {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    .card.classified::after {
+      content: "✓ 已归类";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(34, 197, 94, 0.9);
+      color: #0f172a;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .card.unclassified {
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .card.unclassified::after {
+      content: "⏳ 待归类/备选";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(245, 158, 11, 0.85);
+      color: #0f172a;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .player-box {
+      width: 100%;
+      height: 180px;
+      background: #090d16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .player-box ruffle-player {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.6);
+      cursor: pointer;
+      transition: background 0.2s;
+      color: white;
+      font-size: 0.85rem;
+      gap: 6px;
+    }
+    .play-overlay:hover {
+      background: rgba(15, 23, 42, 0.2);
+    }
+    .play-overlay .icon {
+      font-size: 2.2rem;
+    }
+    .card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .swf-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      word-break: break-all;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-row label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .form-row select, .form-row input {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .form-row select:focus, .form-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--success);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 1000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* 实时烧录进度模态浮窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 15, 29, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      width: 90%;
+      max-width: 920px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: 85vh;
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      0% { transform: scale(0.95) translateY(20px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      padding: 16px 20px;
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .modal-badge.running { background: rgba(56, 189, 248, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+    .modal-badge.success { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .modal-badge.error { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .modal-close-btn:hover { background: #334155; color: white; }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .progress-track {
+      width: 100%;
+      height: 12px;
+      background: #1e293b;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #22c55e);
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+    .terminal-window {
+      background: #050811;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: "Cascadia Code", "Fira Code", Consolas, Menlo, Monaco, monospace;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      flex: 1;
+      min-height: 280px;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .terminal-line { margin-bottom: 3px; }
+    .terminal-line.progress { color: #38bdf8; }
+    .terminal-line.success { color: #4ade80; font-weight: bold; }
+    .terminal-line.error { color: #f87171; font-weight: bold; }
+    .terminal-line.warn { color: #fbbf24; }
+  </style>
+
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size: 1.6rem;">🐧</span>
+    <div>
+      <h1>QQ 宠物动作全景预览与归类工作室</h1>
+      <p style="font-size: 0.75rem; color: var(--text-muted);">实时播放 1340+ 原版 Flash SWF，轻松建立场景对应关系</p>
+    </div>
+  </div>
+
+  <div class="filters">
+    <!-- 性别切换 -->
+    <div class="btn-group" id="genderGroup">
+      <button class="active" data-gender="MM">MM (小企鹅女)</button>
+      <button data-gender="GG">GG (小企鹅男)</button>
+    </div>
+
+    <!-- 阶段切换 -->
+    <div class="btn-group" id="stageGroup">
+      <button class="active" data-stage="Adult">成年 (Adult)</button>
+      <button data-stage="Kid">幼年 (Kid)</button>
+      <button data-stage="Egg">破壳 (Egg)</button>
+    </div>
+
+    <!-- 目录分类筛选 -->
+    <div class="btn-group" id="folderGroup">
+      <button class="active" data-folder="all">全部目录</button>
+      <button data-folder="peaceful">平静 (peaceful)</button>
+      <button data-folder="happy">开心 (happy)</button>
+      <button data-folder="sad">难过 (sad)</button>
+      <button data-folder="upset">生气 (upset)</button>
+      <button data-folder="prostrate">趴卧 (prostrate)</button>
+      <button data-folder="root">常用功能 (Eat/Clean等)</button>
+    </div>
+
+    <!-- 归类状态筛选 -->
+    <div class="btn-group" id="classifiedGroup">
+      <button class="active" data-classified="all">全部分类状态</button>
+      <button data-classified="classified" style="color: var(--success);">✓ 已归类</button>
+      <button data-classified="unclassified" style="color: var(--warning);">⏳ 未归类/待定</button>
+    </div>
+
+    <!-- 固件包含筛选 -->
+    <div class="btn-group" id="firmwareGroup">
+      <button class="active" data-firmware="all">全部固件状态</button>
+      <button data-firmware="enabled" style="color: var(--accent);">📦 已加入固件</button>
+      <button data-firmware="disabled" style="color: var(--text-muted);">🚫 未加入固件</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索文件名/动作ID...">
+    </div>
+  </div>
+
+
+  <div class="actions-bar">
+    <button class="btn btn-primary" id="saveBtn">💾 保存归类映射</button>
+    <button class="btn btn-success" id="applyBtn">⚡ 一键应用到固件并烧录</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats-bar">
+    <div>显示 <span id="visibleCount" style="color: var(--accent); font-weight: bold;">0</span> / <span id="totalCount">0</span> 个动作动画</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">💡 点击卡片中的预览画面可直接播放 Flash 动画</div>
+  </div>
+
+  <div class="grid" id="actionGrid">
+    <!-- 动态卡片列表 -->
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allActions = [];
+let categories = [];
+let mappings = {};
+let currentGender = "MM";
+let currentStage = "Adult";
+let currentFolder = "all";
+let currentClassified = "all"; // 'all' | 'classified' | 'unclassified'
+let currentFirmware = "all";   // 'all' | 'enabled' | 'disabled'
+let searchKeyword = "";
+
+const actionGrid = document.getElementById("actionGrid");
+const visibleCount = document.getElementById("visibleCount");
+const totalCount = document.getElementById("totalCount");
+const searchInput = document.getElementById("searchInput");
+const toast = document.getElementById("toast");
+
+function showToast(msg, duration = 3000) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+// 获取全部动作数据
+async function loadData() {
+  try {
+    const res = await fetch("/api/list_actions");
+    const data = await res.json();
+    allActions = data.actions;
+    categories = data.categories;
+    renderGrid();
+  } catch (e) {
+    showToast("加载动作列表失败：" + e);
+  }
+}
+
+function renderGrid() {
+  actionGrid.innerHTML = "";
+  
+  const filtered = allActions.filter(act => {
+    if (act.gender !== currentGender) return false;
+    if (act.stage !== currentStage) return false;
+    
+    // 目录筛选
+    if (currentFolder !== "all") {
+      if (currentFolder === "root" && act.folder !== "root") return false;
+      if (currentFolder !== "root" && !act.folder.startsWith(currentFolder)) return false;
+    }
+
+    // 归类状态筛选 (已归类: category 有效且不为 other 且有 action_id)
+    const isClassified = act.category && act.category !== "other" && act.action_id;
+    if (currentClassified === "classified" && !isClassified) return false;
+    if (currentClassified === "unclassified" && isClassified) return false;
+
+    // 固件包含状态筛选
+    if (currentFirmware === "enabled" && !act.enabled) return false;
+    if (currentFirmware === "disabled" && act.enabled) return false;
+
+    // 关键词搜索
+    if (searchKeyword) {
+      const q = searchKeyword.toLowerCase();
+      const matchRel = act.rel_path.toLowerCase().includes(q);
+      const matchActId = (act.action_id || "").toLowerCase().includes(q);
+      const matchLabel = (act.label || "").toLowerCase().includes(q);
+      if (!matchRel && !matchActId && !matchLabel) return false;
+    }
+    return true;
+  });
+
+
+  visibleCount.textContent = filtered.length;
+  totalCount.textContent = allActions.filter(a => a.gender === currentGender && a.stage === currentStage).length;
+
+  filtered.forEach(act => {
+    const isClassified = act.category && act.category !== "" && act.category !== "other" && act.action_id;
+    const card = document.createElement("div");
+    card.className = "card " + (isClassified ? "classified" : "unclassified");
+    card.dataset.key = act.key;
+
+
+    // 分类选项
+    const catOptions = [
+      '<option value="">-- 选择归属场景 --</option>',
+      ...categories.map(c => `<option value="${c.id}" ${act.category === c.id ? "selected" : ""}>${c.name}</option>`)
+    ].join("");
+
+    card.innerHTML = `
+      <div class="player-box" id="player-${act.key.replace(/[^a-zA-Z0-9]/g, '_')}" data-key="${act.key}" data-url="${act.url}">
+        <div class="loading-spinner" style="color: var(--text-muted); font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+          <span>⏳ 加载画面中...</span>
+        </div>
+      </div>
+      <div class="player-controls" style="display: flex; gap: 8px; padding: 6px 14px; background: #131d2f; border-bottom: 1px solid var(--card-border);">
+        <button type="button" onclick="playFlash('${act.key}', '${act.url}', true)" style="flex: 1; background: #1e293b; border: 1px solid var(--card-border); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+          🔄 重播
+        </button>
+        <button type="button" onclick="toggleLoop('${act.key}', this)" style="background: #1e293b; border: 1px solid var(--success); color: var(--success); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;" title="切换循环播放">
+          🔁 循环: 开
+        </button>
+
+      </div>
+      <div class="card-body">
+        <div class="swf-title" title="${act.rel_path}">📁 ${act.rel_path}</div>
+        
+        <div class="form-row">
+          <label>归属场景分类</label>
+          <select onchange="updateCategory('${act.key}', this.value)">
+            ${catOptions}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>动作文件名 / 动作 ID (英文，如 eat, work_sweep)</label>
+          <input type="text" value="${act.action_id || ''}" placeholder="如 study_math, play_ball" onchange="updateActionId('${act.key}', this.value)">
+        </div>
+
+        <div class="form-row" style="display: flex; flex-direction: row; gap: 10px;">
+          <div style="flex: 1;">
+            <label>提取帧数 (Frames)</label>
+            <input type="number" min="6" max="36" value="${act.num_frames || 28}" onchange="updateNumFrames('${act.key}', this.value)">
+          </div>
+          <div style="flex: 1;">
+            <label>帧率 FPS</label>
+            <input type="number" min="6" max="16" value="${act.fps || 12}" onchange="updateFps('${act.key}', this.value)">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${act.enabled ? 'var(--accent)' : 'var(--text-muted)'}; font-weight: bold; background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--card-border);">
+            <input type="checkbox" ${act.enabled ? 'checked' : ''} onchange="updateEnabled('${act.key}', this.checked)" style="width: 16px; height: 16px; accent-color: var(--accent);">
+            <span>📦 将此动作编译并加入固件</span>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>动作中文备注 (如 拿着鱼大快朵颐)</label>
+          <input type="text" value="${act.label || ''}" placeholder="中文描述" onchange="updateLabel('${act.key}', this.value)">
+        </div>
+      </div>
+    `;
+
+    actionGrid.appendChild(card);
+  });
+
+  // 启用可视区域自动加载
+  setupCardObserver();
+}
+
+
+
+const activePlayers = {};
+const loopStates = {};
+let cardObserver = null;
+
+function setupCardObserver() {
+  if (cardObserver) {
+    cardObserver.disconnect();
+  }
+
+  cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const card = entry.target;
+        const pbox = card.querySelector(".player-box");
+        if (pbox && !pbox.dataset.loaded) {
+          pbox.dataset.loaded = "true";
+          const key = pbox.dataset.key;
+          const url = pbox.dataset.url;
+          playFlash(key, url, false);
+        }
+      }
+    });
+  }, {
+    rootMargin: "250px"
+  });
+
+  document.querySelectorAll(".card").forEach(c => cardObserver.observe(c));
+}
+
+function toggleLoop(key, btn) {
+  // 默认为 true，点击后切换
+  const currentState = loopStates[key] !== false;
+  loopStates[key] = !currentState;
+  
+  if (loopStates[key]) {
+    btn.innerHTML = "🔁 循环: 开";
+    btn.style.color = "var(--success)";
+    btn.style.borderColor = "var(--success)";
+  } else {
+    btn.innerHTML = "🔁 循环: 关";
+    btn.style.color = "var(--text-muted)";
+    btn.style.borderColor = "var(--card-border)";
+  }
+}
+
+function playFlash(key, swfUrl, isManualReplay = false) {
+  const containerId = `player-${key.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (activePlayers[key] && container.contains(activePlayers[key]) && isManualReplay) {
+    const p = activePlayers[key];
+    try {
+      p.Rewind?.();
+      p.Play?.();
+      return;
+    } catch (e) {}
+  }
+
+  container.innerHTML = "";
+  const ruffle = window.RufflePlayer.newest();
+  const player = ruffle.createPlayer();
+  player.style.width = "100%";
+  player.style.height = "100%";
+  player.config = {
+    autoplay: "on",
+    unmuteOverlay: "hidden",
+    letterbox: "off",
+    backgroundColor: "#090d16",
+    wmode: "transparent"
+  };
+  
+  container.appendChild(player);
+  activePlayers[key] = player;
+  
+  // 监听并加载
+  player.load(swfUrl).then(() => {
+    // 监听播放结束事件，默认全量开启无限循环播放
+    const checkInterval = setInterval(() => {
+      try {
+        if (!container.contains(player)) {
+          clearInterval(checkInterval);
+          return;
+        }
+        const isLoop = loopStates[key] !== false; // 默认为 true 开启循环
+        if (isLoop) {
+          const total = player.totalFrames || player.TotalFrames?.() || 0;
+          const curr = player.currentFrame || player.CurrentFrame?.() || 0;
+          const isPlaying = player.isPlaying || player.IsPlaying?.() || false;
+          if (total > 1 && curr >= total - 1 && !isPlaying) {
+            player.Rewind?.();
+            player.Play?.();
+          }
+        }
+      } catch (e) {}
+    }, 150);
+  });
+}
+
+
+
+
+function updateEnabled(key, checked) {
+  const act = allActions.find(a => a.key === key);
+  if (act) act.enabled = checked;
+}
+
+function updateNumFrames(key, val) {
+  const act = allActions.find(a => a.key === key);
+  if (act) act.num_frames = parseInt(val) || 28;
+}
+
+function updateFps(key, val) {
+  const act = allActions.find(a => a.key === key);
+  if (act) act.fps = parseInt(val) || 12;
+}
+
+
+function updateCategory(key, cat) {
+  const act = allActions.find(a => a.key === key);
+  if (act) {
+    act.category = cat;
+    if (!act.action_id && cat && cat !== "other") {
+      act.action_id = cat;
+      const input = document.querySelector(`[data-key="${key}"] input`);
+      if (input) input.value = cat;
+    }
+    const card = document.querySelector(`[data-key="${key}"]`);
+    if (card) {
+      const isClassified = act.category && act.category !== "" && act.category !== "other" && act.action_id;
+      card.className = "card " + (isClassified ? "classified" : "unclassified");
+    }
+  }
+}
+
+function updateActionId(key, val) {
+  const act = allActions.find(a => a.key === key);
+  if (act) {
+    act.action_id = val.trim();
+    const card = document.querySelector(`[data-key="${key}"]`);
+    if (card) {
+      const isClassified = act.category && act.category !== "" && act.category !== "other" && act.action_id;
+      card.className = "card " + (isClassified ? "classified" : "unclassified");
+    }
+  }
+}
+
+
+function updateLabel(key, val) {
+  const act = allActions.find(a => a.key === key);
+  if (act) act.label = val.trim();
+}
+
+// 绑定筛选按钮
+document.getElementById("genderGroup").addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#genderGroup button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentGender = e.target.dataset.gender;
+    renderGrid();
+  }
+});
+
+document.getElementById("stageGroup").addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#stageGroup button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentStage = e.target.dataset.stage;
+    renderGrid();
+  }
+});
+
+document.getElementById("folderGroup").addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#folderGroup button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentFolder = e.target.dataset.folder;
+    renderGrid();
+  }
+});
+
+document.getElementById("classifiedGroup").addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#classifiedGroup button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentClassified = e.target.dataset.classified;
+    renderGrid();
+  }
+});
+
+document.getElementById("firmwareGroup").addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#firmwareGroup button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentFirmware = e.target.dataset.firmware;
+    renderGrid();
+  }
+});
+
+
+searchInput.addEventListener("input", e => {
+  searchKeyword = e.target.value;
+  renderGrid();
+});
+
+// 保存配置
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const mappingMap = {};
+  allActions.forEach(act => {
+    if (act.action_id || act.category || act.label) {
+      mappingMap[act.key] = {
+        gender: act.gender,
+        stage: act.stage,
+        rel_path: act.rel_path,
+        category: act.category,
+        action_id: act.action_id,
+        label: act.label,
+        enabled: act.enabled
+      };
+    }
+  });
+
+  try {
+    const res = await fetch("/api/save_mappings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mappingMap)
+    });
+    if (res.ok) {
+      showToast("✓ 动作归类映射已成功保存！");
+    } else {
+      showToast("❌ 保存失败！");
+    }
+  } catch (e) {
+    showToast("❌ 保存出错：" + e);
+  }
+});
+</script>
+
+<!-- 实时烧录进度模态浮窗 -->
+<div class="modal-backdrop" id="buildModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>⚡ 固件生成与设备烧录控制台</h3>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="modal-badge running" id="modalStatusBadge">⏳ 正在提取动画与烧录...</span>
+        <button class="modal-close-btn" onclick="closeBuildModal()" title="关闭窗口">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="progress-container">
+        <div class="progress-info">
+          <span id="progressStepText">正在准备任务...</span>
+          <span id="progressPercentText" style="font-weight: bold; color: var(--accent);">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </div>
+
+      <div class="terminal-window" id="terminalWindow">
+        <div class="terminal-line progress">> [系统就绪] 正在连接编译与烧录管道...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+let buildEventSource = null;
+
+function openBuildModal() {
+  document.getElementById("buildModal").classList.add("active");
+  document.getElementById("progressBarFill").style.width = "0%";
+  document.getElementById("progressPercentText").textContent = "0%";
+  document.getElementById("progressStepText").textContent = "正在准备提取 Flash 动画...";
+  
+  const badge = document.getElementById("modalStatusBadge");
+  badge.className = "modal-badge running";
+  badge.textContent = "⏳ 正在提取动画与烧录...";
+
+  const term = document.getElementById("terminalWindow");
+  term.innerHTML = '<div class="terminal-line progress">> [任务启动] 正在读取动作映射表并启动渲染引擎...</div>';
+}
+
+function closeBuildModal() {
+  document.getElementById("buildModal").classList.remove("active");
+  if (buildEventSource) {
+    buildEventSource.close();
+    buildEventSource = null;
+  }
+}
+
+function appendTerminalLog(text, pct, status) {
+  const term = document.getElementById("terminalWindow");
+  const line = document.createElement("div");
+  line.className = "terminal-line";
+
+  if (text.includes("PROGRESS:")) {
+    line.classList.add("progress");
+    const cleanText = text.replace("PROGRESS:", "").trim();
+    line.textContent = `> ${cleanText}`;
+    document.getElementById("progressStepText").textContent = cleanText.split("|").pop().trim();
+  } else if (text.includes("[OK]") || text.includes("SUCCESS") || text.includes("成功") || status === "success") {
+    line.classList.add("success");
+    line.textContent = text;
+  } else if (text.includes("ERROR") || text.includes("失败") || text.includes("Error") || status === "error") {
+    line.classList.add("error");
+    line.textContent = text;
+  } else if (text.includes("Warning") || text.includes("[SKIP]")) {
+    line.classList.add("warn");
+    line.textContent = text;
+  } else {
+    line.textContent = text;
+  }
+
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+
+  if (pct !== null && pct !== undefined) {
+    document.getElementById("progressBarFill").style.width = `${pct}%`;
+    document.getElementById("progressPercentText").textContent = `${pct}%`;
+  }
+}
+
+// 一键应用并烧录（实时进度流模式）
+document.getElementById("applyBtn").addEventListener("click", async () => {
+  // 先触发自动保存
+  document.getElementById("saveBtn").click();
+  
+  // 打开浮窗并启动流监听
+  openBuildModal();
+
+  if (buildEventSource) {
+    buildEventSource.close();
+  }
+
+  buildEventSource = new EventSource("/api/build_stream");
+
+  buildEventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      appendTerminalLog(data.line, data.pct, data.status);
+
+      if (data.status === "success") {
+        const badge = document.getElementById("modalStatusBadge");
+        badge.className = "modal-badge success";
+        badge.textContent = "🎉 烧录成功！设备已自动重启";
+        showToast("🎉 恭喜！最新动作库已成功编译并烧录到 M5StickS3！", 6000);
+        buildEventSource.close();
+      } else if (data.status === "error") {
+        const badge = document.getElementById("modalStatusBadge");
+        badge.className = "modal-badge error";
+        badge.textContent = "❌ 遇到错误，请查看日志";
+        showToast("❌ 构建或烧录遇到问题，请查看控制台日志！", 6000);
+        buildEventSource.close();
+      }
+    } catch (err) {
+      appendTerminalLog(e.data, null, "running");
+    }
+  };
+
+  buildEventSource.onerror = (err) => {
+    appendTerminalLog("> [连接关闭] 数据流接收完毕。", null, "running");
+    if (buildEventSource) {
+      buildEventSource.close();
+      buildEventSource = null;
+    }
+  };
+});
+
+// 初始化
+loadData();
+</script>
+
+</body>
+</html>
+

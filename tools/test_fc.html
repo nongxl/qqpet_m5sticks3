@@ -1,0 +1,16 @@
+<!DOCTYPE html><html><head><script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script></head>
+<body><div id="pet"></div>
+<script>
+window.checkFrames = async function(swfUrl) {
+    const r = window.RufflePlayer.newest();
+    const p = r.createPlayer();
+    document.getElementById('pet').innerHTML = '';
+    document.getElementById('pet').appendChild(p);
+    await p.load(swfUrl);
+    await new Promise(res => setTimeout(res, 400));
+    return {
+        total: p.totalFrames || (p.TotalFrames ? p.TotalFrames() : 0),
+        fps: p.metadata ? p.metadata.frameRate : 24
+    };
+};
+</script></body></html>

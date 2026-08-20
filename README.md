@@ -137,8 +137,28 @@ QQpet_StickS3/
 
 ---
 
-## 💖 鸣谢与致敬
+## 🎨 动作全景预览与归类工作室 (QQ Pet Action Studio)
 
-- 感谢原项目 [xuemian168/qqpet_automation](https://github.com/xuemian168/qqpet_automation) 提供的 QQ 宠物通信逆向分析、官方 SWF 素材与数据资产！
+本项目内置了 **QQ 宠物 Flash 动作全景预览与动作归类 Web 管理平台**（基于 Python 本地服务 + Ruffle Flash WASM 播放内核），方便开发者和玩家直观预览全部 1340+ 个原版动画，并自由为企鹅分配动作与场景映射：
+
+### 1. 启动 Web 归类工作室
+在项目根目录下执行：
+```powershell
+python tools/action_studio/server.py
+```
+打开浏览器访问：**`http://127.0.0.1:8088`**
+
+### 2. 核心功能亮点
+- 🎬 **60 FPS 原汁原味 Flash 播放**：点击卡片即可在浏览器中即时渲染原版 Flash SWF，支持 **「🔄 重播」** 与 **「🔁 循环播放」** 开关；
+- 🔍 **多维度筛选定位**：按性别 (`MM`/`GG`)、成长阶段 (`Adult`/`Kid`/`Egg`)、情绪分类 (`peaceful`/`happy`/`sad`/`upset`/`prostrate`) 或文件名搜索；
+- 🏷️ **直观场景归类与动作重命名**：下拉选择归属场景（用餐、自习、打工、玩耍、生病、睡觉等），自定义动作 ID 与中文备注；
+- ⚡ **一键构建并全自动烧录**：点击页面右上角 **「💾 保存归类映射」** ➔ **「⚡ 一键应用到固件并烧录」**，后台将全自动提取纯单层实心帧、压制 LittleFS 镜像并烧录进 M5StickS3！
+
+---
+
+## 📜 开源协议与鸣谢
+
+- 企鹅美术原画素材与音效版权归 **腾讯科技（Tencent）** 所有，本项目仅供嵌入式技术探索、个人学习研究与怀旧交流，严禁用于商业用途。
+- 感谢 [M5Stack](https://m5stack.com/) 社区与 [Ruffle](https://ruffle.rs/) 团队提供的开源支持！
+- 感谢 [xuemian168/qqpet_automation](https://github.com/xuemian168/qqpet_automation) 提供的 QQ 宠物通信逆向分析、官方 SWF 素材与数据资产！
 - 致敬腾讯 QQ 宠物（2005~2018）陪伴无数人成长的美好青春回忆！
-

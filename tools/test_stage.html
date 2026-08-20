@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
+<style>
+body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+#stage { position: relative; width: 144px; height: 144px; }
+#base { position: absolute; top: 0; left: 0; width: 144px; height: 144px; z-index: 1; }
+#act { position: absolute; top: 0; left: 0; width: 144px; height: 144px; z-index: 2; }
+</style>
+</head><body>
+<div id="stage">
+  <div id="base"></div>
+  <div id="act"></div>
+</div>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    const r = window.RufflePlayer.newest();
+    
+    // 1. 底层加载 Stand.swf (完整身躯底座)
+    const pBase = r.createPlayer();
+    pBase.style.width = '100%'; pBase.style.height = '100%';
+    pBase.config = { autoplay: 'on', unmuteOverlay: 'hidden', letterbox: 'off', backgroundColor: null, wmode: 'transparent' };
+    document.getElementById('base').appendChild(pBase);
+    pBase.load("/doc/qqpet_automation/qq-pet-macos/src/assets/Action/MM/Adult/peaceful/Stand.swf");
+    
+    // 2. 顶层加载 Eat1.swf (用餐动作与道具)
+    const pAct = r.createPlayer();
+    pAct.style.width = '100%'; pAct.style.height = '100%';
+    pAct.config = { autoplay: 'on', unmuteOverlay: 'hidden', letterbox: 'off', backgroundColor: null, wmode: 'transparent' };
+    document.getElementById('act').appendChild(pAct);
+    pAct.load("/doc/qqpet_automation/qq-pet-macos/src/assets/Action/MM/Adult/Eat1.swf");
+});
+</script></body></html>
