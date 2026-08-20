@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 apply_custom_action_mappings.py
-根据用户在 Action Studio Web 页面中配置的 action_mappings.json：
-1. 提取所有启用的 SWF 动画，生成纯单层实心 .act 文件；
-2. 打包生成 LittleFS 镜像；
-3. 全量烧录至 ESP32-S3 设备 (COM6, 0x1E0000)！
+极速并发多 Worker 提取与固件烧录：
+1. 增量智能缓存机制（无变动动作 0 毫秒跳过）；
+2. 6 线程/并发 Worker 高速并行渲染提取 Flash 长动画；
+3. 一键打包 6.06MB LittleFS 镜像并自动烧录至 ESP32-S3 (COM6, 0x1E0000)！
 """
 
 import os
@@ -15,6 +15,7 @@ import json
 import time
 import struct
 import shutil
+import asyncio
 import http.server
 import socketserver
 import threading
@@ -28,15 +29,50 @@ if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 from PIL import Image, ImageDraw, ImageOps
+import numpy as np
 from scipy.ndimage import binary_fill_holes
-from playwright.sync_api import sync_playwright
-
+from playwright.async_api import async_playwright
 
 WORKSPACE = Path(__file__).resolve().parent.parent
 DATA_DIR = WORKSPACE / "data/assets"
 ACTION_ROOT = WORKSPACE / "doc/qqpet_automation/qq-pet-macos/src/assets/Action"
 MAPPING_FILE = WORKSPACE / "tools/action_mappings.json"
+CACHE_FILE = WORKSPACE / "tools/.build_cache.json"
 PORT = 8998
+NUM_WORKERS = 6
+
+HTML_DYNAMIC = """<!DOCTYPE html>
+<html>
+<head>
+  <script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
+  <style>
+    body { margin: 0; background: transparent; overflow: hidden; }
+    #pet { width: 260px; height: 260px; }
+  </style>
+</head>
+<body>
+  <div id="pet"></div>
+  <script>
+    window.loadSwf = function(url) {
+      const r = window.RufflePlayer.newest();
+      const p = r.createPlayer();
+      p.style.width = '100%';
+      p.style.height = '100%';
+      p.config = {
+        autoplay: 'on',
+        unmuteOverlay: 'hidden',
+        letterbox: 'off',
+        backgroundColor: '#000000',
+        wmode: 'transparent'
+      };
+      const pet = document.getElementById('pet');
+      pet.innerHTML = '';
+      pet.appendChild(p);
+      return p.load(url);
+    };
+  </script>
+</body>
+</html>"""
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -44,26 +80,7 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-HTML_TEMPLATE = """<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<script src="/doc/qqpet_automation/qq-pet-macos/src/windows/js/ruffle/ruffle.js"></script>
-<style>
-body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; }}
-#pet {{ width: 220px; height: 220px; }}
-</style>
-</head><body><div id="pet"></div>
-<script>
-window.addEventListener('DOMContentLoaded', () => {{
-    const r = window.RufflePlayer.newest();
-    const p = r.createPlayer();
-    p.style.width = '100%'; p.style.height = '100%';
-    p.config = {{ autoplay: 'on', unmuteOverlay: 'hidden', letterbox: 'off', backgroundColor: null, wmode: 'transparent' }};
-    document.getElementById('pet').appendChild(p);
-    p.load("{swf_url}");
-}});
-</script></body></html>"""
-
-def pack_png_frames_to_act(png_bytes_list, out_file: Path):
+def pack_png_frames_to_act(png_bytes_list, out_file):
     out_file.parent.mkdir(parents=True, exist_ok=True)
     count = len(png_bytes_list)
     buf = bytearray()
@@ -75,86 +92,126 @@ def pack_png_frames_to_act(png_bytes_list, out_file: Path):
     with open(out_file, "wb") as f:
         f.write(buf)
 
-def extract_single_swf(page, swf_rel, out_act_file, stage, num_frames=6, frame_delay=0.08):
-    act_url = f"/doc/qqpet_automation/qq-pet-macos/src/assets/Action/{swf_rel}".replace("\\", "/")
-    html_code = HTML_TEMPLATE.format(swf_url=act_url)
-    (WORKSPACE / "tools/render_apply.html").write_text(html_code, encoding="utf-8")
-
-    page.goto(f"http://127.0.0.1:{PORT}/tools/render_apply.html")
-    try:
-        page.wait_for_selector("#pet ruffle-player", timeout=8000)
-    except Exception:
-        return False
-    time.sleep(0.35)
+def process_frame_image(screenshot_bytes, stage):
+    img = Image.open(io.BytesIO(screenshot_bytes)).convert("RGBA")
+    arr_test = np.array(img)
+    red_err = (arr_test[:, :, 0] > 170) & (arr_test[:, :, 1] < 70) & (arr_test[:, :, 2] < 70)
+    if np.sum(red_err) > 300:
+        return None
 
     target_size = 72 if stage == "Egg" else (82 if stage == "Kid" else 90)
-    png_bytes_list = []
+    bbox = img.getbbox()
+    if bbox:
+        cropped = img.crop(bbox)
+        w, h = cropped.size
+        scale = min(target_size / w, target_size / h)
+        nw = max(1, int(w * scale))
+        nh = max(1, int(h * scale))
 
-    for f in range(num_frames):
-        screenshot_bytes = page.locator("#pet").screenshot(omit_background=True)
-        img = Image.open(io.BytesIO(screenshot_bytes)).convert("RGBA")
+        resized = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
+        final_img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
+        paste_x = (96 - nw) // 2
+        paste_y = 96 - nh - 2
+        final_img.paste(resized, (paste_x, paste_y), mask=resized)
+
+        # 闭合空洞填充
+        arr = np.array(final_img)
+        has_px = arr[:, :, 3] > 20
+        filled = binary_fill_holes(has_px)
+        holes = filled & (~has_px)
         
-        arr_test = np.array(img)
-        red_err = (arr_test[:, :, 0] > 170) & (arr_test[:, :, 1] < 70) & (arr_test[:, :, 2] < 70)
-        if np.sum(red_err) > 300:
-            return False
+        if np.any(holes):
+            for y in range(96):
+                for x in range(96):
+                    if holes[y, x]:
+                        if 28 <= y <= 68 and 30 <= x <= 66:
+                            arr[y, x] = [150, 40, 45, 255]
+                        elif y > 68:
+                            arr[y, x] = [240, 240, 240, 255]
+                        else:
+                            arr[y, x] = [30, 35, 45, 255]
+                            
+        final_clean = Image.fromarray(arr, "RGBA")
+        q = final_clean.quantize(colors=64, method=Image.Quantize.FASTOCTREE)
+        buf = io.BytesIO()
+        q.save(buf, format="PNG", optimize=True)
+        return buf.getvalue()
+    else:
+        final_img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
+        buf = io.BytesIO()
+        final_img.save(buf, format="PNG", optimize=True)
+        return buf.getvalue()
 
-        bbox = img.getbbox()
-        if bbox:
-            cropped = img.crop(bbox)
-            w, h = cropped.size
-            scale = min(target_size / w, target_size / h)
-            nw = max(1, int(w * scale))
-            nh = max(1, int(h * scale))
+async def worker_task(worker_id, queue, browser, total_tasks, progress_state, lock):
+    page = await browser.new_page(viewport={"width": 260, "height": 260})
+    await page.goto(f"http://127.0.0.1:{PORT}/tools/render_dynamic.html")
+    await asyncio.sleep(0.5)
 
-            resized = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
-            final_img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
-            paste_x = (96 - nw) // 2
-            paste_y = 96 - nh - 2
-            final_img.paste(resized, (paste_x, paste_y), mask=resized)
+    while not queue.empty():
+        try:
+            item, out_file, swf_file, cache_key, num_f, fps_val = queue.get_nowait()
+        except asyncio.QueueEmpty:
+            break
 
-            # 闭合空洞填充
-            arr = np.array(final_img)
-            has_px = arr[:, :, 3] > 20
-            filled = binary_fill_holes(has_px)
-            holes = filled & (~has_px)
-            
-            if np.any(holes):
-                for y in range(96):
-                    for x in range(96):
-                        if holes[y, x]:
-                            if 28 <= y <= 68 and 30 <= x <= 66:
-                                arr[y, x] = [150, 40, 45, 255]
-                            elif y > 68:
-                                arr[y, x] = [240, 240, 240, 255]
-                            else:
-                                arr[y, x] = [30, 35, 45, 255]
-                                
-            final_clean = Image.fromarray(arr, "RGBA")
-            q = final_clean.quantize(colors=64, method=Image.Quantize.FASTOCTREE)
-            buf = io.BytesIO()
-            q.save(buf, format="PNG", optimize=True)
-            png_bytes_list.append(buf.getvalue())
-        else:
-            final_img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
-            buf = io.BytesIO()
-            final_img.save(buf, format="PNG", optimize=True)
-            png_bytes_list.append(buf.getvalue())
+        gender = item.get("gender")
+        stage = item.get("stage")
+        rel_path = item.get("rel_path")
+        act_id = item.get("action_id")
+        swf_full = f"{gender}/{stage}/{rel_path}"
+        act_url = f"/doc/qqpet_automation/qq-pet-macos/src/assets/Action/{swf_full}".replace("\\", "/")
+        frame_delay = 1.0 / max(1, fps_val)
 
-        time.sleep(frame_delay)
+        async with lock:
+            progress_state["current"] += 1
+            idx = progress_state["current"]
+            pct = int(idx * 80 / max(1, total_tasks))
+            print(f"PROGRESS: {idx}/{total_tasks} | {pct}% | [{idx}/{total_tasks} W{worker_id}] 正在提取: {gender}/{stage}/{act_id} ({rel_path})", flush=True)
 
-    pack_png_frames_to_act(png_bytes_list, out_act_file)
-    return True
+        try:
+            await page.evaluate(f'window.loadSwf("{act_url}")')
+            await asyncio.sleep(0.35)
 
-def main():
+            png_bytes_list = []
+            failed = False
+
+            for _ in range(num_f):
+                shot_bytes = await page.locator("#pet").screenshot(omit_background=True)
+                p_bytes = await asyncio.to_thread(process_frame_image, shot_bytes, stage)
+                if p_bytes is None:
+                    failed = True
+                    break
+                png_bytes_list.append(p_bytes)
+                await asyncio.sleep(frame_delay)
+
+            if not failed and png_bytes_list:
+                await asyncio.to_thread(pack_png_frames_to_act, png_bytes_list, out_file)
+                async with lock:
+                    progress_state["cache"][cache_key] = {
+                        "swf_rel": rel_path,
+                        "num_frames": num_f,
+                        "fps": fps_val,
+                        "swf_mtime": swf_file.stat().st_mtime if swf_file.exists() else 0,
+                        "stage": stage
+                    }
+                    print(f"  [OK] 提取完成: {out_file.name} ({out_file.stat().st_size} 字节)", flush=True)
+            else:
+                print(f"  [SKIP] 无法提取或出现异常: {rel_path}", flush=True)
+
+        except Exception as e:
+            print(f"  [ERR] 提取异常 {rel_path}: {e}", flush=True)
+
+        queue.task_done()
+
+    await page.close()
+
+async def run_async_build():
     if not MAPPING_FILE.exists():
-        print("No action_mappings.json found!")
-        return
+        print(f"ERROR: {MAPPING_FILE} not found!")
+        return False
 
     with open(MAPPING_FILE, "r", encoding="utf-8") as f:
         mappings = json.load(f)
 
-    CACHE_FILE = WORKSPACE / "tools/.build_cache.json"
     build_cache = {}
     if CACHE_FILE.exists():
         try:
@@ -165,8 +222,7 @@ def main():
 
     enabled_items = [item for item in mappings.values() if item.get("enabled", True) and item.get("action_id")]
     total_to_process = len(enabled_items)
-    
-    # 分析哪些需要重新提取，哪些命中缓存
+
     tasks_to_extract = []
     cached_count = 0
 
@@ -197,52 +253,38 @@ def main():
         else:
             cached_count += 1
 
-    print(f"PROGRESS: 0/{total_to_process} | 0% | 总计 {total_to_process} 个动作 [缓存命中 {cached_count} 个, 待提取 {len(tasks_to_extract)} 个]", flush=True)
-
+    print(f"PROGRESS: 0/{total_to_process} | 0% | 总计 {total_to_process} 个动作 [缓存命中 {cached_count} 个, 待提取 {len(tasks_to_extract)} 个 (启用 {NUM_WORKERS} 并发加速)]", flush=True)
 
     if tasks_to_extract:
+        (WORKSPACE / "tools/render_dynamic.html").write_text(HTML_DYNAMIC, encoding="utf-8")
         server = socketserver.TCPServer(("", PORT), QuietHandler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
 
-        processed_count = cached_count
-        with sync_playwright() as p:
-            browser = p.chromium.launch(channel="msedge", headless=True)
-            page = browser.new_page(viewport={"width": 260, "height": 260})
+        queue = asyncio.Queue()
+        for t in tasks_to_extract:
+            queue.put_nowait(t)
 
-            for item, out_file, swf_file, cache_key, num_f, fps_val in tasks_to_extract:
-                gender = item.get("gender")
-                stage = item.get("stage")
-                rel_path = item.get("rel_path")
-                act_id = item.get("action_id")
-                swf_full = f"{gender}/{stage}/{rel_path}"
-                frame_delay = 1.0 / max(1, fps_val)
+        progress_state = {
+            "current": cached_count,
+            "cache": build_cache
+        }
+        lock = asyncio.Lock()
 
-                processed_count += 1
-                pct = int(processed_count * 80 / max(1, total_to_process))
-                print(f"PROGRESS: {processed_count}/{total_to_process} | {pct}% | [{processed_count}/{total_to_process}] 正在提取: {gender}/{stage}/{act_id} ({rel_path})", flush=True)
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(channel="msedge", headless=True)
+            workers = [
+                asyncio.create_task(worker_task(w_id + 1, queue, browser, total_to_process, progress_state, lock))
+                for w_id in range(min(NUM_WORKERS, len(tasks_to_extract)))
+            ]
+            await asyncio.gather(*workers)
+            await browser.close()
 
-                ok = extract_single_swf(page, swf_full, out_file, stage, num_frames=num_f, frame_delay=frame_delay)
-                if ok:
-                    print(f"  [OK] 生成成功: {out_file.name} ({out_file.stat().st_size} 字节)", flush=True)
-                    build_cache[cache_key] = {
-                        "swf_rel": rel_path,
-                        "num_frames": num_f,
-                        "fps": fps_val,
-                        "swf_mtime": swf_file.stat().st_mtime if swf_file.exists() else 0,
-                        "stage": stage
-                    }
-                else:
-                    print(f"  [SKIP] 无法提取: {rel_path}", flush=True)
-
-            browser.close()
         server.shutdown()
 
-        # 保存更新后的构建缓存
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(build_cache, f, ensure_ascii=False, indent=2)
     else:
-        print("PROGRESS: 80% | 所有动作均已处于最新状态，无需重新提取渲染！", flush=True)
-
+        print("PROGRESS: 80% | 所有动作均处于最新状态，无需重新渲染！", flush=True)
 
     # 打包 LittleFS 镜像
     mklittlefs_exe = Path(os.environ['USERPROFILE']) / '.platformio/packages/tool-mklittlefs/mklittlefs.exe'
@@ -270,13 +312,15 @@ def main():
     print(res_f.stdout, flush=True)
     if res_f.returncode == 0:
         print("\nPROGRESS: 100% | SUCCESS | 恭喜！全部长动画已成功编译并烧录至 M5StickS3！设备已自动重启生效！", flush=True)
+        return True
     else:
         print(f"\nPROGRESS: ERROR | 烧录失败：{res_f.stderr}", flush=True)
-        sys.exit(1)
+        return False
 
-    print(res_f.stdout)
-    if res_f.returncode == 0:
-        print("\nSUCCESSFULLY FLASHED TO M5STICKS3!")
+def main():
+    ok = asyncio.run(run_async_build())
+    if not ok:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

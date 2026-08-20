@@ -193,68 +193,14 @@ def classify_swf_fallback(gender, stage, rel_path):
         if stem == "Stand":
             return ("upset", "upset", "生气噘嘴待机", True)
         if len(parts) >= 2 and parts[1] == "play":
-            if stem in UPSET_ACTIONS:
-                cat, act_id, lbl = UPSET_ACTIONS[stem]
-                return (cat, act_id, lbl, True)
-            return ("upset", f"upset_{stem.lower()}", f"发脾气动作 {stem}", False)
-
-    elif folder == "sad":
-        if stem == "Stand":
-            return ("sad", "sad", "伤心低落待机", True)
-        if len(parts) >= 2 and parts[1] == "play":
-            if stem in SAD_ACTIONS:
-                cat, act_id, lbl = SAD_ACTIONS[stem]
-                return (cat, act_id, lbl, True)
-            return ("sad", f"sad_{stem.lower()}", f"伤心沮丧动作 {stem}", False)
-
-    elif folder == "prostrate":
-        if stem == "Stand":
-            return ("sleep", "sleep", "趴在地上睡眼惺忪", True)
-        if len(parts) >= 2 and parts[1] == "play":
-            if stem in SLEEP_ACTIONS:
-                cat, act_id, lbl = SLEEP_ACTIONS[stem]
-                return (cat, act_id, lbl, True)
-            return ("sleep", f"sleep_{stem.lower()}", f"就寝睡觉动作 {stem}", False)
-
-    elif stage == "Kid" and folder == "play":
-        if stem in KID_PLAY_ACTIONS:
-            cat, act_id, lbl = KID_PLAY_ACTIONS[stem]
-            return (cat, act_id, lbl, True)
-        return ("play", f"kid_{stem.lower()}", f"少儿游戏动作 {stem}", False)
-
-    elif stage == "Egg" and folder == "play":
-        if stem == "P1":
-            return ("play", "play_hug", "蛋壳摇晃求抱抱", True)
-        elif stem == "P2":
-            return ("play", "play_roll", "蛋壳左右打滚摇摆", True)
-        elif stem == "P3":
-            return ("play", "play_jump", "顶着小蛋壳欢快小跳", True)
-        elif stem == "P4":
-            return ("study", "study", "破壳雏鸟好奇看小画书", True)
-        elif stem == "P5":
-            return ("play", "play_trip", "顶着蛋壳蹒跚漫步", True)
-        return ("play", f"egg_{stem.lower()}", f"雏鸟动作 {stem}", False)
-
-    return ("other", stem.lower(), f"备选动作 {rel_path}", False)
-
-def load_mappings():
-    if MAPPING_FILE.exists():
-        try:
-            with open(MAPPING_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
-def save_mappings(data):
-    with open(MAPPING_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+            if stem in UPSET_ACTIONCURRENT_BUILD_PROC = None
 
 class ActionStudioHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WORKSPACE), **kwargs)
 
     def do_GET(self):
+        global CURRENT_BUILD_PROC
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/" or parsed.path == "/index.html":
             self.send_response(200)
@@ -319,7 +265,95 @@ class ActionStudioHandler(SimpleHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
 
+            # 如果上一个还在跑，先终止
+            if CURRENT_BUILD_PROC and CURRENT_BUILD_PROC.poll() is None:
+                try:
+                    CURRENT_BUILD_PROC.kill()
+                except Exception:
+                    pass
+
             custom_env = os.environ.copy()
+            custom_env["PYTHONIOENCODING"] = "utf-8"
+            custom_env["PYTHONUTF8"] = "1"
+
+            proc = subprocess.Popen(
+                [sys.executable, "-u", str(WORKSPACE / "tools/apply_custom_action_mappings.py")],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+                cwd=str(WORKSPACE),
+                env=custom_env
+            )
+            CURRENT_BUILD_PROC = proc
+
+            try:
+                for line in iter(proc.stdout.readline, ''):
+                    line_str = line.rstrip()
+                    if not line_str: continue
+                    pct = None
+                    if "PROGRESS:" in line_str:
+                        parts = line_str.split("|")
+                        for p in parts:
+                            if "%" in p:
+                                try:
+                                    pct = int(p.replace("%", "").strip())
+                                except:
+                                    pass
+                    evt = json.dumps({"line": line_str, "pct": pct, "status": "running"}, ensure_ascii=False)
+                    self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
+                    self.wfile.flush()
+                    
+                proc.stdout.close()
+                rc = proc.wait()
+                final_status = "success" if rc == 0 else "error"
+                evt = json.dumps({
+                    "line": "=== 编译与烧录完成 ===" if rc == 0 else "=== 烧录遇到错误或已终止 ===",
+                    "pct": 100 if rc == 0 else None,
+                    "status": final_status,
+                    "code": rc
+                }, ensure_ascii=False)
+                self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
+                self.wfile.flush()
+            except Exception as e:
+                evt = json.dumps({"line": f"通信关闭/已中止: {e}", "status": "error"}, ensure_ascii=False)
+                try:
+                    self.wfile.write(f"data: {evt}\n\n".encode('utf-8'))
+                    self.wfile.flush()
+                except:
+                    pass
+            finally:
+                # 无论前端是断开连接还是关闭网页，只要退出了流就立即终止子进程！
+                if proc.poll() is None:
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+                CURRENT_BUILD_PROC = None
+            return
+
+        return super().do_GET()
+
+    def do_POST(self):
+        global CURRENT_BUILD_PROC
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/abort_build":
+            if CURRENT_BUILD_PROC and CURRENT_BUILD_PROC.poll() is None:
+                try:
+                    CURRENT_BUILD_PROC.kill()
+                except Exception:
+                    pass
+                CURRENT_BUILD_PROC = None
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "aborted"}')
+            return
+
+        elif parsed.path == "/api/save_mappings":
+ron.copy()
             custom_env["PYTHONIOENCODING"] = "utf-8"
             custom_env["PYTHONUTF8"] = "1"
 
